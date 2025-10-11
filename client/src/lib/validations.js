@@ -2,25 +2,55 @@ import { z } from 'zod';
 
 // Authentication schemas
 export const loginSchema = z.object({
-    username: z.string().min(1, 'Tên đăng nhập là bắt buộc'),
+    uemail: z.string()
+        .min(1, 'Email là bắt buộc')
+        .email('Email không hợp lệ')
+        .max(100, 'Email không được quá 100 ký tự')
+        .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            'Email không đúng định dạng')
+        .refine((val) => !val.includes('..'), {
+            message: 'Email không được chứa hai dấu chấm liên tiếp'
+        })
+        .refine((val) => {
+            const localPart = val.split('@')[0];
+            return localPart && localPart.length <= 64;
+        }, {
+            message: 'Phần trước @ không được quá 64 ký tự'
+        }),
     password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
 });
 
 export const registerSchema = z.object({
-    username: z.string()
-        .min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự')
-        .max(20, 'Tên đăng nhập không được quá 20 ký tự')
-        .regex(/^[a-zA-Z0-9_]+$/, 'Tên đăng nhập chỉ được chứa chữ cái, số và dấu gạch dưới'),
     password: z.string()
-        .min(8, 'Mật khẩu phải có ít nhất 6 ký tự')
+        .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
         .max(50, 'Mật khẩu không được quá 50 ký tự'),
     confirmPassword: z.string(),
     fullname: z.string()
         .min(2, 'Họ tên phải có ít nhất 2 ký tự')
-        .max(50, 'Họ tên không được quá 50 ký tự'),
+        .max(50, 'Họ tên không được quá 50 ký tự')
+        .regex(/^[a-zA-ZÀ-ỹĂĐĨŨƠàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ\s]+$/,
+            'Họ tên chỉ được chứa chữ cái và khoảng trắng')
+        .refine((val) => val.trim().length >= 2, {
+            message: 'Họ tên không được chỉ chứa khoảng trắng'
+        })
+        .refine((val) => !/\s{2,}/.test(val), {
+            message: 'Họ tên không được chứa nhiều khoảng trắng liên tiếp'
+        }),
     email: z.string()
+        .min(1, 'Email là bắt buộc')
         .email('Email không hợp lệ')
-        .max(100, 'Email không được quá 100 ký tự'),
+        .max(100, 'Email không được quá 100 ký tự')
+        .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            'Email không đúng định dạng')
+        .refine((val) => !val.includes('..'), {
+            message: 'Email không được chứa hai dấu chấm liên tiếp'
+        })
+        .refine((val) => {
+            const localPart = val.split('@')[0];
+            return localPart && localPart.length <= 64;
+        }, {
+            message: 'Phần trước @ không được quá 64 ký tự'
+        }),
     phone: z.string()
         .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số')
         .min(10, 'Số điện thoại phải có ít nhất 10 chữ số'),
@@ -63,10 +93,30 @@ export const servicePackageSchema = z.object({
 export const profileUpdateSchema = z.object({
     fullname: z.string()
         .min(2, 'Họ tên phải có ít nhất 2 ký tự')
-        .max(50, 'Họ tên không được quá 50 ký tự'),
+        .max(50, 'Họ tên không được quá 50 ký tự')
+        .regex(/^[a-zA-ZÀ-ỹĂĐĨŨƠàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ\s]+$/,
+            'Họ tên chỉ được chứa chữ cái và khoảng trắng')
+        .refine((val) => val.trim().length >= 2, {
+            message: 'Họ tên không được chỉ chứa khoảng trắng'
+        })
+        .refine((val) => !/\s{2,}/.test(val), {
+            message: 'Họ tên không được chứa nhiều khoảng trắng liên tiếp'
+        }),
     email: z.string()
+        .min(1, 'Email là bắt buộc')
         .email('Email không hợp lệ')
-        .max(100, 'Email không được quá 100 ký tự'),
+        .max(100, 'Email không được quá 100 ký tự')
+        .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            'Email không đúng định dạng')
+        .refine((val) => !val.includes('..'), {
+            message: 'Email không được chứa hai dấu chấm liên tiếp'
+        })
+        .refine((val) => {
+            const localPart = val.split('@')[0];
+            return localPart && localPart.length <= 64;
+        }, {
+            message: 'Phần trước @ không được quá 64 ký tự'
+        }),
     phone: z.string()
         .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số')
         .min(10, 'Số điện thoại phải có ít nhất 10 chữ số'),

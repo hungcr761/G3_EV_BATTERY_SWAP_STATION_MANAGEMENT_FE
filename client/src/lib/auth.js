@@ -26,5 +26,6 @@ export function getCurrentRole() {
 
 export function clearAuth() {
     localStorage.removeItem("authToken");
+    sessionStorage.removeItem("authToken");
     localStorage.removeItem(USER_KEY);
 } 

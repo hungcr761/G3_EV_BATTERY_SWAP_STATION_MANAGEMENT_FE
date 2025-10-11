@@ -36,9 +36,12 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (credentials) => {
         try {
-            const response = await authAPI.login(credentials);
+            const { rememberMe, ...loginData } = credentials;
+            const response = await authAPI.login(loginData);
             const { token, user } = response.data;
-            setAuthToken(token);
+
+            // Lưu token vào localStorage hoặc sessionStorage tùy theo rememberMe
+            setAuthToken(token, rememberMe);
             setUser(user);
             setIsAuthenticated(true);
 

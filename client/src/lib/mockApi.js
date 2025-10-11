@@ -1,21 +1,15 @@
-// Mock API service for development/testing
-// This simulates backend API responses for login and register
-
-// Mock users database (in real app, this would be in backend)
 const mockUsers = [
     {
         id: 1,
         email: "admin@example.com",
-        password: "admin123",
-        username: "admin",
+        password: "admin1234",
         role: "admin",
         phone: "0123456789"
     },
     {
         id: 2,
         email: "user@example.com",
-        password: "user123",
-        username: "user",
+        password: "user1234",
         role: "user",
         phone: "0987654321"
     }
@@ -30,17 +24,17 @@ export const mockApi = {
     async login(credentials) {
         await delay(800); // Simulate network delay
 
-        const { username, password } = credentials;
+        const { email, password } = credentials;
 
         // Find user by email and password
-        const user = mockUsers.find(u => u.username === username && u.password === password);
+        const user = mockUsers.find(u => u.email === email && u.password === password);
 
         if (!user) {
             return Promise.reject({
                 response: {
                     status: 401,
                     data: {
-                        message: "username hoặc mật khẩu không đúng"
+                        message: "email hoặc mật khẩu không đúng"
                     }
                 }
             });
@@ -112,42 +106,6 @@ export const mockApi = {
         };
     },
 
-    // Mock refresh token
-    async refreshToken(refreshTokenData) {
-        await delay(500);
-
-        const { refreshToken } = refreshTokenData;
-
-        // Extract user ID from mock refresh token
-        const userId = refreshToken.split('_')[2];
-        const user = mockUsers.find(u => u.id == userId);
-
-        if (!user) {
-            return Promise.reject({
-                response: {
-                    status: 401,
-                    data: {
-                        message: "Refresh token không hợp lệ"
-                    }
-                }
-            });
-        }
-
-        // Generate new tokens
-        const newToken = `mock_token_${user.id}_${Date.now()}`;
-        const newRefreshToken = `mock_refresh_${user.id}_${Date.now()}`;
-
-        const { password: _, ...userWithoutPassword } = user;
-
-        return {
-            data: {
-                success: true,
-                token: newToken,
-                refreshToken: newRefreshToken,
-                user: userWithoutPassword
-            }
-        };
-    },
 
     // Mock logout
     async logout() {

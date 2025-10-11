@@ -100,34 +100,18 @@ const RegisterForm = () => {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="fullname">Họ và tên *</Label>
-                                    <Input
-                                        id="fullname"
-                                        type="text"
-                                        placeholder="Nhập họ tên"
-                                        {...register('fullname')}
-                                        className={errors.fullname ? 'border-red-500' : ''}
-                                    />
-                                    {errors.fullname && (
-                                        <p className="text-sm text-red-600">{errors.fullname.message}</p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="username">Tên đăng nhập *</Label>
-                                    <Input
-                                        id="username"
-                                        type="text"
-                                        placeholder="Tên đăng nhập"
-                                        {...register('username')}
-                                        className={errors.username ? 'border-red-500' : ''}
-                                    />
-                                    {errors.username && (
-                                        <p className="text-sm text-red-600">{errors.username.message}</p>
-                                    )}
-                                </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="fullname">Họ và tên *</Label>
+                                <Input
+                                    id="fullname"
+                                    type="text"
+                                    placeholder="Nhập họ tên"
+                                    {...register('fullname')}
+                                    className={errors.fullname ? 'border-red-500' : ''}
+                                />
+                                {errors.fullname && (
+                                    <p className="text-sm text-red-600">{errors.fullname.message}</p>
+                                )}
                             </div>
 
                             <div className="space-y-2">

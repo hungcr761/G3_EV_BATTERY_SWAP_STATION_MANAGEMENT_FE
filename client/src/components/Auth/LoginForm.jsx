@@ -14,6 +14,7 @@ const LoginForm = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
 
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -32,7 +33,7 @@ const LoginForm = () => {
         setError('');
 
         try {
-            const result = await login(data);
+            const result = await login({ ...data, rememberMe });
 
             if (result.success) {
                 navigate('/dashboard');
@@ -66,16 +67,16 @@ const LoginForm = () => {
                             )}
 
                             <div className="space-y-2">
-                                <Label htmlFor="username">Tên đăng nhập</Label>
+                                <Label htmlFor="email">Email</Label>
                                 <Input
-                                    id="username"
+                                    id="email"
                                     type="text"
-                                    placeholder="Nhập tên đăng nhập"
-                                    {...register('username')}
-                                    className={errors.username ? 'border-red-500' : ''}
+                                    placeholder="Nhập email"
+                                    {...register('email')}
+                                    className={errors.email ? 'border-red-500' : ''}
                                 />
-                                {errors.username && (
-                                    <p className="text-sm text-red-600">{errors.username.message}</p>
+                                {errors.email && (
+                                    <p className="text-sm text-red-600">{errors.email.message}</p>
                                 )}
                             </div>
 
@@ -112,6 +113,8 @@ const LoginForm = () => {
                                         id="remember-me"
                                         name="remember-me"
                                         type="checkbox"
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
                                         className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                                     />
                                     <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">

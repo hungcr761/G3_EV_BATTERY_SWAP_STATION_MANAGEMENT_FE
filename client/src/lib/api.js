@@ -18,7 +18,7 @@ export const api = axios.create({
 
 // Request interceptor - Add auth token
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("authToken");
+    const token = getAuthToken();
     if (token) {
         config.headers = config.headers || {};
         config.headers["Authorization"] = `Bearer ${token}`;
@@ -57,15 +57,26 @@ api.interceptors.response.use(
 );
 
 // Helper function to set auth token
-export function setAuthToken(token) {
+export function setAuthToken(token, rememberMe = false) {
     if (token) {
-        localStorage.setItem("authToken", token);
+        if (rememberMe) {
+            // Lưu vào localStorage nếu người dùng chọn "Ghi nhớ đăng nhập"
+            localStorage.setItem("authToken", token);
+            sessionStorage.removeItem("authToken");
+        } else {
+            // Lưu vào sessionStorage nếu không chọn "Ghi nhớ đăng nhập"
+            sessionStorage.setItem("authToken", token);
+            localStorage.removeItem("authToken");
+        }
     } else {
+        // Xóa token khỏi cả hai storage
         localStorage.removeItem("authToken");
+        sessionStorage.removeItem("authToken");
     }
 }
 
 // Helper function to get auth token
 export function getAuthToken() {
-    return localStorage.getItem("authToken");
+    // Ưu tiên lấy từ localStorage trước (remember me), sau đó mới đến sessionStorage
+    return localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
 }
