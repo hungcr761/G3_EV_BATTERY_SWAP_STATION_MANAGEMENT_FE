@@ -123,7 +123,8 @@ export const mockApi = {
     async getProfile() {
         await delay(400);
 
-        const token = localStorage.getItem("authToken");
+        // Check both localStorage and sessionStorage for token
+        const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
         if (!token) {
             return Promise.reject({
                 response: {

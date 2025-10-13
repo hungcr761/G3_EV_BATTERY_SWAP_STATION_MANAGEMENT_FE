@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Authentication schemas
 export const loginSchema = z.object({
-    uemail: z.string()
+    email: z.string()
         .min(1, 'Email là bắt buộc')
         .email('Email không hợp lệ')
         .max(100, 'Email không được quá 100 ký tự')
@@ -21,6 +21,9 @@ export const loginSchema = z.object({
 });
 
 export const registerSchema = z.object({
+    username: z.string()
+        .min(4, 'Tên đăng nhập phải có ít nhất 4 ký tự')
+        .max(50, 'Tên đăng nhập không được quá 50 ký tự'),
     password: z.string()
         .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
         .max(50, 'Mật khẩu không được quá 50 ký tự'),
@@ -53,7 +56,6 @@ export const registerSchema = z.object({
         }),
     phone: z.string()
         .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số')
-        .min(10, 'Số điện thoại phải có ít nhất 10 chữ số'),
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Mật khẩu xác nhận không khớp',
     path: ['confirmPassword'],

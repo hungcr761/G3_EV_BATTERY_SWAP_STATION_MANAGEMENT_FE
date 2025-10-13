@@ -101,6 +101,20 @@ const RegisterForm = () => {
                             )}
 
                             <div className="space-y-2">
+                                <Label htmlFor="username">Username *</Label>
+                                <Input
+                                    id="username"
+                                    type="text"
+                                    placeholder="Nhập tên đăng nhập"
+                                    {...register('username')}
+                                    className={errors.username ? 'border-red-500' : ''}
+                                />
+                                {errors.username && (
+                                    <p className="text-sm text-red-600">{errors.username.message}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
                                 <Label htmlFor="fullname">Họ và tên *</Label>
                                 <Input
                                     id="fullname"

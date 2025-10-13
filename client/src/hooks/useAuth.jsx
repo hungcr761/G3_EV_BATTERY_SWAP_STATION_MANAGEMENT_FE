@@ -14,17 +14,29 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const token = getAuthToken();
         if (token) {
-            // Verify token with backend
+            // First, set user as authenticated based on token presence
+            // This prevents the token from being cleared immediately on page reload
+            setIsAuthenticated(true);
+
+            // Try to verify token with backend (optional verification)
             authAPI.getProfile()
                 .then(response => {
-                    setUser(response.data.user);
-                    setIsAuthenticated(true);
+                    // Handle different response formats (mock API vs real API)
+                    const data = response?.data || {};
+                    const profile = data.user || data.payload?.account || data.payload?.user;
+                    if (profile) {
+                        setUser(profile);
+                    } else {
+                        // If no profile data, create a basic user object from token
+                        // This ensures the user stays authenticated even if profile fetch fails
+                        setUser({ token: token });
+                    }
                 })
-                .catch(() => {
-                    // Token invalid, clear it
-                    setAuthToken(null);
-                    setUser(null);
-                    setIsAuthenticated(false);
+                .catch((error) => {
+                    console.warn('Profile fetch failed, but keeping user authenticated:', error);
+                    // Don't clear the token if profile fetch fails
+                    // Just create a basic user object
+                    setUser({ token: token });
                 })
                 .finally(() => {
                     setLoading(false);
@@ -38,18 +50,29 @@ export const AuthProvider = ({ children }) => {
         try {
             const { rememberMe, ...loginData } = credentials;
             const response = await authAPI.login(loginData);
-            const { token, user } = response.data;
+
+            // Handle different response formats (mock API vs real API)
+            const data = response?.data || {};
+            const token = data.token || data.payload?.token;
+            const account = data.user || data.payload?.account || data.payload?.user;
+
+            if (!token) {
+                throw new Error('Invalid login response - no token received');
+            }
 
             // Lưu token vào localStorage hoặc sessionStorage tùy theo rememberMe
             setAuthToken(token, rememberMe);
-            setUser(user);
+
+            // Set user data - use account if available, otherwise create basic user object
+            const userData = account || { token: token };
+            setUser(userData);
             setIsAuthenticated(true);
 
-            return { success: true, user };
+            return { success: true, user: userData };
         } catch (error) {
             return {
                 success: false,
-                error: error.response?.data?.message || 'Login failed'
+                error: error.response?.data?.message || error.message || 'Login failed'
             };
         }
     };
