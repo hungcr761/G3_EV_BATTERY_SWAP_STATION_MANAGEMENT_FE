@@ -8,13 +8,13 @@ const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false' && (!import.m
 // Authentication APIs
 export const authAPI = {
     login: (credentials) =>
-        USE_MOCK_API ? mockApi.login(credentials) : api.post('/api/auth/login', credentials),
+        USE_MOCK_API ? mockApi.login(credentials) : api.post('/user/login', credentials),
     register: (userData) =>
-        USE_MOCK_API ? mockApi.register(userData) : api.post('/api/auth/register', userData),
+        USE_MOCK_API ? mockApi.register(userData) : api.post('/user/register', userData),
     logout: () =>
-        USE_MOCK_API ? mockApi.logout() : api.post('/api/auth/logout'),
+        USE_MOCK_API ? mockApi.logout() : api.post('/user/logout'),
     getProfile: () =>
-        USE_MOCK_API ? mockApi.getProfile() : api.get('/api/auth/profile'),
+        USE_MOCK_API ? mockApi.getProfile() : api.get('/users/profile'),
 };
 
 // EV APIs
