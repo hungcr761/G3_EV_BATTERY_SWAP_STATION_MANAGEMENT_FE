@@ -21,9 +21,14 @@ export const authAPI = {
 export const vehicleAPI = {
     getAll: () => api.get('/api/EV'),
     getById: (id) => api.get(`/api/EV/${id}`),
-    create: (data) => api.post('/api/EV', data),
-    update: (id, data) => api.put(`/api/EV/${id}`, data),
-    delete: (id) => api.delete(`/api/EV/${id}`),
+    create: (data) =>
+        USE_MOCK_API ? mockApi.createVehicle(data) : api.post('/api/EV', data),
+    update: (id, data) =>
+        USE_MOCK_API ? mockApi.updateVehicle(id, data) : api.put(`/api/EV/${id}`, data),
+    delete: (id) =>
+        USE_MOCK_API ? mockApi.deleteVehicle(id) : api.delete(`/api/EV/${id}`),
+    getUserVehicles: () =>
+        USE_MOCK_API ? mockApi.getUserVehicles() : api.get('/api/user/vehicles'),
 };
 
 // user APIs

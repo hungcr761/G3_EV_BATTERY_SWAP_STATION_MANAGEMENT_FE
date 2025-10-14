@@ -5,6 +5,7 @@ import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { useAuth } from '../hooks/useAuth'
 import ProfileUpdate from '../components/Dashboard/ProfileUpdate';
+import VehicleManagement from '../components/Dashboard/VehicleManagement';
 import {
     Battery,
     Car,
@@ -22,6 +23,7 @@ const Dashboard = () => {
     const { user } = useAuth();
     const [showMockTest, setShowMockTest] = useState(false);
     const [showProfileUpdate, setShowProfileUpdate] = useState(false);
+    const [showVehicleManagement, setShowVehicleManagement] = useState(false);
 
     // Mock data - in real app, this would come from API
     const userStats = {
@@ -64,6 +66,11 @@ const Dashboard = () => {
     // If showing profile update, render that component
     if (showProfileUpdate) {
         return <ProfileUpdate onBack={() => setShowProfileUpdate(false)} />;
+    }
+
+    // If showing vehicle management, render that component
+    if (showVehicleManagement) {
+        return <VehicleManagement onBack={() => setShowVehicleManagement(false)} />;
     }
 
     return (
@@ -246,7 +253,11 @@ const Dashboard = () => {
                                     <Calendar className="mr-2 h-4 w-4" />
                                     Đặt lịch đổi pin
                                 </Button>
-                                <Button className="w-full justify-start" variant="outline">
+                                <Button
+                                    className="w-full justify-start"
+                                    variant="outline"
+                                    onClick={() => setShowVehicleManagement(true)}
+                                >
                                     <Car className="mr-2 h-4 w-4" />
                                     Quản lý xe
                                 </Button>

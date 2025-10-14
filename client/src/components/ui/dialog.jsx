@@ -1,30 +1,43 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
+import { X } from "lucide-react"
+import { cn } from "../../lib/utils"
 
-const Dialog = React.forwardRef(({ className, children, ...props }, ref) => (
-    <div
-        ref={ref}
-        className={cn("fixed inset-0 z-50 flex items-center justify-center", className)}
-        {...props}
-    >
-        <div className="fixed inset-0 bg-black/50" />
-        <div className="relative z-50 w-full max-w-lg mx-4">
-            {children}
+const Dialog = ({ open, onOpenChange, children }) => {
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in-0">
+            <div
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                onClick={() => onOpenChange?.(false)}
+            />
+            <div className="relative z-50 w-full max-w-lg">
+                {children}
+            </div>
         </div>
-    </div>
-))
+    );
+};
 Dialog.displayName = "Dialog"
 
-const DialogContent = React.forwardRef(({ className, children, ...props }, ref) => (
+const DialogContent = React.forwardRef(({ className, children, onClose, ...props }, ref) => (
     <div
         ref={ref}
         className={cn(
-            "relative bg-background border rounded-lg shadow-lg",
+            "relative bg-white border rounded-lg shadow-lg animate-in zoom-in-95 fade-in-0",
             className
         )}
         {...props}
     >
         {children}
+        {onClose && (
+            <button
+                onClick={onClose}
+                className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+            >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+            </button>
+        )}
     </div>
 ))
 DialogContent.displayName = "DialogContent"

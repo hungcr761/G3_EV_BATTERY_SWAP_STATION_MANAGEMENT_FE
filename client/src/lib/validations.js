@@ -7,16 +7,7 @@ export const loginSchema = z.object({
         .email('Email không hợp lệ')
         .max(100, 'Email không được quá 100 ký tự')
         .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-            'Email không đúng định dạng')
-        .refine((val) => !val.includes('..'), {
-            message: 'Email không được chứa hai dấu chấm liên tiếp'
-        })
-        .refine((val) => {
-            const localPart = val.split('@')[0];
-            return localPart && localPart.length <= 64;
-        }, {
-            message: 'Phần trước @ không được quá 64 ký tự'
-        }),
+            'Email không đúng định dạng'),
     password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
 });
 
@@ -44,18 +35,9 @@ export const registerSchema = z.object({
         .email('Email không hợp lệ')
         .max(100, 'Email không được quá 100 ký tự')
         .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-            'Email không đúng định dạng')
-        .refine((val) => !val.includes('..'), {
-            message: 'Email không được chứa hai dấu chấm liên tiếp'
-        })
-        .refine((val) => {
-            const localPart = val.split('@')[0];
-            return localPart && localPart.length <= 64;
-        }, {
-            message: 'Phần trước @ không được quá 64 ký tự'
-        }),
+            'Email không đúng định dạng'),
     phone_number: z.string()
-    // .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số')
+        .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số')
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Mật khẩu xác nhận không khớp',
     path: ['confirmPassword'],
@@ -64,18 +46,53 @@ export const registerSchema = z.object({
 // Vehicle schemas
 export const vehicleSchema = z.object({
     vin: z.string()
-        .min(17, 'VIN phải có đúng 17 ký tự')
-        .max(17, 'VIN phải có đúng 17 ký tự')
-        .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'VIN không hợp lệ'),
-    batteryType: z.enum(['type1', 'type2'], {
-        errorMap: () => ({ message: 'Vui lòng chọn loại pin' }),
-    }),
-    vehicleModel: z.string()
-        .min(1, 'Model xe là bắt buộc')
-        .max(50, 'Model xe không được quá 50 ký tự'),
-    vehicleBrand: z.string()
-        .min(1, 'Hãng xe là bắt buộc')
-        .max(30, 'Hãng xe không được quá 30 ký tự'),
+        .min(1, 'Số VIN là bắt buộc')
+        .length(17, 'VIN phải có đúng 17 ký tự')
+        .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'VIN không hợp lệ (chỉ chứa chữ in hoa và số, không có I, O, Q)')
+        .transform(val => val.toUpperCase()),
+    model: z.string()
+        .min(1, 'Mẫu xe là bắt buộc')
+        .max(100, 'Mẫu xe không được quá 100 ký tự')
+        .refine((val) => {
+            const validModels = [
+                'VinFast Ludo',
+                'VinFast Impes',
+                'VinFast Klara S (2 pin)',
+                'VinFast Theon (2 pin)',
+                'VinFast Vento',
+                'VinFast Theon S',
+                'VinFast Vento S',
+                'VinFast Feliz S',
+                'VinFast Evo200',
+            ];
+            return validModels.includes(val);
+        }, {
+            message: 'Vui lòng chọn mẫu xe từ danh sách'
+        }),
+    license_plate: z.string()
+        .min(1, 'Biển số xe là bắt buộc')
+        .max(15, 'Biển số xe không được quá 15 ký tự')
+        .regex(
+            /^[0-9]{2}[A-Z]{1,2}-[0-9]{3,5}(\.[0-9]{2})?$/,
+            'Biển số xe không đúng định dạng (VD: 29A-12345, 30B-123.45)'
+        )
+        .transform(val => val.toUpperCase())
+        .refine((val) => {
+            // Kiểm tra mã tỉnh hợp lệ (11-99)
+            const provinceCode = parseInt(val.substring(0, 2));
+            return provinceCode >= 11 && provinceCode <= 99;
+        }, {
+            message: 'Mã tỉnh không hợp lệ (phải từ 11-99)'
+        })
+        .refine((val) => !val.includes('..'), {
+            message: 'Biển số xe không được chứa hai dấu chấm liên tiếp'
+        })
+        .refine((val) => {
+            // Không cho phép khoảng trắng
+            return !val.includes(' ');
+        }, {
+            message: 'Biển số xe không được chứa khoảng trắng'
+        }),
 });
 
 // Service package schemas

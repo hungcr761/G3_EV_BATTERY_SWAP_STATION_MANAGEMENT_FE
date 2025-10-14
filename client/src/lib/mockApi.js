@@ -21,6 +21,30 @@ const mockUsers = [
     }
 ];
 
+// Mock vehicles data
+const mockVehicles = [
+    {
+        vehicle_id: "vehicle-001",
+        account_id: "c9cd9cf5-333b-5d8a-c6e3-b958c7b95397",
+        vin: "1HGBH41JXMN109186",
+        model: "VinFast Theon",
+        license_plate: "29A-12345",
+        battery_soh: 92,
+        status: "active",
+        created_at: "2024-01-15T10:30:00Z"
+    },
+    {
+        vehicle_id: "vehicle-002",
+        account_id: "c9cd9cf5-333b-5d8a-c6e3-b958c7b95397",
+        vin: "5YJSA1E14HF123456",
+        model: "VinFast Evo200",
+        license_plate: "30B-98765",
+        battery_soh: 88,
+        status: "active",
+        created_at: "2024-02-20T14:20:00Z"
+    }
+];
+
 // Simulate network delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -250,8 +274,216 @@ export const mockApi = {
                 }
             }
         };
+    },
+
+    // Mock get user vehicles
+    async getUserVehicles() {
+        await delay(500);
+
+        // Lấy thông tin user từ storage
+        const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
+        if (!userInfoStr) {
+            return Promise.reject({
+                response: {
+                    status: 401,
+                    data: {
+                        message: "Người dùng không tồn tại"
+                    }
+                }
+            });
+        }
+
+        const currentUser = JSON.parse(userInfoStr);
+
+        // Lọc xe theo account_id
+        const userVehicles = mockVehicles.filter(v => v.account_id === currentUser.account_id);
+
+        return {
+            data: {
+                success: true,
+                payload: {
+                    vehicles: userVehicles
+                }
+            }
+        };
+    },
+
+    // Mock create vehicle
+    async createVehicle(vehicleData) {
+        await delay(700);
+
+        // Lấy thông tin user từ storage
+        const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
+        if (!userInfoStr) {
+            return Promise.reject({
+                response: {
+                    status: 401,
+                    data: {
+                        message: "Người dùng không tồn tại"
+                    }
+                }
+            });
+        }
+
+        const currentUser = JSON.parse(userInfoStr);
+
+        // Kiểm tra VIN đã tồn tại chưa
+        const existingVehicle = mockVehicles.find(v => v.vin === vehicleData.vin);
+        if (existingVehicle) {
+            return Promise.reject({
+                response: {
+                    status: 400,
+                    data: {
+                        message: "Số VIN đã tồn tại trong hệ thống"
+                    }
+                }
+            });
+        }
+
+        // Tạo xe mới
+        const newVehicle = {
+            vehicle_id: `vehicle-${Date.now()}`,
+            account_id: currentUser.account_id,
+            vin: vehicleData.vin,
+            model: vehicleData.model,
+            license_plate: vehicleData.license_plate || vehicleData.licensePlate,
+            battery_soh: 100, // Xe mới có SoH là 100%
+            status: "active",
+            created_at: new Date().toISOString()
+        };
+
+        mockVehicles.push(newVehicle);
+
+        return {
+            data: {
+                success: true,
+                message: "Thêm xe thành công",
+                payload: {
+                    vehicle: newVehicle
+                }
+            }
+        };
+    },
+
+    // Mock update vehicle
+    async updateVehicle(vehicleId, vehicleData) {
+        await delay(600);
+
+        // Lấy thông tin user từ storage
+        const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
+        if (!userInfoStr) {
+            return Promise.reject({
+                response: {
+                    status: 401,
+                    data: {
+                        message: "Người dùng không tồn tại"
+                    }
+                }
+            });
+        }
+
+        const currentUser = JSON.parse(userInfoStr);
+
+        // Tìm xe
+        const vehicleIndex = mockVehicles.findIndex(
+            v => v.vehicle_id === vehicleId && v.account_id === currentUser.account_id
+        );
+
+        if (vehicleIndex === -1) {
+            return Promise.reject({
+                response: {
+                    status: 404,
+                    data: {
+                        message: "Không tìm thấy xe"
+                    }
+                }
+            });
+        }
+
+        // Kiểm tra VIN mới có trùng với xe khác không
+        if (vehicleData.vin !== mockVehicles[vehicleIndex].vin) {
+            const existingVehicle = mockVehicles.find(
+                v => v.vin === vehicleData.vin && v.vehicle_id !== vehicleId
+            );
+            if (existingVehicle) {
+                return Promise.reject({
+                    response: {
+                        status: 400,
+                        data: {
+                            message: "Số VIN đã tồn tại trong hệ thống"
+                        }
+                    }
+                });
+            }
+        }
+
+        // Cập nhật xe
+        mockVehicles[vehicleIndex] = {
+            ...mockVehicles[vehicleIndex],
+            vin: vehicleData.vin,
+            model: vehicleData.model,
+            license_plate: vehicleData.license_plate || vehicleData.licensePlate,
+            updated_at: new Date().toISOString()
+        };
+
+        return {
+            data: {
+                success: true,
+                message: "Cập nhật xe thành công",
+                payload: {
+                    vehicle: mockVehicles[vehicleIndex]
+                }
+            }
+        };
+    },
+
+    // Mock delete vehicle
+    async deleteVehicle(vehicleId) {
+        await delay(500);
+
+        // Lấy thông tin user từ storage
+        const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
+        if (!userInfoStr) {
+            return Promise.reject({
+                response: {
+                    status: 401,
+                    data: {
+                        message: "Người dùng không tồn tại"
+                    }
+                }
+            });
+        }
+
+        const currentUser = JSON.parse(userInfoStr);
+
+        // Tìm xe
+        const vehicleIndex = mockVehicles.findIndex(
+            v => v.vehicle_id === vehicleId && v.account_id === currentUser.account_id
+        );
+
+        if (vehicleIndex === -1) {
+            return Promise.reject({
+                response: {
+                    status: 404,
+                    data: {
+                        message: "Không tìm thấy xe"
+                    }
+                }
+            });
+        }
+
+        // Xóa xe
+        mockVehicles.splice(vehicleIndex, 1);
+
+        return {
+            data: {
+                success: true,
+                message: "Xóa xe thành công"
+            }
+        };
     }
 };
 
 // Export mock users for testing
 export const getMockUsers = () => mockUsers.map(({ password, ...user }) => user);
+export const getMockVehicles = () => mockVehicles;
