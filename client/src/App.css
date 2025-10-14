@@ -32,30 +32,50 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    /* Soft dark theme với tông slate/gray thay vì đen thuần túy */
+    --background: 222 47% 11%;
+    /* Slate-900 nhẹ - #1a1f2e */
+    --foreground: 213 31% 91%;
+    /* Warm white - #e2e8f0 */
+    --card: 217 33% 17%;
+    /* Slate-800 - #283141 */
+    --card-foreground: 213 31% 91%;
+    /* Warm white */
+    --popover: 217 33% 17%;
+    /* Slate-800 */
+    --popover-foreground: 213 31% 91%;
+    /* Warm white */
+    --primary: 221.2 83.2% 53.3%;
+    /* Blue primary */
+    --primary-foreground: 210 40% 98%;
+    /* White */
+    --secondary: 215 25% 27%;
+    /* Slate-700 - #3e4a5f */
+    --secondary-foreground: 213 31% 91%;
+    /* Warm white */
+    --muted: 215 25% 27%;
+    /* Slate-700 */
+    --muted-foreground: 217 11% 65%;
+    /* Gray-400 - #94a3b8 */
+    --accent: 215 25% 27%;
+    /* Slate-700 */
+    --accent-foreground: 213 31% 91%;
+    /* Warm white */
+    --destructive: 0 84.2% 60.2%;
+    /* Red */
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
+    /* White */
+    --border: 215 20% 25%;
+    /* Subtle border - #3a4556 */
+    --input: 215 20% 25%;
+    /* Input border */
+    --ring: 221.2 83.2% 53.3%;
+    /* Blue ring */
+    --chart-1: 221 83% 60%;
+    --chart-2: 173 58% 50%;
+    --chart-3: 197 37% 35%;
+    --chart-4: 43 74% 70%;
+    --chart-5: 27 87% 70%
   }
 }
 

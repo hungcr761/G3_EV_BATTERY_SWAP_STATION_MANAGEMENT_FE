@@ -52,13 +52,13 @@ const Services = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-background py-8">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                    <h1 className="text-3xl font-bold text-foreground mb-4">
                         Gói dịch vụ đổi pin
                     </h1>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                    <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                         Chọn gói dịch vụ phù hợp với nhu cầu sử dụng của bạn.
                         Tất cả gói đều bao gồm bảo hiểm và hỗ trợ 24/7.
                     </p>
@@ -88,10 +88,10 @@ const Services = () => {
 
                             <CardContent className="space-y-6">
                                 <div className="text-center">
-                                    <div className="text-2xl font-bold text-gray-900 mb-2">
+                                    <div className="text-2xl font-bold text-foreground mb-2">
                                         {pkg.maxSwaps}
                                     </div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-muted-foreground">
                                         {typeof pkg.maxSwaps === 'number' ? 'lượt đổi pin/tháng' : 'lượt đổi pin'}
                                     </div>
                                 </div>
@@ -100,7 +100,7 @@ const Services = () => {
                                     {pkg.features.map((feature, featureIndex) => (
                                         <li key={featureIndex} className="flex items-center space-x-3">
                                             <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                                            <span className="text-gray-600">{feature}</span>
+                                            <span className="text-muted-foreground">{feature}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -122,25 +122,25 @@ const Services = () => {
                     <Card className="max-w-4xl mx-auto">
                         <CardContent className="p-8">
                             <div className="space-y-6">
-                                <h3 className="text-2xl font-bold text-gray-900">
+                                <h3 className="text-2xl font-bold text-foreground">
                                     Cách tính phí
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                                     <div className="space-y-2">
-                                        <h4 className="font-semibold text-gray-900">Phí gói hàng tháng</h4>
-                                        <p className="text-sm text-gray-600">
+                                        <h4 className="font-semibold text-foreground">Phí gói hàng tháng</h4>
+                                        <p className="text-sm text-muted-foreground">
                                             Thanh toán trước mỗi tháng theo gói đã chọn
                                         </p>
                                     </div>
                                     <div className="space-y-2">
-                                        <h4 className="font-semibold text-gray-900">Phí vượt quá</h4>
-                                        <p className="text-sm text-gray-600">
+                                        <h4 className="font-semibold text-foreground">Phí vượt quá</h4>
+                                        <p className="text-sm text-muted-foreground">
                                             Tính theo delta SoH, trừ free allowance 2%
                                         </p>
                                     </div>
                                     <div className="space-y-2">
-                                        <h4 className="font-semibold text-gray-900">Bảo hiểm</h4>
-                                        <p className="text-sm text-gray-600">
+                                        <h4 className="font-semibold text-foreground">Bảo hiểm</h4>
+                                        <p className="text-sm text-muted-foreground">
                                             Tất cả gói đều bao gồm bảo hiểm pin toàn diện
                                         </p>
                                     </div>

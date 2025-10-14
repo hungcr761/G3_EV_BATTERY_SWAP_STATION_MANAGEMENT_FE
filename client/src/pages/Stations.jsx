@@ -55,14 +55,14 @@ const Stations = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-background py-8">
             <div className="container mx-auto px-4">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-3xl font-bold text-foreground mb-2">
                         Tìm trạm đổi pin
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                         Tìm kiếm trạm đổi pin gần nhất với tình trạng pin sẵn có
                     </p>
                 </div>
@@ -73,7 +73,7 @@ const Stations = () => {
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="md:col-span-2">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Nhập địa chỉ hoặc tên trạm..."
                                         className="pl-10"
@@ -115,7 +115,7 @@ const Stations = () => {
                                                         <Badge variant="secondary">Hạn chế</Badge>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                                     <div className="flex items-center space-x-1">
                                                         <MapPin className="h-4 w-4" />
                                                         <span>{station.distance}</span>
@@ -129,7 +129,7 @@ const Stations = () => {
                                                         <span>{station.operatingHours}</span>
                                                     </div>
                                                 </div>
-                                                <p className="text-sm text-gray-600">{station.address}</p>
+                                                <p className="text-sm text-muted-foreground">{station.address}</p>
                                             </div>
                                         </div>
 
@@ -185,10 +185,10 @@ const Stations = () => {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+                                <div className="w-full h-96 bg-muted rounded-lg flex items-center justify-center">
                                     <div className="text-center">
-                                        <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                        <p className="text-gray-600">Google Maps sẽ được tích hợp ở đây</p>
+                                        <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                                        <p className="text-muted-foreground">Google Maps sẽ được tích hợp ở đây</p>
                                     </div>
                                 </div>
                             </CardContent>

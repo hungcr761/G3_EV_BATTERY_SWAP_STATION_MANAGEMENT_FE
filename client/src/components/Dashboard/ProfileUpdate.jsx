@@ -82,7 +82,7 @@ const ProfileUpdate = ({ onBack }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-background py-8">
             <div className="container mx-auto px-4 max-w-4xl">
                 {/* Header */}
                 <div className="mb-8">
@@ -94,10 +94,10 @@ const ProfileUpdate = ({ onBack }) => {
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Quay lại Dashboard
                     </Button>
-                    <h1 className="text-3xl font-bold text-gray-900">
+                    <h1 className="text-3xl font-bold text-foreground">
                         Cập nhật thông tin cá nhân
                     </h1>
-                    <p className="text-gray-600 mt-2">
+                    <p className="text-muted-foreground mt-2">
                         Quản lý thông tin tài khoản của bạn
                     </p>
                 </div>

@@ -64,7 +64,7 @@ const FeaturesSection = () => {
     ];
 
     return (
-        <section className="py-20 bg-white">
+        <section className="py-20 bg-background">
             <div className="container mx-auto px-4">
                 {/* Section Header */}
                 <div className="text-center mb-16">
@@ -72,11 +72,11 @@ const FeaturesSection = () => {
                         <Award className="mr-2 h-4 w-4" />
                         Tính năng nổi bật
                     </Badge>
-                    <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">
+                    <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
                         Tất cả những gì bạn cần cho
                         <span className="text-primary block">việc quản lý xe điện</span>
                     </h2>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                    <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                         Hệ thống quản lý trạm đổi pin được thiết kế đặc biệt cho tài xế xe điện,
                         mang đến trải nghiệm sử dụng tối ưu và tiện lợi nhất.
                     </p>
@@ -85,7 +85,7 @@ const FeaturesSection = () => {
                 {/* Features Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                     {driverFeatures.map((feature, index) => (
-                        <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50">
+                        <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-card to-muted/30">
                             <CardContent className="p-8">
                                 <div className="space-y-6">
                                     {/* Icon */}
@@ -97,17 +97,17 @@ const FeaturesSection = () => {
 
                                     {/* Content */}
                                     <div className="space-y-4">
-                                        <h3 className="text-xl font-semibold text-gray-900">
+                                        <h3 className="text-xl font-semibold text-foreground">
                                             {feature.title}
                                         </h3>
-                                        <p className="text-gray-600 leading-relaxed">
+                                        <p className="text-muted-foreground leading-relaxed">
                                             {feature.description}
                                         </p>
 
                                         {/* Feature List */}
                                         <ul className="space-y-2">
                                             {feature.features.map((item, itemIndex) => (
-                                                <li key={itemIndex} className="flex items-center text-sm text-gray-600">
+                                                <li key={itemIndex} className="flex items-center text-sm text-muted-foreground">
                                                     <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3" />
                                                     {item}
                                                 </li>
@@ -121,7 +121,7 @@ const FeaturesSection = () => {
                 </div>
 
                 {/* Stats Section */}
-                <div className="bg-gradient-to-r from-primary/5 via-white to-green-500/5 rounded-3xl p-8 lg:p-12">
+                <div className="bg-gradient-to-r from-primary/5 via-background to-green-500/5 dark:from-primary/10 dark:via-background dark:to-green-500/10 rounded-3xl p-8 lg:p-12">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
                         {stats.map((stat, index) => (
                             <div key={index} className="text-center">
@@ -130,10 +130,10 @@ const FeaturesSection = () => {
                                         {stat.icon}
                                     </div>
                                 </div>
-                                <div className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                                <div className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
                                     {stat.value}
                                 </div>
-                                <div className="text-gray-600 font-medium">
+                                <div className="text-muted-foreground font-medium">
                                     {stat.label}
                                 </div>
                             </div>
@@ -144,10 +144,10 @@ const FeaturesSection = () => {
                 {/* CTA Section */}
                 <div className="text-center mt-16">
                     <div className="space-y-6">
-                        <h3 className="text-2xl font-bold text-gray-900">
+                        <h3 className="text-2xl font-bold text-foreground">
                             Sẵn sàng trải nghiệm tương lai?
                         </h3>
-                        <p className="text-gray-600 max-w-2xl mx-auto">
+                        <p className="text-muted-foreground max-w-2xl mx-auto">
                             Tham gia cộng đồng tài xế xe điện thông minh và trải nghiệm
                             dịch vụ đổi pin tiện lợi nhất Việt Nam.
                         </p>

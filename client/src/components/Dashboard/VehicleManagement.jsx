@@ -178,7 +178,7 @@ const VehicleManagement = ({ onBack }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-background py-8">
             <div className="container mx-auto px-4 max-w-6xl">
                 {/* Header */}
                 <div className="mb-8">
@@ -192,10 +192,10 @@ const VehicleManagement = ({ onBack }) => {
                     </Button>
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">
+                            <h1 className="text-3xl font-bold text-foreground">
                                 Quản lý xe của tôi
                             </h1>
-                            <p className="text-gray-600 mt-2">
+                            <p className="text-muted-foreground mt-2">
                                 Quản lý danh sách xe điện của bạn
                             </p>
                         </div>
@@ -228,17 +228,17 @@ const VehicleManagement = ({ onBack }) => {
                     {loading ? (
                         <div className="col-span-full text-center py-12">
                             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-                            <p className="mt-4 text-gray-600">Đang tải...</p>
+                            <p className="mt-4 text-muted-foreground">Đang tải...</p>
                         </div>
                     ) : vehicles.length === 0 ? (
                         <div className="col-span-full">
                             <Card>
                                 <CardContent className="py-12 text-center">
-                                    <Car className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                    <Car className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">
                                         Chưa có xe nào
                                     </h3>
-                                    <p className="text-gray-600 mb-4">
+                                    <p className="text-muted-foreground mb-4">
                                         Thêm xe điện của bạn để bắt đầu sử dụng dịch vụ
                                     </p>
                                     <Button onClick={handleAddNew}>
@@ -271,13 +271,13 @@ const VehicleManagement = ({ onBack }) => {
                                 <CardContent>
                                     <div className="space-y-3">
                                         <div>
-                                            <p className="text-sm text-gray-600">VIN</p>
+                                            <p className="text-sm text-muted-foreground">VIN</p>
                                             <p className="font-mono text-sm">{vehicle.vin}</p>
                                         </div>
 
                                         {/* {vehicle.battery_soh && (
                                             <div>
-                                                <p className="text-sm text-gray-600">Tình trạng pin</p>
+                                                <p className="text-sm text-muted-foreground">Tình trạng pin</p>
                                                 <div className="flex items-center space-x-2">
                                                     <div className="flex-1 bg-gray-200 rounded-full h-2">
                                                         <div

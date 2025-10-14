@@ -1,11 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import Stations from './pages/Stations';
 import Booking from './pages/Booking';
 import Services from './pages/Services';
@@ -29,52 +32,68 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        {/* Public routes with layout */}
-        <Route path="/" element={
-          <Layout>
-            <Home />
-          </Layout>
-        } />
-        <Route path="/stations" element={
-          <Layout>
-            <Stations />
-          </Layout>
-        } />
-        <Route path="/booking" element={
-          <Layout>
-            <Booking />
-          </Layout>
-        } />
-        <Route path="/services" element={
-          <Layout>
-            <Services />
-          </Layout>
-        } />
-        <Route path="/support" element={
-          <Layout>
-            <Support />
-          </Layout>
-        } />
-
-        {/* Auth routes without layout */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        {/* Protected routes with layout */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
+          {/* Public routes with layout */}
+          <Route path="/" element={
             <Layout>
-              <Dashboard />
+              <Home />
             </Layout>
-          </ProtectedRoute>
-        } />
+          } />
+          <Route path="/stations" element={
+            <Layout>
+              <Stations />
+            </Layout>
+          } />
+          <Route path="/booking" element={
+            <Layout>
+              <Booking />
+            </Layout>
+          } />
+          <Route path="/services" element={
+            <Layout>
+              <Services />
+            </Layout>
+          } />
+          <Route path="/support" element={
+            <Layout>
+              <Support />
+            </Layout>
+          } />
 
-        {/* Redirect unknown routes to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AuthProvider>
+          {/* Auth routes without layout */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Protected routes with layout */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Layout>
+                <Dashboard />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Layout>
+                <Settings />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+          {/* Redirect unknown routes to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

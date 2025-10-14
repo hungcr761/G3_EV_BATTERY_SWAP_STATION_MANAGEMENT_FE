@@ -74,31 +74,25 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-background py-8">
             <div className="container mx-auto px-4">
                 {/* Header */}
                 <div className="mb-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <Avatar className="h-16 w-16">
-                                <AvatarImage src={user?.avatar} alt={user?.fullname} />
-                                <AvatarFallback className="text-lg">
-                                    {user?.fullname?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">
-                                    Chào mừng, {user?.fullname}!
-                                </h1>
-                                <p className="text-gray-600">
-                                    {user?.permission === 'driver' ? 'Tài xế xe điện' : 'Quản trị viên'} • {user?.email}
-                                </p>
-                            </div>
+                    <div className="flex items-center space-x-4">
+                        <Avatar className="h-16 w-16">
+                            <AvatarImage src={user?.avatar} alt={user?.fullname} />
+                            <AvatarFallback className="text-lg">
+                                {user?.fullname?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h1 className="text-2xl font-bold text-foreground">
+                                Chào mừng, {user?.fullname}!
+                            </h1>
+                            <p className="text-muted-foreground">
+                                {user?.permission === 'driver' ? 'Tài xế xe điện' : 'Quản trị viên'} • {user?.email}
+                            </p>
                         </div>
-                        <Button onClick={() => setShowProfileUpdate(true)}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            Cài đặt
-                        </Button>
                     </div>
                 </div>
 
@@ -108,8 +102,8 @@ const Dashboard = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Tổng lượt đổi pin</p>
-                                    <p className="text-2xl font-bold text-gray-900">{userStats.totalSwaps}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">Tổng lượt đổi pin</p>
+                                    <p className="text-2xl font-bold text-foreground">{userStats.totalSwaps}</p>
                                 </div>
                                 <Battery className="h-8 w-8 text-primary" />
                             </div>
@@ -120,8 +114,8 @@ const Dashboard = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Tháng này</p>
-                                    <p className="text-2xl font-bold text-gray-900">{userStats.thisMonthSwaps}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">Tháng này</p>
+                                    <p className="text-2xl font-bold text-foreground">{userStats.thisMonthSwaps}</p>
                                 </div>
                                 <TrendingUp className="h-8 w-8 text-green-500" />
                             </div>
@@ -132,8 +126,8 @@ const Dashboard = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">SoH hiện tại</p>
-                                    <p className="text-2xl font-bold text-gray-900">{userStats.currentBatterySoH}%</p>
+                                    <p className="text-sm font-medium text-muted-foreground">SoH hiện tại</p>
+                                    <p className="text-2xl font-bold text-foreground">{userStats.currentBatterySoH}%</p>
                                 </div>
                                 <Car className="h-8 w-8 text-blue-500" />
                             </div>
@@ -144,8 +138,8 @@ const Dashboard = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Chi phí tháng</p>
-                                    <p className="text-2xl font-bold text-gray-900">
+                                    <p className="text-sm font-medium text-muted-foreground">Chi phí tháng</p>
+                                    <p className="text-2xl font-bold text-foreground">
                                         {userStats.monthlyCost.toLocaleString()}đ
                                     </p>
                                 </div>
@@ -183,12 +177,12 @@ const Dashboard = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-medium">{swap.station}</p>
-                                                    <p className="text-sm text-gray-600">{swap.date}</p>
+                                                    <p className="text-sm text-muted-foreground">{swap.date}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
                                                 <Badge variant="secondary">{swap.batteryType}</Badge>
-                                                <p className="text-sm text-gray-600 mt-1">
+                                                <p className="text-sm text-muted-foreground mt-1">
                                                     {swap.cost.toLocaleString()}đ
                                                 </p>
                                                 <p className="text-xs text-red-600">
@@ -222,7 +216,7 @@ const Dashboard = () => {
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="font-medium text-sm">{booking.station}</p>
-                                                    <p className="text-xs text-gray-600">{booking.date} lúc {booking.time}</p>
+                                                    <p className="text-xs text-muted-foreground">{booking.date} lúc {booking.time}</p>
                                                 </div>
                                                 <Badge variant="outline">{booking.batteryType}</Badge>
                                             </div>

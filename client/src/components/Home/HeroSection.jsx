@@ -46,9 +46,9 @@ const HeroSection = () => {
     ];
 
     return (
-        <section className="relative bg-gradient-to-br from-blue-50 via-white to-green-50 overflow-hidden">
+        <section className="relative bg-gradient-to-br from-blue-50 via-background to-green-50 dark:from-blue-950/20 dark:via-background dark:to-green-950/20 overflow-hidden">
             {/* Background Pattern */}
-            <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
+            <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-800 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.05))] -z-10" />
 
             <div className="container mx-auto px-4 py-20">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -62,12 +62,12 @@ const HeroSection = () => {
                                 </span>
                             </div>
 
-                            <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                            <h1 className="text-4xl lg:text-6xl font-bold text-foreground leading-tight">
                                 Đổi pin xe điện
                                 <span className="text-primary block">nhanh chóng & tiện lợi</span>
                             </h1>
 
-                            <p className="text-xl text-gray-600 leading-relaxed">
+                            <p className="text-xl text-muted-foreground leading-relaxed">
                                 Hệ thống quản lý trạm đổi pin xe máy điện hàng đầu Việt Nam.
                                 Giải pháp hoàn hảo cho nhu cầu di chuyển xanh và bền vững.
                             </p>
@@ -97,7 +97,7 @@ const HeroSection = () => {
                                     <div className="text-2xl lg:text-3xl font-bold text-primary">
                                         {stat.number}
                                     </div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-muted-foreground">
                                         {stat.label}
                                     </div>
                                 </div>
@@ -108,7 +108,7 @@ const HeroSection = () => {
                     {/* Right Content - Hero Image/Cards */}
                     <div className="relative">
                         {/* Main Card */}
-                        <Card className="relative z-10 shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+                        <Card className="relative z-10 shadow-2xl border-0 bg-card/80 backdrop-blur-sm">
                             <CardContent className="p-8">
                                 <div className="space-y-6">
                                     <div className="flex items-center justify-between">
@@ -118,7 +118,7 @@ const HeroSection = () => {
                                             </div>
                                             <div>
                                                 <h3 className="font-semibold">Trạm ABC - Quận 1</h3>
-                                                <p className="text-sm text-gray-600">Cách bạn 2.3 km</p>
+                                                <p className="text-sm text-muted-foreground">Cách bạn 2.3 km</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -126,7 +126,7 @@ const HeroSection = () => {
                                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                                                 <span className="font-semibold">4.8</span>
                                             </div>
-                                            <p className="text-sm text-gray-600">(127 đánh giá)</p>
+                                            <p className="text-sm text-muted-foreground">(127 đánh giá)</p>
                                         </div>
                                     </div>
 
@@ -169,13 +169,13 @@ const HeroSection = () => {
                 {/* Features Grid */}
                 <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {features.map((feature, index) => (
-                        <Card key={index} className="text-center hover:shadow-lg transition-shadow border-0 bg-white/60 backdrop-blur-sm">
+                        <Card key={index} className="text-center hover:shadow-lg transition-shadow border-0 bg-card/60 backdrop-blur-sm">
                             <CardContent className="p-6">
                                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                                     {feature.icon}
                                 </div>
                                 <h3 className="font-semibold mb-2">{feature.title}</h3>
-                                <p className="text-sm text-gray-600">{feature.description}</p>
+                                <p className="text-sm text-muted-foreground">{feature.description}</p>
                             </CardContent>
                         </Card>
                     ))}

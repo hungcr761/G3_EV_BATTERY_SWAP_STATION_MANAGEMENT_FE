@@ -106,15 +106,15 @@ const HowItWorksSection = () => {
     ];
 
     return (
-        <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
+        <section className="py-20 bg-gradient-to-br from-muted/30 to-blue-50 dark:from-muted/10 dark:to-blue-950/10">
             <div className="container mx-auto px-4">
                 {/* Section Header */}
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">
+                    <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
                         Cách thức hoạt động
                         <span className="text-primary block">đơn giản & hiệu quả</span>
                     </h2>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                    <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                         Chỉ với 5 bước đơn giản, bạn có thể bắt đầu sử dụng dịch vụ đổi pin
                         và trải nghiệm tương lai di chuyển xanh.
                     </p>
@@ -126,7 +126,7 @@ const HowItWorksSection = () => {
                         <div key={index} className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                             {/* Content */}
                             <div className={`order-2 ${index % 2 === 1 ? 'lg:order-1' : 'lg:order-2'}`}>
-                                <Card className="h-full border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                                <Card className="h-full border-0 shadow-xl bg-card/80 backdrop-blur-sm">
                                     <CardContent className="p-8">
                                         <div className="space-y-6">
                                             {/* Step Number & Icon */}
@@ -143,10 +143,10 @@ const HowItWorksSection = () => {
 
                                             {/* Title & Description */}
                                             <div className="space-y-4">
-                                                <h3 className="text-2xl font-bold text-gray-900">
+                                                <h3 className="text-2xl font-bold text-foreground">
                                                     {step.title}
                                                 </h3>
-                                                <p className="text-gray-600 text-lg leading-relaxed">
+                                                <p className="text-muted-foreground text-lg leading-relaxed">
                                                     {step.description}
                                                 </p>
                                             </div>
@@ -156,7 +156,7 @@ const HowItWorksSection = () => {
                                                 {step.details.map((detail, detailIndex) => (
                                                     <li key={detailIndex} className="flex items-center space-x-3">
                                                         <div className="w-2 h-2 bg-primary rounded-full" />
-                                                        <span className="text-gray-600">{detail}</span>
+                                                        <span className="text-muted-foreground">{detail}</span>
                                                     </li>
                                                 ))}
                                             </ul>
@@ -187,8 +187,8 @@ const HowItWorksSection = () => {
                                     </div>
 
                                     {/* Floating Elements */}
-                                    <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/20 rounded-full blur-xl" />
-                                    <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-white/10 rounded-full blur-xl" />
+                                    <div className="absolute -top-4 -right-4 w-24 h-24 bg-background/20 rounded-full blur-xl" />
+                                    <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-background/10 rounded-full blur-xl" />
                                 </div>
                             </div>
                         </div>
@@ -196,12 +196,12 @@ const HowItWorksSection = () => {
                 </div>
 
                 {/* Benefits Section */}
-                <div className="bg-white rounded-3xl p-8 lg:p-12 shadow-xl">
+                <div className="bg-card rounded-3xl p-8 lg:p-12 shadow-xl">
                     <div className="text-center mb-12">
-                        <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
+                        <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
                             Lợi ích khi sử dụng EVSwap
                         </h3>
-                        <p className="text-gray-600 max-w-2xl mx-auto">
+                        <p className="text-muted-foreground max-w-2xl mx-auto">
                             Không chỉ đơn giản là đổi pin, EVSwap mang đến cho bạn
                             một trải nghiệm di chuyển hoàn toàn mới.
                         </p>
@@ -217,10 +217,10 @@ const HowItWorksSection = () => {
                                                 {benefit.icon}
                                             </div>
                                         </div>
-                                        <h4 className="font-semibold text-gray-900">
+                                        <h4 className="font-semibold text-foreground">
                                             {benefit.title}
                                         </h4>
-                                        <p className="text-sm text-gray-600">
+                                        <p className="text-sm text-muted-foreground">
                                             {benefit.description}
                                         </p>
                                     </div>

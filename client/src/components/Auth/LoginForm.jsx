@@ -48,7 +48,7 @@ const LoginForm = () => {
     };
 
     return (
-        <div className="min-h-[calc(100vh-4rem)]  flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-[calc(100vh-4rem)]  flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <Card>
                     <CardHeader className="text-center">
@@ -154,12 +154,12 @@ const LoginForm = () => {
                                     <div className="w-full border-t border-gray-300" />
                                 </div>
                                 <div className="relative flex justify-center text-sm">
-                                    <span className="px-2 bg-white text-gray-500">Hoặc</span>
+                                    <span className="px-2 bg-background text-muted-foreground">Hoặc</span>
                                 </div>
                             </div>
 
                             <div className="mt-6 text-center">
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-muted-foreground">
                                     Chưa có tài khoản?{' '}
                                     <Link
                                         to="/register"

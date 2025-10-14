@@ -55,16 +55,16 @@ const RegisterForm = () => {
 
     if (success) {
         return (
-            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-md w-full">
                     <Card>
                         <CardContent className="pt-6">
                             <div className="text-center">
                                 <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                <h3 className="text-lg font-medium text-foreground mb-2">
                                     Đăng ký thành công!
                                 </h3>
-                                <p className="text-sm text-gray-600 mb-4">
+                                <p className="text-sm text-muted-foreground mb-4">
                                     Tài khoản của bạn đã được tạo thành công.
                                     Bạn sẽ được chuyển đến trang đăng nhập.
                                 </p>
@@ -82,7 +82,7 @@ const RegisterForm = () => {
     }
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <Card>
                     <CardHeader className="text-center">
@@ -247,7 +247,7 @@ const RegisterForm = () => {
                         </form>
 
                         <div className="mt-6 text-center">
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                                 Đã có tài khoản?{' '}
                                 <Link
                                     to="/login"
