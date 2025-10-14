@@ -21,9 +21,9 @@ export const AuthProvider = ({ children }) => {
             // Try to verify token with backend (optional verification)
             authAPI.getProfile()
                 .then(response => {
-                    // Handle different response formats (mock API vs real API)
+                    // Handle response format: payload.account
                     const data = response?.data || {};
-                    const profile = data.user || data.payload?.account || data.payload?.user;
+                    const profile = data.payload?.account;
                     if (profile) {
                         setUser(profile);
                     } else {
@@ -51,10 +51,10 @@ export const AuthProvider = ({ children }) => {
             const { rememberMe, ...loginData } = credentials;
             const response = await authAPI.login(loginData);
 
-            // Handle different response formats (mock API vs real API)
+            // Handle response format: payload.token and payload.account
             const data = response?.data || {};
-            const token = data.token || data.payload?.token;
-            const account = data.user || data.payload?.account || data.payload?.user;
+            const token = data.payload?.token;
+            const account = data.payload?.account;
 
             if (!token) {
                 throw new Error('Invalid login response - no token received');
@@ -63,7 +63,15 @@ export const AuthProvider = ({ children }) => {
             // Lưu token vào localStorage hoặc sessionStorage tùy theo rememberMe
             setAuthToken(token, rememberMe);
 
-            // Set user data - use account if available, otherwise create basic user object
+            // Lưu thông tin user để mock API có thể sử dụng
+            const userInfo = JSON.stringify(account);
+            if (rememberMe) {
+                localStorage.setItem("currentUser", userInfo);
+            } else {
+                sessionStorage.setItem("currentUser", userInfo);
+            }
+
+            // Set user data
             const userData = account || { token: token };
             setUser(userData);
             setIsAuthenticated(true);
@@ -81,8 +89,27 @@ export const AuthProvider = ({ children }) => {
         setAuthToken(null);
         setUser(null);
         setIsAuthenticated(false);
+        // Xóa thông tin user
+        localStorage.removeItem("currentUser");
+        sessionStorage.removeItem("currentUser");
         // Optionally call logout API
         authAPI.logout().catch(() => { });
+    };
+
+    const updateUser = (updatedUserData) => {
+        const newUserData = {
+            ...user,
+            ...updatedUserData
+        };
+        setUser(newUserData);
+
+        // Cập nhật lại storage
+        const userInfo = JSON.stringify(newUserData);
+        if (localStorage.getItem("currentUser")) {
+            localStorage.setItem("currentUser", userInfo);
+        } else if (sessionStorage.getItem("currentUser")) {
+            sessionStorage.setItem("currentUser", userInfo);
+        }
     };
 
     const value = {
@@ -91,6 +118,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         login,
         logout,
+        updateUser,
     };
 
     return (

@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { useAuth } from '../hooks/useAuth'
+import ProfileUpdate from '../components/Dashboard/ProfileUpdate';
 import {
     Battery,
     Car,
@@ -20,6 +21,7 @@ import {
 const Dashboard = () => {
     const { user } = useAuth();
     const [showMockTest, setShowMockTest] = useState(false);
+    const [showProfileUpdate, setShowProfileUpdate] = useState(false);
 
     // Mock data - in real app, this would come from API
     const userStats = {
@@ -59,6 +61,11 @@ const Dashboard = () => {
         }
     ];
 
+    // If showing profile update, render that component
+    if (showProfileUpdate) {
+        return <ProfileUpdate onBack={() => setShowProfileUpdate(false)} />;
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="container mx-auto px-4">
@@ -69,7 +76,7 @@ const Dashboard = () => {
                             <Avatar className="h-16 w-16">
                                 <AvatarImage src={user?.avatar} alt={user?.fullname} />
                                 <AvatarFallback className="text-lg">
-                                    {user?.fullname?.charAt(0) || 'U'}
+                                    {user?.fullname?.charAt(0) || user?.username?.charAt(0) || 'U'}
                                 </AvatarFallback>
                             </Avatar>
                             <div>
@@ -77,11 +84,11 @@ const Dashboard = () => {
                                     Chào mừng, {user?.fullname}!
                                 </h1>
                                 <p className="text-gray-600">
-                                    Tài xế xe điện • Thành viên từ {new Date().getFullYear()}
+                                    {user?.permission === 'driver' ? 'Tài xế xe điện' : 'Quản trị viên'} • {user?.email}
                                 </p>
                             </div>
                         </div>
-                        <Button>
+                        <Button onClick={() => setShowProfileUpdate(true)}>
                             <Settings className="mr-2 h-4 w-4" />
                             Cài đặt
                         </Button>

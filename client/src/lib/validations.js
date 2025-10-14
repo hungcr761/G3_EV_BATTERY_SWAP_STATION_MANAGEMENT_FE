@@ -54,8 +54,8 @@ export const registerSchema = z.object({
         }, {
             message: 'Phần trước @ không được quá 64 ký tự'
         }),
-    phone: z.string()
-        .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số')
+    phone_number: z.string()
+    // .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số')
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Mật khẩu xác nhận không khớp',
     path: ['confirmPassword'],

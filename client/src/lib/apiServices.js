@@ -33,6 +33,8 @@ export const userAPI = {
     create: (data) => api.post('/api/users', data),
     update: (id, data) => api.put(`/api/users/${id}`, data),
     delete: (id) => api.delete(`/api/users/${id}`),
+    updateProfile: (data) =>
+        USE_MOCK_API ? mockApi.updateProfile(data) : api.put('/users/profile', data),
 };
 
 

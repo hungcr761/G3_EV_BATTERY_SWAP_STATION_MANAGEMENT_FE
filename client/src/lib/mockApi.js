@@ -1,17 +1,23 @@
 const mockUsers = [
     {
-        id: 1,
+        account_id: "babc8bf4-222a-4c79-b5d2-a847b6a94296",
+        username: "admin",
         email: "admin@example.com",
         password: "admin1234",
-        role: "admin",
-        phone: "0123456789"
+        fullname: "Quản trị viên",
+        phone_number: "0123456789",
+        permission: "admin",
+        status: "active"
     },
     {
-        id: 2,
+        account_id: "c9cd9cf5-333b-5d8a-c6e3-b958c7b95397",
+        username: "tynguyen",
         email: "user@example.com",
         password: "user1234",
-        role: "user",
-        phone: "0987654321"
+        fullname: "Nguyễn Văn A",
+        phone_number: "0987654321",
+        permission: "driver",
+        status: "active"
     }
 ];
 
@@ -40,19 +46,19 @@ export const mockApi = {
             });
         }
 
-        // Generate mock token
-        const token = `mock_token_${user.id}_${Date.now()}`;
+        // Generate mock token (không chứa user info)
+        const token = `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
         // Return user data without password
-        const { password: _, ...userWithoutPassword } = user;
+        const { password: _, ...account } = user;
 
         return {
             data: {
                 success: true,
-                message: "Đăng nhập thành công",
-                token,
-                user: userWithoutPassword,
-                refreshToken: `mock_refresh_${user.id}_${Date.now()}`
+                payload: {
+                    token,
+                    account
+                }
             }
         };
     },
@@ -61,7 +67,7 @@ export const mockApi = {
     async register(userData) {
         await delay(1000); // Simulate network delay
 
-        const { email, password, name, phone } = userData;
+        const { email, password, fullname, phone } = userData;
 
         // Check if email already exists
         const existingUser = mockUsers.find(u => u.email === email);
@@ -78,30 +84,32 @@ export const mockApi = {
 
         // Create new user
         const newUser = {
-            id: mockUsers.length + 1,
+            account_id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            username: email.split('@')[0],
             email,
             password, // In real app, this would be hashed
-            name,
-            phone,
-            role: "user" // Default role
+            fullname,
+            phone_number: phone,
+            permission: "driver",
+            status: "active"
         };
 
         // Add to mock database
         mockUsers.push(newUser);
 
         // Generate mock token
-        const token = `mock_token_${newUser.id}_${Date.now()}`;
+        const token = `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
         // Return user data without password
-        const { password: _, ...userWithoutPassword } = newUser;
+        const { password: _, ...account } = newUser;
 
         return {
             data: {
                 success: true,
-                message: "Đăng ký thành công",
-                token,
-                user: userWithoutPassword,
-                refreshToken: `mock_refresh_${newUser.id}_${Date.now()}`
+                payload: {
+                    token,
+                    account
+                }
             }
         };
     },
@@ -110,6 +118,10 @@ export const mockApi = {
     // Mock logout
     async logout() {
         await delay(300);
+
+        // Xóa thông tin user khi logout
+        localStorage.removeItem("currentUser");
+        sessionStorage.removeItem("currentUser");
 
         return {
             data: {
@@ -136,11 +148,9 @@ export const mockApi = {
             });
         }
 
-        // Extract user ID from token
-        const userId = token.split('_')[2];
-        const user = mockUsers.find(u => u.id == userId);
-
-        if (!user) {
+        // Lấy thông tin user từ storage
+        const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
+        if (!userInfoStr) {
             return Promise.reject({
                 response: {
                     status: 401,
@@ -151,12 +161,93 @@ export const mockApi = {
             });
         }
 
-        const { password: _, ...userWithoutPassword } = user;
+        const account = JSON.parse(userInfoStr);
 
         return {
             data: {
                 success: true,
-                user: userWithoutPassword
+                payload: {
+                    account
+                }
+            }
+        };
+    },
+
+    // Mock update profile
+    async updateProfile(profileData) {
+        await delay(600);
+
+        // Check both localStorage and sessionStorage for token
+        const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+        if (!token) {
+            return Promise.reject({
+                response: {
+                    status: 401,
+                    data: {
+                        message: "Token không hợp lệ"
+                    }
+                }
+            });
+        }
+
+        // Lấy thông tin user từ storage
+        const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
+        if (!userInfoStr) {
+            return Promise.reject({
+                response: {
+                    status: 401,
+                    data: {
+                        message: "Người dùng không tồn tại"
+                    }
+                }
+            });
+        }
+
+        const currentUser = JSON.parse(userInfoStr);
+
+        // Tìm user trong mock database
+        const userIndex = mockUsers.findIndex(u => u.account_id === currentUser.account_id);
+
+        if (userIndex === -1) {
+            return Promise.reject({
+                response: {
+                    status: 401,
+                    data: {
+                        message: "Người dùng không tồn tại"
+                    }
+                }
+            });
+        }
+
+        // Map field names từ frontend sang backend format
+        const updatedData = {
+            fullname: profileData.fullname,
+            phone_number: profileData.phone || profileData.phone_number,
+        };
+
+        // Update user data in mock database
+        mockUsers[userIndex] = {
+            ...mockUsers[userIndex],
+            ...updatedData,
+            // Ensure email cannot be changed
+            email: mockUsers[userIndex].email
+        };
+
+        const { password: _, ...account } = mockUsers[userIndex];
+
+        // Cập nhật lại storage
+        if (localStorage.getItem("currentUser")) {
+            localStorage.setItem("currentUser", JSON.stringify(account));
+        } else if (sessionStorage.getItem("currentUser")) {
+            sessionStorage.setItem("currentUser", JSON.stringify(account));
+        }
+
+        return {
+            data: {
+                success: true,
+                payload: {
+                    account
+                }
             }
         };
     }

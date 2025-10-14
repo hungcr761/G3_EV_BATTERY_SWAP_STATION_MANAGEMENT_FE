@@ -143,16 +143,16 @@ const RegisterForm = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="phone">Số điện thoại *</Label>
+                                <Label htmlFor="phone_number">Số điện thoại *</Label>
                                 <Input
-                                    id="phone"
+                                    id="phone_number"
                                     type="tel"
                                     placeholder="0123456789"
-                                    {...register('phone')}
-                                    className={errors.phone ? 'border-red-500' : ''}
+                                    {...register('phone_number')}
+                                    className={errors.phone_number ? 'border-red-500' : ''}
                                 />
-                                {errors.phone && (
-                                    <p className="text-sm text-red-600">{errors.phone.message}</p>
+                                {errors.phone_number && (
+                                    <p className="text-sm text-red-600">{errors.phone_number.message}</p>
                                 )}
                             </div>
 
