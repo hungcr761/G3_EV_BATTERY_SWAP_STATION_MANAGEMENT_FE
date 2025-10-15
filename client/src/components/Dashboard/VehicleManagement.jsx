@@ -39,8 +39,8 @@ import {
 const VEHICLE_MODELS = [
     'VinFast Ludo',
     'VinFast Impes',
-    'VinFast Klara S (2 pin)',
-    'VinFast Theon (2 pin)',
+    'VinFast Klara S',
+    'VinFast Theon',
     'VinFast Vento',
     'VinFast Theon S',
     'VinFast Vento S',

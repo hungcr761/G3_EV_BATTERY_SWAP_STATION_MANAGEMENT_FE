@@ -31,9 +31,6 @@ export const resetPasswordSchema = z.object({
 });
 
 export const registerSchema = z.object({
-    username: z.string()
-        .min(4, 'Tên đăng nhập phải có ít nhất 4 ký tự')
-        .max(50, 'Tên đăng nhập không được quá 50 ký tự'),
     password: z.string()
         .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
         .max(50, 'Mật khẩu không được quá 50 ký tự'),
@@ -76,8 +73,8 @@ export const vehicleSchema = z.object({
             const validModels = [
                 'VinFast Ludo',
                 'VinFast Impes',
-                'VinFast Klara S (2 pin)',
-                'VinFast Theon (2 pin)',
+                'VinFast Klara S',
+                'VinFast Theon',
                 'VinFast Vento',
                 'VinFast Theon S',
                 'VinFast Vento S',

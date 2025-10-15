@@ -40,7 +40,7 @@ const RegisterForm = () => {
             const { confirmPassword, ...userData } = data;
 
             const response = await authAPI.register(userData);
-            if (response.data.success) {
+            if (response.data.account) {
                 setSuccess(true);
                 setTimeout(() => {
                     navigate('/login');
@@ -99,20 +99,6 @@ const RegisterForm = () => {
                                     <span className="text-sm text-red-700">{error}</span>
                                 </div>
                             )}
-
-                            <div className="space-y-2">
-                                <Label htmlFor="username">Username *</Label>
-                                <Input
-                                    id="username"
-                                    type="text"
-                                    placeholder="Nhập tên đăng nhập"
-                                    {...register('username')}
-                                    className={errors.username ? 'border-red-500' : ''}
-                                />
-                                {errors.username && (
-                                    <p className="text-sm text-red-600">{errors.username.message}</p>
-                                )}
-                            </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="fullname">Họ và tên *</Label>
