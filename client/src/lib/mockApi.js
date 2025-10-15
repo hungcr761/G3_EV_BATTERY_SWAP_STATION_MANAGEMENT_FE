@@ -481,6 +481,89 @@ export const mockApi = {
                 message: "Xóa xe thành công"
             }
         };
+    },
+
+    // Mock forgot password
+    async forgotPassword(emailData) {
+        await delay(1000); // Simulate network delay
+
+        const { email } = emailData;
+
+        // Check if user exists
+        const user = mockUsers.find(u => u.email === email);
+
+        if (!user) {
+            return Promise.reject({
+                response: {
+                    status: 404,
+                    data: {
+                        message: "Email không tồn tại trong hệ thống"
+                    }
+                }
+            });
+        }
+
+        // Generate mock reset token (giống format backend)
+        const resetToken = `${Math.random().toString(36).substr(2, 9)}${Date.now().toString(36)}`;
+
+        // Backend sẽ gửi email với link này cho user
+        const magicLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+
+        // Log magic link to console (trong production, backend sẽ gửi qua email)
+        console.log('=== MAGIC LINK FOR PASSWORD RESET ===');
+        console.log(`Email: ${email}`);
+        console.log(`Magic Link: ${magicLink}`);
+        console.log(`Reset Token: ${resetToken}`);
+        console.log('=====================================');
+
+        // Response giống backend thật (code 200)
+        return {
+            status: 200,
+            data: {
+                message: "Reset email sent if email exists",
+                resetToken: resetToken
+            }
+        };
+    },
+
+    // Mock reset password
+    async resetPassword(resetData) {
+        await delay(1000); // Simulate network delay
+
+        const { token, newPassword } = resetData;
+
+        // Validate token (trong mock, chúng ta chỉ kiểm tra token có tồn tại)
+        if (!token || token.length < 10) {
+            return Promise.reject({
+                response: {
+                    status: 400,
+                    data: {
+                        message: "Token không hợp lệ hoặc đã hết hạn"
+                    }
+                }
+            });
+        }
+
+        // Trong production, backend sẽ verify token và tìm user tương ứng
+        // Ở đây chúng ta giả sử token hợp lệ và cập nhật password cho user đầu tiên
+        const userIndex = 0; // Mock: giả sử reset password cho user đầu tiên
+
+        if (mockUsers[userIndex]) {
+            mockUsers[userIndex].password = newPassword;
+
+            console.log('=== PASSWORD RESET SUCCESSFUL ===');
+            console.log(`Token: ${token}`);
+            console.log(`New Password: ${newPassword} (đã được hash trong production)`);
+            console.log('=================================');
+        }
+
+        // Response giống backend thật (code 200)
+        return {
+            status: 200,
+            data: {
+                message: "Mật khẩu đã được đặt lại thành công"
+            }
+        };
     }
 };
 

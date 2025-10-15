@@ -11,6 +11,25 @@ export const loginSchema = z.object({
     password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
 });
 
+export const forgotPasswordSchema = z.object({
+    email: z.string()
+        .min(1, 'Email là bắt buộc')
+        .email('Email không hợp lệ')
+        .max(100, 'Email không được quá 100 ký tự')
+        .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            'Email không đúng định dạng'),
+});
+
+export const resetPasswordSchema = z.object({
+    newPassword: z.string()
+        .min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự')
+        .max(50, 'Mật khẩu mới không được quá 50 ký tự'),
+    confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+});
+
 export const registerSchema = z.object({
     username: z.string()
         .min(4, 'Tên đăng nhập phải có ít nhất 4 ký tự')
@@ -173,6 +192,8 @@ export const bookingSchema = z.object({
 export default {
     loginSchema,
     registerSchema,
+    forgotPasswordSchema,
+    resetPasswordSchema,
     vehicleSchema,
     servicePackageSchema,
     profileUpdateSchema,

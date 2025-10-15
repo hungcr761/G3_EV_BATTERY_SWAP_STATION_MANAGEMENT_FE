@@ -15,6 +15,10 @@ export const authAPI = {
         USE_MOCK_API ? mockApi.logout() : api.post('/user/logout'),
     getProfile: () =>
         USE_MOCK_API ? mockApi.getProfile() : api.get('/users/profile'),
+    forgotPassword: (email) =>
+        USE_MOCK_API ? mockApi.forgotPassword(email) : api.post('/user/forgot-password', email),
+    resetPassword: (data) =>
+        USE_MOCK_API ? mockApi.resetPassword(data) : api.post('/user/reset-password', data),
 };
 
 // EV APIs
