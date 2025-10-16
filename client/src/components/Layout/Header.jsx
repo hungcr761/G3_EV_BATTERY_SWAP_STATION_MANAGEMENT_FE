@@ -40,7 +40,6 @@ const Header = () => {
 
     const navigationItems = [
         { label: 'Tìm trạm', href: '/stations' },
-        { label: 'Đặt lịch', href: '/booking' },
         { label: 'Dịch vụ', href: '/services' },
         { label: 'Hỗ trợ', href: '/support' },
     ];

@@ -6,16 +6,20 @@ import { Label } from '../ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth } from '../../hooks/useAuth';
 import { userAPI } from '../../lib/apiServices';
-import { ArrowLeft, Save, User, Mail, Phone, Camera, AlertCircle, CheckCircle } from 'lucide-react';
+import { profileUpdateSchema } from '../../lib/validations';
+import { ArrowLeft, Save, User, Mail, Phone, Camera, AlertCircle, CheckCircle, CreditCard, Car } from 'lucide-react';
 
 const ProfileUpdate = ({ onBack }) => {
     const { user, updateUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [errors, setErrors] = useState({});
     const [formData, setFormData] = useState({
         fullname: user?.fullname || '',
         email: user?.email || '',
-        phone: user?.phone_number || user?.phone || ''
+        phone: user?.phone_number || user?.phone || '',
+        citizen_id: user?.citizen_id || '',
+        driving_license: user?.driving_license || ''
     });
 
     const handleChange = (e) => {
@@ -24,9 +28,15 @@ const ProfileUpdate = ({ onBack }) => {
             ...prev,
             [name]: value
         }));
-        // Clear message when user starts typing
+        // Clear message and errors when user starts typing
         if (message.text) {
             setMessage({ type: '', text: '' });
+        }
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
         }
     };
 
@@ -34,13 +44,26 @@ const ProfileUpdate = ({ onBack }) => {
         e.preventDefault();
         setLoading(true);
         setMessage({ type: '', text: '' });
+        setErrors({});
 
         try {
-            const response = await userAPI.updateProfile(formData);
+            // Check if user has account_id
+            if (!user?.account_id) {
+                setMessage({
+                    type: 'error',
+                    text: 'Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại.'
+                });
+                return;
+            }
 
-            if (response.data.success) {
-                // Update user in AuthContext - response format: payload.account
-                const updatedAccount = response.data.payload?.account;
+            // Validate form data
+            const validatedData = profileUpdateSchema.parse(formData);
+
+            const response = await userAPI.updateProfile(user.account_id, validatedData);
+
+            if (response.data.success || response.data.account) {
+                // Update user in AuthContext - response format: account hoặc payload.account
+                const updatedAccount = response.data.account || response.data.payload?.account;
                 if (updateUser && updatedAccount) {
                     updateUser(updatedAccount);
                 }
@@ -56,10 +79,23 @@ const ProfileUpdate = ({ onBack }) => {
                 }, 3000);
             }
         } catch (error) {
-            setMessage({
-                type: 'error',
-                text: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin'
-            });
+            if (error.name === 'ZodError') {
+                // Handle validation errors
+                const fieldErrors = {};
+                error.errors.forEach((err) => {
+                    fieldErrors[err.path[0]] = err.message;
+                });
+                setErrors(fieldErrors);
+                setMessage({
+                    type: 'error',
+                    text: 'Vui lòng kiểm tra lại thông tin nhập vào'
+                });
+            } else {
+                setMessage({
+                    type: 'error',
+                    text: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin'
+                });
+            }
         } finally {
             setLoading(false);
         }
@@ -146,10 +182,13 @@ const ProfileUpdate = ({ onBack }) => {
                                                 value={formData.fullname}
                                                 onChange={handleChange}
                                                 placeholder="Nhập họ và tên"
-                                                className="pl-10"
+                                                className={`pl-10 ${errors.fullname ? 'border-red-500' : ''}`}
                                                 required
                                             />
                                         </div>
+                                        {errors.fullname && (
+                                            <p className="text-sm text-red-600">{errors.fullname}</p>
+                                        )}
                                     </div>
 
                                     {/* Email */}
@@ -190,9 +229,60 @@ const ProfileUpdate = ({ onBack }) => {
                                                 value={formData.phone}
                                                 onChange={handleChange}
                                                 placeholder="0123456789"
-                                                className="pl-10"
+                                                className={`pl-10 ${errors.phone ? 'border-red-500' : ''}`}
                                             />
                                         </div>
+                                        {errors.phone && (
+                                            <p className="text-sm text-red-600">{errors.phone}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Citizen ID */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="citizen_id">
+                                            Căn cước công dân <span className="text-red-500">*</span>
+                                        </Label>
+                                        <div className="relative">
+                                            <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input
+                                                id="citizen_id"
+                                                name="citizen_id"
+                                                type="text"
+                                                value={formData.citizen_id}
+                                                onChange={handleChange}
+                                                placeholder="123456789012"
+                                                maxLength={12}
+                                                className={`pl-10 ${errors.citizen_id ? 'border-red-500' : ''}`}
+                                                required
+                                            />
+                                        </div>
+                                        {errors.citizen_id && (
+                                            <p className="text-sm text-red-600">{errors.citizen_id}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Driving License */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="driving_license">
+                                            Bằng lái xe <span className="text-red-500">*</span>
+                                        </Label>
+                                        <div className="relative">
+                                            <Car className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Input
+                                                id="driving_license"
+                                                name="driving_license"
+                                                type="text"
+                                                value={formData.driving_license}
+                                                onChange={handleChange}
+                                                placeholder="123456789012"
+                                                maxLength={12}
+                                                className={`pl-10 ${errors.driving_license ? 'border-red-500' : ''}`}
+                                                required
+                                            />
+                                        </div>
+                                        {errors.driving_license && (
+                                            <p className="text-sm text-red-600">{errors.driving_license}</p>
+                                        )}
                                     </div>
 
                                     {/* Action Buttons */}

@@ -19,28 +19,40 @@ export const AuthProvider = ({ children }) => {
             setIsAuthenticated(true);
 
             // Try to verify token with backend (optional verification)
-            authAPI.getProfile()
-                .then(response => {
-                    // Handle response format: payload.account
-                    const data = response?.data || {};
-                    const profile = data.payload?.account;
-                    if (profile) {
-                        setUser(profile);
-                    } else {
-                        // If no profile data, create a basic user object from token
-                        // This ensures the user stays authenticated even if profile fetch fails
-                        setUser({ token: token });
+            // First try to get user from localStorage/sessionStorage
+            const storedUser = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
+            if (storedUser) {
+                try {
+                    const userData = JSON.parse(storedUser);
+                    if (userData.account_id) {
+                        authAPI.getProfile(userData.account_id)
+                            .then(response => {
+                                // Handle response format: account
+                                const data = response?.data || {};
+                                const profile = data.account || data.payload?.account;
+                                if (profile) {
+                                    setUser(profile);
+                                } else {
+                                    setUser(userData);
+                                }
+                            })
+                            .catch((error) => {
+                                console.warn('Profile fetch failed, using stored user:', error);
+                                setUser(userData);
+                            })
+                            .finally(() => {
+                                setLoading(false);
+                            });
+                        return;
                     }
-                })
-                .catch((error) => {
-                    console.warn('Profile fetch failed, but keeping user authenticated:', error);
-                    // Don't clear the token if profile fetch fails
-                    // Just create a basic user object
-                    setUser({ token: token });
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
+                } catch (e) {
+                    console.warn('Failed to parse stored user:', e);
+                }
+            }
+
+            // Fallback: create basic user object
+            setUser({ token: token });
+            setLoading(false);
         } else {
             setLoading(false);
         }
