@@ -44,6 +44,7 @@ const VehicleManagement = ({ onBack }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [apiError, setApiError] = useState('');
     const [vehicleModels, setVehicleModels] = useState([]);
+    const [confirmDelete, setConfirmDelete] = useState({ show: false, vehicle: null });
 
     const {
         register,
@@ -130,8 +131,6 @@ const VehicleManagement = ({ onBack }) => {
                 response = await vehicleAPI.create(payload);
             }
 
-            console.log('✅ Response:', response.data);
-
             // Kiểm tra response thành công
             const isSuccess = response.data?.success === true || 
                              response.status === 200 || 
@@ -173,18 +172,30 @@ const VehicleManagement = ({ onBack }) => {
     };
 
     const handleDelete = async (vehicleId) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa xe này?')) {
-            return;
-        }
+        const vehicleToDelete = vehicles.find(v => v.vehicle_id === vehicleId);
+        setConfirmDelete({ show: true, vehicle: vehicleToDelete });
+    };
+
+    const executeDelete = async () => {
+        const vehicleToDelete = confirmDelete.vehicle;
+        const vehicleId = vehicleToDelete.vehicle_id;
+        
+        setConfirmDelete({ show: false, vehicle: null });
 
         try {
             const response = await vehicleAPI.delete(vehicleId);
-            if (response.data.success) {
+            
+            const isSuccess = response.data?.success === true || 
+                             response.status === 200 || 
+                             response.status === 204;
+            
+            if (isSuccess) {
                 setMessage({
                     type: 'success',
-                    text: 'Xóa xe thành công!'
+                    text: `Đã xóa xe ${vehicleToDelete.modelName} (${vehicleToDelete.license_plate}) thành công!`
                 });
-                fetchVehicles();
+                
+                await fetchVehicles();
 
                 setTimeout(() => {
                     setMessage({ type: '', text: '' });
@@ -193,8 +204,12 @@ const VehicleManagement = ({ onBack }) => {
         } catch (error) {
             setMessage({
                 type: 'error',
-                text: error.response?.data?.message || 'Không thể xóa xe'
+                text: error.response?.data?.message || 'Không thể xóa xe. Vui lòng thử lại!'
             });
+            
+            setTimeout(() => {
+                setMessage({ type: '', text: '' });
+            }, 5000);
         }
     };
 
@@ -388,7 +403,9 @@ const VehicleManagement = ({ onBack }) => {
                                     type="text"
                                     placeholder="Nhập số VIN (17 ký tự)"
                                     maxLength={17}
-                                    className={`uppercase ${errors.vin ? 'border-red-500' : ''}`}
+                                    disabled={!!editingVehicle}
+                                    readOnly={!!editingVehicle}
+                                    className={`uppercase ${errors.vin ? 'border-red-500' : ''} ${editingVehicle ? 'bg-muted cursor-not-allowed' : ''}`}
                                     {...register('vin', {
                                         setValueAs: v => v.toUpperCase()
                                     })}
@@ -396,11 +413,16 @@ const VehicleManagement = ({ onBack }) => {
                                 {errors.vin && (
                                     <p className="text-sm text-red-600">{errors.vin.message}</p>
                                 )}
-                                {!errors.vin && (
+                                {!errors.vin && !editingVehicle && (
                                     <p className="text-xs text-gray-500">
                                         Vehicle Identification Number (Số khung xe, 17 ký tự)
                                     </p>
                                 )}
+                                {/* {editingVehicle && (
+                                    <p className="text-xs text-amber-600">
+                                        VIN không thể chỉnh sửa
+                                    </p>
+                                )} */}
                             </div>
 
                             {/* Model */}
@@ -489,6 +511,73 @@ const VehicleManagement = ({ onBack }) => {
                                 </Button>
                             </div>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Delete Confirmation Dialog */}
+                <Dialog open={confirmDelete.show} onOpenChange={(open) => !open && setConfirmDelete({ show: false, vehicle: null })}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader className="space-y-3">
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                                <Trash2 className="h-6 w-6 text-red-600" />
+                            </div>
+                            <DialogTitle className="text-center text-xl">Xác nhận xóa xe</DialogTitle>
+                            <DialogDescription className="text-center">
+                                Bạn có chắc chắn muốn xóa xe này không? Hành động này không thể hoàn tác.
+                            </DialogDescription>
+                        </DialogHeader>
+                        
+                        {confirmDelete.vehicle && (
+                            <div className="space-y-4 py-4">
+                                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <Car className="h-5 w-5 text-gray-400" />
+                                        <div className="flex-1">
+                                            <p className="text-xs text-gray-500">Mẫu xe</p>
+                                            <p className="text-sm font-semibold text-gray-900">
+                                                VinFast {confirmDelete.vehicle.modelName}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="h-px bg-gray-200" />
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <p className="text-xs text-gray-500 mb-1">Biển số</p>
+                                            <p className="text-sm font-mono font-semibold text-gray-900">
+                                                {confirmDelete.vehicle.license_plate}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 mb-1">VIN</p>
+                                            <p className="text-xs font-mono text-gray-700 break-all">
+                                                {confirmDelete.vehicle.vin}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setConfirmDelete({ show: false, vehicle: null })}
+                                        className="flex-1"
+                                    >
+                                        Hủy
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={executeDelete}
+                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Xóa xe
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </DialogContent>
                 </Dialog>
             </div>
