@@ -27,14 +27,14 @@ export const authAPI = {
 
 // EV APIs
 export const vehicleAPI = {
-    getAll: () => api.get('/api/EV'),
-    getById: (id) => api.get(`/api/EV/${id}`),
+    getAll: () => api.get('/api/vehicle'),
+    getById: (id) => api.get(`/api/vehicle/${id}`),
     create: (data) =>
-        USE_MOCK_API ? mockApi.createVehicle(data) : api.post('/api/EV', data),
+        USE_MOCK_API ? mockApi.createVehicle(data) : api.post('/api/vehicle', data),
     update: (id, data) =>
-        USE_MOCK_API ? mockApi.updateVehicle(id, data) : api.put(`/api/EV/${id}`, data),
+        USE_MOCK_API ? mockApi.updateVehicle(id, data) : api.put(`/api/vehicle/${id}`, data),
     delete: (id) =>
-        USE_MOCK_API ? mockApi.deleteVehicle(id) : api.delete(`/api/EV/${id}`),
+        USE_MOCK_API ? mockApi.deleteVehicle(id) : api.delete(`/api/vehicle/${id}`),
     getUserVehicles: () =>
         USE_MOCK_API ? mockApi.getUserVehicles() : api.get('/api/user/vehicles'),
 };
@@ -48,6 +48,15 @@ export const userAPI = {
     delete: (id) => api.delete(`/user/id/${id}`),
     updateProfile: (id, data) =>
         USE_MOCK_API ? mockApi.updateProfile(data) : api.put(`/user/id/${id}`, data),
+};
+
+// Station APIs
+export const stationAPI = {
+    getAll: () => api.get('/station'),
+    getById: (id) => api.get(`/station/${id}`),
+    create: (data) => api.post('/station', data),
+    update: (id, data) => api.put(`/station/${id}`, data),
+    delete: (id) => api.delete(`/station/${id}`),
 };
 
 
