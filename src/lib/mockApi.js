@@ -45,6 +45,18 @@ const mockVehicles = [
     }
 ];
 
+const mockVehicleModels = [
+    { model_id: 19, name: 'Ludo', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.10'},
+    { model_id: 20, name: 'Impes', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.20'},
+    { model_id: 21, name: 'Klara S', brand: 'VinFast', battery_type_id: 10 , avg_energy_usage: '2.50'},
+    { model_id: 22, name: 'Theon', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.80'},
+    { model_id: 23, name: 'Vento', brand: 'VinFast', battery_type_id: 11 , avg_energy_usage: '2.60'},
+    { model_id: 24, name: 'Theon S', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.90'},
+    { model_id: 25, name: 'Vento S', brand: 'VinFast', battery_type_id: 11 , avg_energy_usage: '2.70'},
+    { model_id: 26, name: 'Feliz S', brand: 'VinFast', battery_type_id: 10 , avg_energy_usage: '2.40'},
+    { model_id: 27, name: 'Evo200', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.30'},
+];
+
 // Simulate network delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -303,6 +315,19 @@ export const mockApi = {
                 success: true,
                 payload: {
                     vehicles: userVehicles
+                }
+            }
+        };
+    },
+
+    // Mock get vehicle models
+    async getVehicleModels() {
+        await delay(300);
+        return {
+            data: {
+                success: true,
+                payload: {
+                    vehicleModels: mockVehicleModels
                 }
             }
         };

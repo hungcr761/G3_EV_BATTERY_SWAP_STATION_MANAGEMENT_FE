@@ -87,24 +87,8 @@ export const vehicleSchema = z.object({
         .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'VIN không hợp lệ (chỉ chứa chữ in hoa và số, không có I, O, Q)')
         .transform(val => val.toUpperCase()),
     model: z.string()
-        .min(1, 'Mẫu xe là bắt buộc')
-        .max(100, 'Mẫu xe không được quá 100 ký tự')
-        .refine((val) => {
-            const validModels = [
-                'VinFast Ludo',
-                'VinFast Impes',
-                'VinFast Klara S',
-                'VinFast Theon',
-                'VinFast Vento',
-                'VinFast Theon S',
-                'VinFast Vento S',
-                'VinFast Feliz S',
-                'VinFast Evo200',
-            ];
-            return validModels.includes(val);
-        }, {
-            message: 'Vui lòng chọn mẫu xe từ danh sách'
-        }),
+        .min(1, 'Vui lòng chọn mẫu xe')
+        .max(100, 'Mẫu xe không được quá 100 ký tự'),
     license_plate: z.string()
         .min(1, 'Biển số xe là bắt buộc')
         .max(15, 'Biển số xe không được quá 15 ký tự')
@@ -114,21 +98,18 @@ export const vehicleSchema = z.object({
         )
         .transform(val => val.toUpperCase())
         .refine((val) => {
-            // Kiểm tra mã tỉnh hợp lệ (11-99)
-            const provinceCode = parseInt(val.substring(0, 2));
-            return provinceCode >= 11 && provinceCode <= 99;
+            const provideCode = parseInt(val.substring(0, 2));
+            const excludeCode = [42, 44, 45, 46, 87, 91, 96];
+            const hasInvalidProvince = provideCode < 11 || provideCode > 99 || excludeCode.includes(provideCode);
+            const hasDoubleDot = val.includes('..');
+            const hasSpace = val.includes(' ');
+
+            if (!hasInvalidProvince && !hasDoubleDot && !hasSpace) {
+                return true;
+            }
         }, {
-            message: 'Mã tỉnh không hợp lệ (phải từ 11-99)'
+            message: 'Biển số xe không hợp lệ: Không chứa khoảng trắng, không có dấu chấm đôi, mã tỉnh từ 11–99 (trừ mã đặc biệt: 42, 44, 45, 46, 87, 91, 96).'
         })
-        .refine((val) => !val.includes('..'), {
-            message: 'Biển số xe không được chứa hai dấu chấm liên tiếp'
-        })
-        .refine((val) => {
-            // Không cho phép khoảng trắng
-            return !val.includes(' ');
-        }, {
-            message: 'Biển số xe không được chứa khoảng trắng'
-        }),
 });
 
 // Service package schemas
