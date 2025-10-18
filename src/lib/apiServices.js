@@ -23,18 +23,6 @@ export const authAPI = {
 
 // Vehicle APIs
 export const vehicleAPI = {
-<<<<<<< Updated upstream
-    getAll: () => api.get('/api/EV'),
-    getById: (id) => api.get(`/api/EV/${id}`),
-    create: (data) =>
-        USE_MOCK_API ? mockApi.createVehicle(data) : api.post('/api/EV', data),
-    update: (id, data) =>
-        USE_MOCK_API ? mockApi.updateVehicle(id, data) : api.put(`/api/EV/${id}`, data),
-    delete: (id) =>
-        USE_MOCK_API ? mockApi.deleteVehicle(id) : api.delete(`/api/EV/${id}`),
-    getUserVehicles: () =>
-        USE_MOCK_API ? mockApi.getUserVehicles() : api.get('/api/user/vehicles'),
-=======
     getAll: () => api.get('/vehicles'),
     getById: (id) => api.get(`/vehicles/${id}`),
     create: (data) =>
@@ -43,7 +31,7 @@ export const vehicleAPI = {
         USE_MOCK_API ? mockApi.updateVehicle(id, data) : api.put(`/vehicles/${id}`, data),
     delete: (id) =>
         USE_MOCK_API ? mockApi.deleteVehicle(id) : api.delete(`/vehicles/${id}`)
->>>>>>> Stashed changes
+
 };
 
 // Model API 
