@@ -35,6 +35,7 @@ const RegisterForm = () => {
     const password = watch('password');
 
     const onSubmit = async (data) => {
+        console.log('RegisterForm: onSubmit called with data:', data);
         setIsLoading(true);
         setError('');
         setSuccess(false);
@@ -42,15 +43,19 @@ const RegisterForm = () => {
         try {
             // Remove confirmPassword from data before sending
             const { confirmPassword, ...userData } = data;
+            console.log('RegisterForm: userData after removing confirmPassword:', userData);
 
             // Call request verification API to send OTP
-            await authAPI.requestVerification({ email: userData.email });
+            console.log('RegisterForm: Calling authAPI.requestVerification with email:', userData.email);
+            const response = await authAPI.requestVerification({ email: userData.email });
+            console.log('RegisterForm: requestVerification response:', response);
 
             // Store user data and email for OTP verification step
             setUserData(userData);
             setEmail(userData.email);
             setShowOTP(true);
         } catch (err) {
+            console.error('RegisterForm: Error in onSubmit:', err);
             setError(err.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);

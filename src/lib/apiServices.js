@@ -19,6 +19,10 @@ export const authAPI = {
         USE_MOCK_API ? mockApi.forgotPassword(email) : api.post('/user/forgot-password', email),
     resetPassword: (data) =>
         USE_MOCK_API ? mockApi.resetPassword(data) : api.post('/user/reset-password', data),
+    requestVerification: (data) =>
+        USE_MOCK_API ? mockApi.requestVerification(data) : api.post('/user/request-verification', data),
+    verifyEmail: (data) =>
+        USE_MOCK_API ? mockApi.verifyEmail(data) : api.post('/user/verify-email', data),
 };
 
 // Vehicle APIs
@@ -36,7 +40,7 @@ export const vehicleAPI = {
 
 // Model API 
 export const modelAPI = {
-    getAll: () => api.get('/vehicle-model') 
+    getAll: () => api.get('/vehicle-model')
 }
 
 // user APIs
@@ -51,3 +55,10 @@ export const userAPI = {
 };
 
 
+export const stationAPI = {
+    getAll: () => api.get('/station'),
+    getById: (id) => api.get(`/station/${id}`),
+    create: (data) => api.post('/station', data),
+    update: (id, data) => api.put(`/station/${id}`, data),
+    delete: (id) => api.delete(`/station/${id}`),
+};
