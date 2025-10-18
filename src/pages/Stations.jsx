@@ -22,6 +22,8 @@ const Stations = () => {
     const [stations, setStations] = useState([]);
     const [stationsLoading, setStationsLoading] = useState(false);
     const [stationsError, setStationsError] = useState(null);
+    const [userLocation, setUserLocation] = useState(null);
+    const [nearestStation, setNearestStation] = useState(null);
 
     // Fetch stations from API
     useEffect(() => {
@@ -52,6 +54,59 @@ const Stations = () => {
         fetchStations();
     }, []);
 
+    // Get user location and find nearest station
+    useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    setUserLocation({ lat: latitude, lng: longitude });
+                    findNearestStation(latitude, longitude);
+                },
+                (error) => {
+                    console.warn('Could not get user location:', error);
+                }
+            );
+        }
+    }, [stations]);
+
+    // Calculate distance between two points using Haversine formula
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; // Earth's radius in kilometers
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    };
+
+    // Find nearest station
+    const findNearestStation = (userLat, userLng) => {
+        if (stations.length === 0) return;
+
+        let nearest = null;
+        let minDistance = Infinity;
+
+        stations.forEach(station => {
+            const distance = calculateDistance(
+                userLat,
+                userLng,
+                station.latitude,
+                station.longitude
+            );
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearest = { ...station, distance: distance.toFixed(1) };
+            }
+        });
+
+        setNearestStation(nearest);
+    };
+
     // Filter stations based on search and status
     const filteredStations = stations.filter(station => {
         const matchesSearch = station.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,6 +136,19 @@ const Stations = () => {
         }, 100);
     };
 
+    // Handle navigation/directions
+    const handleNavigation = (station) => {
+        if (userLocation) {
+            // Open Google Maps with directions
+            const url = `https://www.google.com/maps/dir/${userLocation.lat},${userLocation.lng}/${station.latitude},${station.longitude}`;
+            window.open(url, '_blank');
+        } else {
+            // Fallback to station location only
+            const url = `https://www.google.com/maps/search/?api=1&query=${station.latitude},${station.longitude}`;
+            window.open(url, '_blank');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-background py-8">
             <div className="container mx-auto px-4">
@@ -92,6 +160,20 @@ const Stations = () => {
                     <p className="text-muted-foreground">
                         Tìm kiếm trạm đổi pin gần nhất với tình trạng pin sẵn có
                     </p>
+
+                    {/* Nearest Station Info */}
+                    {nearestStation && (
+                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                                <MapPin className="h-5 w-5 text-green-600" />
+                                <span className="font-semibold text-green-800">Trạm gần nhất</span>
+                            </div>
+                            <p className="text-green-700 mt-1">
+                                {nearestStation.name} - {nearestStation.distance} km
+                            </p>
+                            <p className="text-sm text-green-600">{nearestStation.address}</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Search and Filter */}
@@ -166,6 +248,7 @@ const Stations = () => {
                                         key={station.id}
                                         id={`station-${station.id}`}
                                         className={`hover:shadow-lg transition-shadow cursor-pointer ${selectedStation?.id === station.id ? 'ring-2 ring-primary ring-inset' : ''
+                                            } ${nearestStation?.id === station.id ? 'bg-green-50 border-green-200' : ''
                                             }`}
                                         onClick={() => handleStationSelect(station)}
                                     >
@@ -181,6 +264,11 @@ const Stations = () => {
                                                             ) : (
                                                                 <Badge variant="secondary">Hạn chế</Badge>
                                                             )}
+                                                            {nearestStation?.id === station.id && (
+                                                                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                                                                    Gần nhất
+                                                                </Badge>
+                                                            )}
                                                         </div>
                                                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                                             <div className="flex items-center space-x-1">
@@ -191,6 +279,17 @@ const Stations = () => {
                                                                 <Clock className="h-4 w-4" />
                                                                 <span>24/7</span>
                                                             </div>
+                                                            {userLocation && (
+                                                                <div className="flex items-center space-x-1">
+                                                                    <Navigation className="h-4 w-4" />
+                                                                    <span>{calculateDistance(
+                                                                        userLocation.lat,
+                                                                        userLocation.lng,
+                                                                        station.latitude,
+                                                                        station.longitude
+                                                                    ).toFixed(1)} km</span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <p className="text-sm text-muted-foreground">{station.address}</p>
                                                     </div>
@@ -209,7 +308,11 @@ const Stations = () => {
 
                                                 {/* Actions */}
                                                 <div className="flex space-x-2">
-                                                    <Button size="sm" className="flex-1">
+                                                    <Button
+                                                        size="sm"
+                                                        className="flex-1"
+                                                        onClick={() => handleNavigation(station)}
+                                                    >
                                                         <Navigation className="mr-1 h-3 w-3" />
                                                         Chỉ đường
                                                     </Button>
@@ -237,6 +340,7 @@ const Stations = () => {
                                     <GoongMap
                                         onStationSelect={handleStationSelect}
                                         selectedStation={selectedStation}
+                                        nearestStation={nearestStation}
                                     />
                                 </CardContent>
                             </Card>

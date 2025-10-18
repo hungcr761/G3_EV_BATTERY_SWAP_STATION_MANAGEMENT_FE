@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MapPin, Navigation } from 'lucide-react';
 import { stationAPI } from '../../lib/apiServices';
 
-const GoongMap = ({ onStationSelect, selectedStation }) => {
+const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
     const mapRef = useRef(null);
     const mapInstanceRef = useRef(null);
     const markersRef = useRef([]);
@@ -230,22 +230,29 @@ const GoongMap = ({ onStationSelect, selectedStation }) => {
             // Create simple marker element
             const markerElement = document.createElement('div');
             markerElement.className = 'custom-marker';
+
+            // Check if this is the nearest station
+            const isNearest = nearestStation && nearestStation.id === station.id;
+            const isSelected = selectedStation && selectedStation.id === station.id;
+
             markerElement.style.cssText = `
                 width: 32px;
                 height: 32px;
                 background: white;
                 border-radius: 50%;
-                border: 2px solid #3b82f6;
+                border: 2px solid ${isNearest ? '#10b981' : isSelected ? '#3b82f6' : '#3b82f6'};
                 cursor: pointer;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                ${isNearest ? 'animation: pulse 2s infinite;' : ''}
             `;
 
             // Add marker icon
+            const iconColor = isNearest ? '#10b981' : isSelected ? '#3b82f6' : '#3b82f6';
             markerElement.innerHTML = `
-                <svg width="16" height="16" fill="#3b82f6" viewBox="0 0 20 20">
+                <svg width="16" height="16" fill="${iconColor}" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
                 </svg>
             `;
