@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
+import GoongMap from '../components/Map/GoongMap';
+import { stationAPI } from '../lib/apiServices';
 import {
     MapPin,
     Battery,
@@ -14,45 +16,70 @@ import {
 } from 'lucide-react';
 
 const Stations = () => {
-    // Mock data - in real app, this would come from API
-    const stations = [
-        {
-            id: 1,
-            name: 'Trạm ABC - Quận 1',
-            address: '123 Đường ABC, Quận 1, TP.HCM',
-            distance: '2.3 km',
-            rating: 4.8,
-            reviews: 127,
-            type1Available: 15,
-            type2Available: 8,
-            operatingHours: '24/7',
-            status: 'available'
-        },
-        {
-            id: 2,
-            name: 'Trạm XYZ - Quận 3',
-            address: '456 Đường XYZ, Quận 3, TP.HCM',
-            distance: '3.7 km',
-            rating: 4.6,
-            reviews: 89,
-            type1Available: 12,
-            type2Available: 5,
-            operatingHours: '24/7',
-            status: 'available'
-        },
-        {
-            id: 3,
-            name: 'Trạm DEF - Quận 2',
-            address: '789 Đường DEF, Quận 2, TP.HCM',
-            distance: '4.1 km',
-            rating: 4.9,
-            reviews: 203,
-            type1Available: 0,
-            type2Available: 3,
-            operatingHours: '24/7',
-            status: 'limited'
-        }
-    ];
+    const [selectedStation, setSelectedStation] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [batteryType, setBatteryType] = useState('');
+    const [stations, setStations] = useState([]);
+    const [stationsLoading, setStationsLoading] = useState(false);
+    const [stationsError, setStationsError] = useState(null);
+
+    // Fetch stations from API
+    useEffect(() => {
+        const fetchStations = async () => {
+            setStationsLoading(true);
+            setStationsError(null);
+            try {
+                const response = await stationAPI.getAll();
+                if (response.data && response.data.success && response.data.payload && response.data.payload.stations) {
+                    const processedStations = response.data.payload.stations.map(station => ({
+                        id: station.station_id,
+                        name: station.station_name,
+                        address: station.address,
+                        latitude: parseFloat(station.latitude),
+                        longitude: parseFloat(station.longitude),
+                        status: station.status === 'operational' ? 'available' : 'limited'
+                    }));
+                    setStations(processedStations);
+                }
+            } catch (error) {
+                setStationsError(error);
+                console.error('Error fetching stations:', error);
+            } finally {
+                setStationsLoading(false);
+            }
+        };
+
+        fetchStations();
+    }, []);
+
+    // Filter stations based on search and status
+    const filteredStations = stations.filter(station => {
+        const matchesSearch = station.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            station.address.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = !batteryType || station.status === batteryType;
+        return matchesSearch && matchesStatus;
+    });
+
+    const handleStationSelect = (station) => {
+        setSelectedStation(station);
+
+        // Scroll to the selected station in the list
+        setTimeout(() => {
+            const stationElement = document.getElementById(`station-${station.id}`);
+            if (stationElement) {
+                stationElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+                // Add a temporary highlight effect
+                stationElement.classList.add('animate-pulse');
+                setTimeout(() => {
+                    stationElement.classList.remove('animate-pulse');
+                }, 2000);
+            }
+        }, 100);
+    };
 
     return (
         <div className="min-h-screen bg-background py-8">
@@ -77,14 +104,20 @@ const Stations = () => {
                                     <Input
                                         placeholder="Nhập địa chỉ hoặc tên trạm..."
                                         className="pl-10"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
                             </div>
                             <div>
-                                <select className="w-full h-10 px-3 rounded-md border border-input bg-background">
-                                    <option value="">Loại pin</option>
-                                    <option value="type1">Type 1</option>
-                                    <option value="type2">Type 2</option>
+                                <select
+                                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                                    value={batteryType}
+                                    onChange={(e) => setBatteryType(e.target.value)}
+                                >
+                                    <option value="">Trạng thái</option>
+                                    <option value="available">Sẵn sàng</option>
+                                    <option value="limited">Hạn chế</option>
                                 </select>
                             </div>
                             <div>
@@ -97,104 +130,119 @@ const Stations = () => {
                     </CardContent>
                 </Card>
 
+                {/* Loading State */}
+                {stationsLoading && (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p className="text-muted-foreground">Đang tải dữ liệu trạm...</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {stationsError && (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="text-center">
+                            <p className="text-red-500 mb-2">Lỗi tải dữ liệu trạm</p>
+                            <p className="text-sm text-muted-foreground">
+                                {stationsError.message || 'Không thể kết nối đến server'}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Stations List */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 space-y-6">
-                        {stations.map((station) => (
-                            <Card key={station.id} className="hover:shadow-lg transition-shadow">
-                                <CardContent className="p-6">
-                                    <div className="space-y-4">
-                                        {/* Header */}
-                                        <div className="flex items-start justify-between">
-                                            <div className="space-y-2">
-                                                <div className="flex items-center space-x-2">
-                                                    <h3 className="text-lg font-semibold">{station.name}</h3>
-                                                    {station.status === 'available' ? (
-                                                        <Badge variant="default">Sẵn sàng</Badge>
-                                                    ) : (
-                                                        <Badge variant="secondary">Hạn chế</Badge>
-                                                    )}
+                {!stationsLoading && !stationsError && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 space-y-6 max-h-screen overflow-y-auto pr-2 scroll-smooth">
+                            {filteredStations.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <p className="text-muted-foreground">Không tìm thấy trạm nào</p>
+                                </div>
+                            ) : (
+                                filteredStations.map((station) => (
+                                    <Card
+                                        key={station.id}
+                                        id={`station-${station.id}`}
+                                        className={`hover:shadow-lg transition-shadow cursor-pointer ${selectedStation?.id === station.id ? 'ring-2 ring-primary ring-inset' : ''
+                                            }`}
+                                        onClick={() => handleStationSelect(station)}
+                                    >
+                                        <CardContent className="p-4">
+                                            <div className="space-y-3">
+                                                {/* Header */}
+                                                <div className="flex items-start justify-between">
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center space-x-2">
+                                                            <h3 className="text-base font-semibold">{station.name}</h3>
+                                                            {station.status === 'available' ? (
+                                                                <Badge variant="default">Sẵn sàng</Badge>
+                                                            ) : (
+                                                                <Badge variant="secondary">Hạn chế</Badge>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                                            <div className="flex items-center space-x-1">
+                                                                <MapPin className="h-4 w-4" />
+                                                                <span>Trạm đổi pin</span>
+                                                            </div>
+                                                            <div className="flex items-center space-x-1">
+                                                                <Clock className="h-4 w-4" />
+                                                                <span>24/7</span>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-sm text-muted-foreground">{station.address}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                                    <div className="flex items-center space-x-1">
-                                                        <MapPin className="h-4 w-4" />
-                                                        <span>{station.distance}</span>
-                                                    </div>
-                                                    <div className="flex items-center space-x-1">
-                                                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                                        <span>{station.rating} ({station.reviews})</span>
-                                                    </div>
-                                                    <div className="flex items-center space-x-1">
-                                                        <Clock className="h-4 w-4" />
-                                                        <span>{station.operatingHours}</span>
-                                                    </div>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground">{station.address}</p>
-                                            </div>
-                                        </div>
 
-                                        {/* Battery Availability */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="p-4 bg-green-50 rounded-lg">
-                                                <div className="flex items-center justify-between">
+                                                {/* Station Info */}
+                                                <div className="p-3 bg-gray-50 rounded-lg">
                                                     <div className="flex items-center space-x-2">
-                                                        <Battery className="h-5 w-5 text-green-600" />
-                                                        <span className="font-medium">Pin Type 1</span>
+                                                        <Battery className="h-4 w-4 text-blue-600" />
+                                                        <span className="font-medium text-sm">Trạm đổi pin EV</span>
                                                     </div>
-                                                    <div className={`font-semibold ${station.type1Available > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {station.type1Available} pin
-                                                    </div>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Dịch vụ đổi pin cho xe điện 24/7
+                                                    </p>
                                                 </div>
-                                            </div>
-                                            <div className="p-4 bg-blue-50 rounded-lg">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-2">
-                                                        <Battery className="h-5 w-5 text-blue-600" />
-                                                        <span className="font-medium">Pin Type 2</span>
-                                                    </div>
-                                                    <div className={`font-semibold ${station.type2Available > 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                                                        {station.type2Available} pin
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        {/* Actions */}
-                                        <div className="flex space-x-3">
-                                            <Button className="flex-1">
-                                                <Navigation className="mr-2 h-4 w-4" />
-                                                Chỉ đường
-                                            </Button>
-                                            <Button variant="outline" className="flex-1">
-                                                Đặt lịch
-                                            </Button>
-                                        </div>
-                                    </div>
+                                                {/* Actions */}
+                                                <div className="flex space-x-2">
+                                                    <Button size="sm" className="flex-1">
+                                                        <Navigation className="mr-1 h-3 w-3" />
+                                                        Chỉ đường
+                                                    </Button>
+                                                    <Button size="sm" variant="outline" className="flex-1">
+                                                        Đặt lịch
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Map Placeholder */}
+                        <div className="lg:col-span-1">
+                            <Card className="sticky top-4">
+                                <CardHeader>
+                                    <CardTitle>Bản đồ</CardTitle>
+                                    <CardDescription>
+                                        Vị trí các trạm đổi pin
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <GoongMap
+                                        onStationSelect={handleStationSelect}
+                                        selectedStation={selectedStation}
+                                    />
                                 </CardContent>
                             </Card>
-                        ))}
+                        </div>
                     </div>
-
-                    {/* Map Placeholder */}
-                    <div className="lg:col-span-1">
-                        <Card className="sticky top-4">
-                            <CardHeader>
-                                <CardTitle>Bản đồ</CardTitle>
-                                <CardDescription>
-                                    Vị trí các trạm đổi pin
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="w-full h-96 bg-muted rounded-lg flex items-center justify-center">
-                                    <div className="text-center">
-                                        <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                                        <p className="text-muted-foreground">Google Maps sẽ được tích hợp ở đây</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     );

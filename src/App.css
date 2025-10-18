@@ -93,3 +93,25 @@
 .bg-grid-slate-100 {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(15 23 42 / 0.04)'%3e%3cpath d='m0 .5h32m-32 32v-32'/%3e%3c/svg%3e");
 }
+
+/* Goong Map custom marker styles */
+.custom-marker {
+  position: relative;
+  z-index: 1;
+}
+
+.custom-marker:hover {
+  z-index: 2;
+}
+
+/* Goong Map container styles */
+#goong-map-container {
+  position: relative;
+  overflow: hidden;
+}
+
+#goong-map-container canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
