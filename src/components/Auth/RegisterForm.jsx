@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { authAPI, userAPI } from '../../lib/apiServices';
 import { registerSchema } from '../../lib/validations';
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import OTPVerification from './OTPVerification';
 
 const RegisterForm = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +17,9 @@ const RegisterForm = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [showOTP, setShowOTP] = useState(false);
+    const [userData, setUserData] = useState(null);
+    const [email, setEmail] = useState('');
 
     const navigate = useNavigate();
 
@@ -39,19 +43,45 @@ const RegisterForm = () => {
             // Remove confirmPassword from data before sending
             const { confirmPassword, ...userData } = data;
 
-            const response = await authAPI.register(userData);
-            if (response.data.success && response.data.payload?.account) {
-                setSuccess(true);
-                setTimeout(() => {
-                    navigate('/login');
-                }, 2000);
-            }
+            // Call request verification API to send OTP
+            await authAPI.requestVerification({ email: userData.email });
+
+            // Store user data and email for OTP verification step
+            setUserData(userData);
+            setEmail(userData.email);
+            setShowOTP(true);
         } catch (err) {
             setError(err.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);
         }
     };
+
+    const handleOTPSuccess = () => {
+        setSuccess(true);
+        setTimeout(() => {
+            navigate('/login');
+        }, 2000);
+    };
+
+    const handleBackToForm = () => {
+        setShowOTP(false);
+        setUserData(null);
+        setEmail('');
+        setError('');
+    };
+
+    // Show OTP verification component
+    if (showOTP) {
+        return (
+            <OTPVerification
+                email={email}
+                userData={userData}
+                onBack={handleBackToForm}
+                onSuccess={handleOTPSuccess}
+            />
+        );
+    }
 
     if (success) {
         return (

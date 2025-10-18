@@ -20,7 +20,6 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
     const [success, setSuccess] = useState(false);
     const [countdown, setCountdown] = useState(60);
     const [canResend, setCanResend] = useState(false);
-    const [step, setStep] = useState('otp-password'); // Combined step
 
     const navigate = useNavigate();
 
@@ -74,7 +73,6 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
             setIsLoading(false);
         }
     };
-
 
     const handleResendOTP = async () => {
         setIsResending(true);

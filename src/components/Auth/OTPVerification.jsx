@@ -43,7 +43,6 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
             const verifyResponse = await authAPI.verifyEmail({ email, code: otp });
 
             if (verifyResponse.data.verified === true) {
-
                 // If OTP verification successful, proceed with registration
                 const registerResponse = await authAPI.register(userData);
 
@@ -54,7 +53,7 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
                     }, 2000);
                 }
             } else {
-                setError(verifyResponse.data.message || 'Xác thực email thất bại');
+                setError(verifyResponse.data.message || 'Mã OTP không đúng');
             }
         } catch (err) {
             setError(err.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.');

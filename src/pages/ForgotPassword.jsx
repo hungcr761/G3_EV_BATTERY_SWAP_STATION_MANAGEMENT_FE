@@ -10,12 +10,14 @@ import { forgotPasswordSchema } from '../lib/validations';
 import { authAPI } from '../lib/apiServices';
 import { Loader2, AlertCircle, CheckCircle2, ArrowLeft, Mail } from 'lucide-react';
 import SimpleHeader from '../components/Layout/SimpleHeader';
+import OTPResetPassword from '../components/Auth/OTPResetPassword';
 
 const ForgotPassword = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [submittedEmail, setSubmittedEmail] = useState('');
+    const [showOTP, setShowOTP] = useState(false);
 
     const {
         register,
@@ -31,21 +33,45 @@ const ForgotPassword = () => {
         setSuccess(false);
 
         try {
+            // Call forgot password API to send OTP
             const response = await authAPI.forgotPassword(data);
 
-            // Backend trả về code 200 với message "Reset email sent if email exists"
-            if (response.status === 200 || response.data) {
-                setSuccess(true);
+            if (response.data.success || response.status === 200) {
                 setSubmittedEmail(data.email);
+                setShowOTP(true);
             }
         } catch (err) {
-            // Backend trả về code 404 nếu email không tồn tại
             const errorMessage = err?.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.';
             setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
     };
+
+    const handleOTPSuccess = () => {
+        setSuccess(true);
+        setShowOTP(false);
+    };
+
+    const handleBackToForm = () => {
+        setShowOTP(false);
+        setSubmittedEmail('');
+        setError('');
+    };
+
+    // Show OTP reset password component
+    if (showOTP) {
+        return (
+            <>
+                <SimpleHeader />
+                <OTPResetPassword
+                    email={submittedEmail}
+                    onBack={handleBackToForm}
+                    onSuccess={handleOTPSuccess}
+                />
+            </>
+        );
+    }
 
     return (
         <>
@@ -62,8 +88,8 @@ const ForgotPassword = () => {
                             </CardTitle>
                             <CardDescription>
                                 {success
-                                    ? 'Chúng tôi đã gửi link đặt lại mật khẩu đến email của bạn'
-                                    : 'Nhập email của bạn và chúng tôi sẽ gửi link đặt lại mật khẩu'
+                                    ? 'Mật khẩu của bạn đã được đặt lại thành công'
+                                    : 'Nhập email của bạn và chúng tôi sẽ gửi mã OTP để đặt lại mật khẩu'
                                 }
                             </CardDescription>
                         </CardHeader>
@@ -77,38 +103,19 @@ const ForgotPassword = () => {
                                                 Email đã được gửi!
                                             </p>
                                             <p className="text-sm text-green-600 mt-1">
-                                                Chúng tôi đã gửi link đặt lại mật khẩu đến <strong>{submittedEmail}</strong>
+                                                Mật khẩu của bạn đã được đặt lại thành công!
                                             </p>
                                         </div>
                                     </div>
 
                                     <div className="space-y-3 text-sm text-muted-foreground">
-                                        <p>Vui lòng kiểm tra email của bạn và click vào link để đặt lại mật khẩu.</p>
-                                        <p>Nếu bạn không nhận được email trong vài phút, vui lòng:</p>
-                                        <ul className="list-disc list-inside space-y-1 ml-2">
-                                            <li>Kiểm tra thư mục spam/junk</li>
-                                            <li>Đảm bảo email chính xác</li>
-                                            <li>Thử gửi lại sau vài phút</li>
-                                        </ul>
+                                        <p>Bạn có thể đăng nhập với mật khẩu mới ngay bây giờ.</p>
                                     </div>
 
                                     <div className="pt-4 space-y-3">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="w-full"
-                                            onClick={() => {
-                                                setSuccess(false);
-                                                setSubmittedEmail('');
-                                            }}
-                                        >
-                                            Gửi lại email
-                                        </Button>
-
                                         <Link to="/login" className="block">
-                                            <Button type="button" variant="ghost" className="w-full">
-                                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                                Quay lại đăng nhập
+                                            <Button type="button" className="w-full">
+                                                Đăng nhập ngay
                                             </Button>
                                         </Link>
                                     </div>
@@ -150,7 +157,7 @@ const ForgotPassword = () => {
                                         ) : (
                                             <>
                                                 <Mail className="mr-2 h-4 w-4" />
-                                                Gửi link đặt lại mật khẩu
+                                                Gửi mã OTP
                                             </>
                                         )}
                                     </Button>

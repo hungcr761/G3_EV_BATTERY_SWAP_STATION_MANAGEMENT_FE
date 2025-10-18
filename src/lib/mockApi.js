@@ -483,7 +483,7 @@ export const mockApi = {
         };
     },
 
-    // Mock forgot password
+    // Mock forgot password (send OTP)
     async forgotPassword(emailData) {
         await delay(1000); // Simulate network delay
 
@@ -503,65 +503,125 @@ export const mockApi = {
             });
         }
 
-        // Generate mock reset token (giống format backend)
-        const resetToken = `${Math.random().toString(36).substr(2, 9)}${Date.now().toString(36)}`;
+        // Generate mock OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Backend sẽ gửi email với link này cho user
-        const magicLink = `http://localhost:5173/reset-password?token=${resetToken}`;
-
-        // Log magic link to console (trong production, backend sẽ gửi qua email)
-        console.log('=== MAGIC LINK FOR PASSWORD RESET ===');
+        // Log OTP to console (trong production, backend sẽ gửi qua email)
+        console.log('=== OTP FOR PASSWORD RESET ===');
         console.log(`Email: ${email}`);
-        console.log(`Magic Link: ${magicLink}`);
-        console.log(`Reset Token: ${resetToken}`);
-        console.log('=====================================');
+        console.log(`OTP Code: ${otp}`);
+        console.log('==============================');
 
         // Response giống backend thật (code 200)
         return {
             status: 200,
             data: {
-                message: "Reset email sent if email exists",
-                resetToken: resetToken
+                success: true,
+                message: "OTP đã được gửi đến email của bạn"
             }
         };
     },
 
-    // Mock reset password
+    // Mock reset password with 6-digit code
     async resetPassword(resetData) {
         await delay(1000); // Simulate network delay
 
-        const { token, newPassword } = resetData;
+        const { email, code, newPassword } = resetData;
 
-        // Validate token (trong mock, chúng ta chỉ kiểm tra token có tồn tại)
-        if (!token || token.length < 10) {
+        // Mock validation - accept any 6-digit code
+        if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
             return Promise.reject({
                 response: {
                     status: 400,
                     data: {
-                        message: "Token không hợp lệ hoặc đã hết hạn"
+                        message: "Mã OTP không hợp lệ"
                     }
                 }
             });
         }
 
-        // Trong production, backend sẽ verify token và tìm user tương ứng
-        // Ở đây chúng ta giả sử token hợp lệ và cập nhật password cho user đầu tiên
-        const userIndex = 0; // Mock: giả sử reset password cho user đầu tiên
-
-        if (mockUsers[userIndex]) {
-            mockUsers[userIndex].password = newPassword;
-
-            console.log('=== PASSWORD RESET SUCCESSFUL ===');
-            console.log(`Token: ${token}`);
-            console.log(`New Password: ${newPassword} (đã được hash trong production)`);
-            console.log('=================================');
+        // Find user by email
+        const userIndex = mockUsers.findIndex(u => u.email === email);
+        if (userIndex === -1) {
+            return Promise.reject({
+                response: {
+                    status: 404,
+                    data: {
+                        message: "Email không tồn tại trong hệ thống"
+                    }
+                }
+            });
         }
+
+        // Update password
+        mockUsers[userIndex].password = newPassword;
+
+        console.log('=== PASSWORD RESET WITH OTP SUCCESSFUL ===');
+        console.log(`Email: ${email}`);
+        console.log(`OTP Code: ${code}`);
+        console.log(`New Password: ${newPassword} (đã được hash trong production)`);
+        console.log('==========================================');
 
         // Response giống backend thật (code 200)
         return {
             status: 200,
             data: {
+                success: true,
                 message: "Mật khẩu đã được đặt lại thành công"
+            }
+        };
+    },
+
+    // Mock request verification (send OTP)
+    async requestVerification(data) {
+        await delay(800); // Simulate network delay
+
+        const { email } = data;
+
+        // Generate mock OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Log OTP to console (trong production, backend sẽ gửi qua email)
+        console.log('=== OTP VERIFICATION ===');
+        console.log(`Email: ${email}`);
+        console.log(`OTP Code: ${otp}`);
+        console.log('========================');
+
+        return {
+            data: {
+                success: true,
+                message: "Mã xác thực đã được gửi đến email của bạn"
+            }
+        };
+    },
+
+    // Mock verify email
+    async verifyEmail(data) {
+        await delay(600); // Simulate network delay
+
+        const { email, code } = data;
+
+        // Mock validation - accept any 6-digit code
+        if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+            return Promise.reject({
+                response: {
+                    status: 400,
+                    data: {
+                        message: "Mã OTP không hợp lệ"
+                    }
+                }
+            });
+        }
+
+        console.log('=== EMAIL VERIFICATION SUCCESSFUL ===');
+        console.log(`Email: ${email}`);
+        console.log(`OTP Code: ${code}`);
+        console.log('=====================================');
+
+        return {
+            data: {
+                message: "Email verified successfully! You can now complete your registration.",
+                verified: true
             }
         };
     }
