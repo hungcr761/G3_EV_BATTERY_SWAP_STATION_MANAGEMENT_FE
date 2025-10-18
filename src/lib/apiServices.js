@@ -62,3 +62,4 @@ export const stationAPI = {
     update: (id, data) => api.put(`/station/${id}`, data),
     delete: (id) => api.delete(`/station/${id}`),
 };
+
