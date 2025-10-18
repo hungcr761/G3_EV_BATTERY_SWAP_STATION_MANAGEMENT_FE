@@ -19,6 +19,10 @@ export const authAPI = {
         USE_MOCK_API ? mockApi.forgotPassword(email) : api.post('/user/forgot-password', email),
     resetPassword: (data) =>
         USE_MOCK_API ? mockApi.resetPassword(data) : api.post('/user/reset-password', data),
+    requestVerification: (data) =>
+        USE_MOCK_API ? mockApi.requestVerification(data) : api.post('/user/request-verification', data),
+    verifyEmail: (data) =>
+        USE_MOCK_API ? mockApi.verifyEmail(data) : api.post('/user/verify-email', data),
 };
 
 // Vehicle APIs
