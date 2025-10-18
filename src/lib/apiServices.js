@@ -54,6 +54,13 @@ export const userAPI = {
         USE_MOCK_API ? mockApi.updateProfile(data) : api.put(`/user/id/${id}`, data),
 };
 
+export const stationAPI = {
+    getAll: () => api.get('/station'),
+    getById: (id) => api.get(`/station/${id}`),
+    create: (data) => api.post('/station', data),
+    update: (id, data) => api.put(`/station/${id}`, data),
+    delete: (id) => api.delete(`/station/${id}`),
+};
 
 export const stationAPI = {
     getAll: () => api.get('/station'),
