@@ -36,7 +36,7 @@ export const vehicleAPI = {
 
 // Model API 
 export const modelAPI = {
-    getAll: () => api.get('/vehicle-model') 
+    getAll: () => api.get('/vehicle-model')
 }
 
 // user APIs
@@ -51,3 +51,10 @@ export const userAPI = {
 };
 
 
+export const stationAPI = {
+    getAll: () => api.get('/station'),
+    getById: (id) => api.get(`/station/${id}`),
+    create: (data) => api.post('/station', data),
+    update: (id, data) => api.put(`/station/${id}`, data),
+    delete: (id) => api.delete(`/station/${id}`),
+};
