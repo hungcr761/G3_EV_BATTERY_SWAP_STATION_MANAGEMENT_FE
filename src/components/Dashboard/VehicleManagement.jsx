@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -6,8 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
-import { useAuth } from '../../hooks/useAuth';
-import { vehicleAPI } from '../../lib/apiServices';
+import { modelAPI, vehicleAPI } from '../../lib/apiServices';
 import { vehicleSchema } from '../../lib/validations';
 import {
     Select,
@@ -34,22 +33,9 @@ import {
     DialogHeader,
     DialogTitle,
 } from '../ui/dialog';
-
-// Danh sách các mẫu xe VinFast
-const VEHICLE_MODELS = [
-    'VinFast Ludo',
-    'VinFast Impes',
-    'VinFast Klara S',
-    'VinFast Theon',
-    'VinFast Vento',
-    'VinFast Theon S',
-    'VinFast Vento S',
-    'VinFast Feliz S',
-    'VinFast Evo200',
-];
+  
 
 const VehicleManagement = ({ onBack }) => {
-    const { user } = useAuth();
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
@@ -57,6 +43,7 @@ const VehicleManagement = ({ onBack }) => {
     const [editingVehicle, setEditingVehicle] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [apiError, setApiError] = useState('');
+    const [vehicleModels, setVehicleModels] = useState([]);
 
     const {
         register,
@@ -74,49 +61,96 @@ const VehicleManagement = ({ onBack }) => {
         }
     });
 
+    {/* Fetch vehicle models for the select dropdown */}
     useEffect(() => {
-        fetchVehicles();
+        const fetchModels = async () => {
+            try {
+
+                const response = await modelAPI.getAll();
+                const models = response.data?.payload?.vehicleModels || [];
+                setVehicleModels(models);
+            } catch (error) {
+                console.error('Error fetching vehicle models:', error);
+            }
+        };
+
+        fetchModels();
     }, []);
 
-    const fetchVehicles = async () => {
+    // Fetch vehicles function
+    const fetchVehicles = useCallback(async () => {
+        setLoading(true);
         try {
-            setLoading(true);
-            const response = await vehicleAPI.getUserVehicles();
-            if (response.data.success) {
-                setVehicles(response.data.payload?.vehicles || response.data.vehicles || []);
-            }
+            const response = await vehicleAPI.getAll();
+            const vehiclesData = response.data?.vehicles || [];
+            const mappedVehicles = vehiclesData.map(vehicle => ({
+                ...vehicle,
+                // Lấy model.name để hiển thị
+                modelName: vehicle.model?.name || 'Unknown Model'
+            }));
+            
+            setVehicles(mappedVehicles);
         } catch (error) {
             console.error('Error fetching vehicles:', error);
-            setMessage({
-                type: 'error',
-                text: 'Không thể tải danh sách xe'
-            });
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    // Load vehicles when component mounts
+    useEffect(() => {
+        fetchVehicles();
+    }, [fetchVehicles]);
 
     const onSubmit = async (data) => {
         setIsSubmitting(true);
         setApiError('');
 
         try {
-            let response;
-            if (editingVehicle) {
-                response = await vehicleAPI.update(editingVehicle.vehicle_id, data);
-            } else {
-                response = await vehicleAPI.create(data);
+            // Tìm model_id từ model name
+            const selectedModel = vehicleModels.find(m => m.name === data.model);
+            
+            if (!selectedModel) {
+                setApiError('Vui lòng chọn mẫu xe hợp lệ');
+                setIsSubmitting(false);
+                return;
             }
 
-            if (response.data.success) {
+            // Tạo payload với model_id thay vì model
+            const payload = {
+                vin: data.vin,
+                model_id: selectedModel.model_id,
+                license_plate: data.license_plate
+            };
+
+            let response;
+            if (editingVehicle) {
+                response = await vehicleAPI.update(editingVehicle.vehicle_id, payload);
+            } else {
+                response = await vehicleAPI.create(payload);
+            }
+
+            console.log('✅ Response:', response.data);
+
+            // Kiểm tra response thành công
+            const isSuccess = response.data?.success === true || 
+                             response.status === 200 || 
+                             response.status === 201;
+
+            if (isSuccess) {
+                // Đóng dialog trước
+                handleCloseDialog();
+                
+                // Hiển thị thông báo
                 setMessage({
                     type: 'success',
                     text: editingVehicle ? 'Cập nhật xe thành công!' : 'Thêm xe thành công!'
                 });
 
-                fetchVehicles();
-                handleCloseDialog();
+                // Refresh danh sách xe
+                await fetchVehicles();
 
+                // Tự động ẩn thông báo sau 3 giây
                 setTimeout(() => {
                     setMessage({ type: '', text: '' });
                 }, 3000);
@@ -131,7 +165,8 @@ const VehicleManagement = ({ onBack }) => {
     const handleEdit = (vehicle) => {
         setEditingVehicle(vehicle);
         setValue('vin', vehicle.vin || '');
-        setValue('model', vehicle.model || '');
+        // Lấy model name từ nested object hoặc modelName đã map
+        setValue('model', vehicle.modelName || vehicle.model?.name || '');
         setValue('license_plate', vehicle.license_plate || '');
         setApiError('');
         setShowDialog(true);
@@ -259,7 +294,7 @@ const VehicleManagement = ({ onBack }) => {
                                             </div>
                                             <div>
                                                 <CardTitle className="text-lg">
-                                                    {vehicle.model}
+                                                    VinFast {vehicle.modelName}
                                                 </CardTitle>
                                                 <Badge variant="secondary" className="mt-1">
                                                     {vehicle.license_plate}
@@ -385,9 +420,9 @@ const VehicleManagement = ({ onBack }) => {
                                                 <SelectValue placeholder="Chọn mẫu xe" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {VEHICLE_MODELS.map((model) => (
-                                                    <SelectItem key={model} value={model}>
-                                                        {model}
+                                                {vehicleModels.map(model => (
+                                                    <SelectItem key={model.model_id} value={model.name}>
+                                                        VinFast {model.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
