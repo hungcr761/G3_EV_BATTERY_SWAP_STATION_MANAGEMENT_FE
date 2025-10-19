@@ -87,7 +87,7 @@ export const vehicleSchema = z.object({
         .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'VIN không hợp lệ (chỉ chứa chữ in hoa và số, không có I, O, Q)')
         .transform(val => val.toUpperCase()),
     model: z.string()
-        .min(1, 'Vui lòng chọn mẫu xe')
+        .min(1, 'Vui lòng chọn ')
         .max(100, 'Mẫu xe không được quá 100 ký tự'),
     license_plate: z.string()
         .min(1, 'Biển số xe là bắt buộc')
