@@ -10,11 +10,11 @@ const mockUsers = [
         status: "active"
     },
     {
-        account_id: "c9cd9cf5-333b-5d8a-c6e3-b958c7b95397",
+        account_id: "6f8293dd-bf37-4b3e-9e87-fbcea5c3add7",
         username: "tynguyen",
-        email: "user@example.com",
-        password: "user1234",
-        fullname: "Nguyễn Văn A",
+        email: "leehongminh004@gmail.com",
+        password: "H25022k5",
+        fullname: "Le Hong Minh",
         phone_number: "0987654321",
         permission: "driver",
         status: "active"
@@ -25,7 +25,7 @@ const mockUsers = [
 const mockVehicles = [
     {
         vehicle_id: "vehicle-001",
-        account_id: "c9cd9cf5-333b-5d8a-c6e3-b958c7b95397",
+        account_id: "6f8293dd-bf37-4b3e-9e87-fbcea5c3add7",
         vin: "1HGBH41JXMN109186",
         model: "VinFast Theon",
         license_plate: "29A-12345",
@@ -35,7 +35,7 @@ const mockVehicles = [
     },
     {
         vehicle_id: "vehicle-002",
-        account_id: "c9cd9cf5-333b-5d8a-c6e3-b958c7b95397",
+        account_id: "6f8293dd-bf37-4b3e-9e87-fbcea5c3add7",
         vin: "5YJSA1E14HF123456",
         model: "VinFast Evo200",
         license_plate: "30B-98765",
@@ -56,6 +56,46 @@ const mockVehicleModels = [
     { model_id: 26, name: 'Feliz S', brand: 'VinFast', battery_type_id: 10 , avg_energy_usage: '2.40'},
     { model_id: 27, name: 'Evo200', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.30'},
 ];
+
+// Mock subscription plans
+const mockSubscriptionPlans = [
+    {
+        plan_id: 1,
+        plan_name: "Basic Plan",
+        plan_fee: "200000.00",
+        deposit_fee: "400000.00",
+        penalty_fee: "50000.00",
+        battery_cap: 1,
+        soh_cap: "0.80",
+        description: "Gói cơ bản cho người dùng ít sử dụng",
+        is_active: true
+    },
+    {
+        plan_id: 2,
+        plan_name: "Standard Plan",
+        plan_fee: "350000.00",
+        deposit_fee: "800000.00",
+        penalty_fee: "80000.00",
+        battery_cap: 2,
+        soh_cap: "0.75",
+        description: "Gói tiêu chuẩn phù hợp cho người dùng thường xuyên",
+        is_active: true
+    },
+    {
+        plan_id: 3,
+        plan_name: "Premium Plan",
+        plan_fee: "500000.00",
+        deposit_fee: "1200000.00",
+        penalty_fee: "100000.00",
+        battery_cap: 3,
+        soh_cap: "0.70",
+        description: "Gói cao cấp cho người dùng chuyên nghiệp",
+        is_active: true
+    }
+];
+
+// Mock subscriptions (xe đã đăng ký gói)
+const mockSubscriptions = [];
 
 // Simulate network delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -647,6 +687,81 @@ export const mockApi = {
             data: {
                 message: "Email verified successfully! You can now complete your registration.",
                 verified: true
+            }
+        };
+    },
+
+    // Mock get subscription plans
+    async getSubscriptionPlans() {
+        await delay(500);
+        
+        return {
+            data: {
+                success: true,
+                payload: {
+                    subscriptionPlans: mockSubscriptionPlans
+                }
+            }
+        };
+    },
+
+    // Mock get vehicles without subscription
+    async getVehiclesWithoutSubscription() {
+        await delay(600);
+
+        // Lấy thông tin user từ storage
+        const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
+        if (!userInfoStr) {
+            return Promise.reject({
+                response: {
+                    status: 401,
+                    data: {
+                        message: "Người dùng không tồn tại"
+                    }
+                }
+            });
+        }
+
+        const currentUser = JSON.parse(userInfoStr);
+        console.log('🔍 Current User:', currentUser);
+        console.log('🔍 Current User account_id:', currentUser.account_id);
+        console.log('🔍 All mock vehicles:', mockVehicles);
+
+        // Lấy tất cả xe của user
+        const userVehicles = mockVehicles.filter(v => v.account_id === currentUser.account_id);
+        console.log('🚗 User vehicles:', userVehicles);
+
+        // Lọc ra xe chưa có subscription
+        const vehicleIdsWithSubscription = mockSubscriptions.map(sub => sub.vehicle_id);
+        console.log('📋 Vehicle IDs with subscription:', vehicleIdsWithSubscription);
+        
+        const vehiclesWithout = userVehicles.filter(
+            v => !vehicleIdsWithSubscription.includes(v.vehicle_id)
+        );
+        console.log('✅ Vehicles without subscription:', vehiclesWithout);
+
+        return {
+            data: {
+                success: true,
+                payload: {
+                    vehicles: vehiclesWithout
+                }
+            }
+        };
+    },
+
+    // Mock get subscriptions by user
+    async getSubscriptionsByUserId(userId) {
+        await delay(500);
+
+        const userSubscriptions = mockSubscriptions.filter(sub => sub.user_id === userId);
+
+        return {
+            data: {
+                success: true,
+                payload: {
+                    subscriptions: userSubscriptions
+                }
             }
         };
     }

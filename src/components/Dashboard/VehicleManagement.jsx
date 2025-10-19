@@ -82,11 +82,12 @@ const VehicleManagement = ({ onBack }) => {
         setLoading(true);
         try {
             const response = await vehicleAPI.getAll();
-            const vehiclesData = response.data?.vehicles || [];
+            // Mock API trả về response.data.payload.vehicles
+            const vehiclesData = response.data?.payload?.vehicles || response.data?.vehicles || [];
             const mappedVehicles = vehiclesData.map(vehicle => ({
                 ...vehicle,
-                // Lấy model.name để hiển thị
-                modelName: vehicle.model?.name || 'Unknown Model'
+                // Mock vehicles có trường 'model' (string), còn API thật có 'model.name'
+                modelName: typeof vehicle.model === 'string' ? vehicle.model : (vehicle.model?.name || 'Unknown Model')
             }));
             
             setVehicles(mappedVehicles);

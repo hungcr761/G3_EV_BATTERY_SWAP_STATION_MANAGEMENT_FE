@@ -27,15 +27,16 @@ export const authAPI = {
 
 // Vehicle APIs
 export const vehicleAPI = {
-    getAll: () => api.get('/vehicles'),
+    getAll: () => USE_MOCK_API ? mockApi.getUserVehicles() : api.get('/vehicles'),
     getById: (id) => api.get(`/vehicles/${id}`),
+    // Luôn dùng mock cho vehicles without subscription vì backend chưa có API này
+    getWithoutSubscription: () => mockApi.getVehiclesWithoutSubscription(),
     create: (data) =>
         USE_MOCK_API ? mockApi.createVehicle(data) : api.post('/vehicles', data),
     update: (id, data) =>
         USE_MOCK_API ? mockApi.updateVehicle(id, data) : api.put(`/vehicles/${id}`, data),
     delete: (id) =>
         USE_MOCK_API ? mockApi.deleteVehicle(id) : api.delete(`/vehicles/${id}`)
-
 };
 
 // Model API 
@@ -55,10 +56,21 @@ export const userAPI = {
 };
 
 
-export const stationAPI = {
-    getAll: () => api.get('/station'),
-    getById: (id) => api.get(`/station/${id}`),
-    create: (data) => api.post('/station', data),
-    update: (id, data) => api.put(`/station/${id}`, data),
-    delete: (id) => api.delete(`/station/${id}`),
+// Subscription Plan APIs
+export const subscriptionPlanAPI = {
+    getAll: () =>
+        USE_MOCK_API ? mockApi.getSubscriptionPlans() : api.get('/subscription-plan'),
+    getById: (id) => api.get(`/subscription-plan/${id}`)
 };
+
+// Subscription APIs (User đăng ký gói cho xe)
+export const subscriptionAPI = {
+    // Tạo subscription mới cho xe
+    create: (data) => api.post('/subscription', data),
+    // Lấy danh sách subscription của user (luôn dùng mock vì chưa có API)
+    getByUserId: (userId) => mockApi.getSubscriptionsByUserId(userId),
+    // Lấy subscription của một xe
+    getByVehicleId: (vehicleId) => api.get(`/subscription/vehicle/${vehicleId}`),
+    // Hủy subscription
+    cancel: (subscriptionId) => api.delete(`/subscription/${subscriptionId}`)
+} 

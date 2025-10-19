@@ -14,6 +14,7 @@ import Settings from './pages/Settings';
 import Stations from './pages/Stations';
 import Booking from './pages/Booking';
 import Services from './pages/Services';
+import Payment from './pages/Payment';
 import Support from './pages/Support';
 import './App.css';
 
@@ -57,6 +58,11 @@ function App() {
             <Layout>
               <Services />
             </Layout>
+          } />
+          <Route path="/payment" element={
+            <ProtectedRoute>
+              <Payment />
+            </ProtectedRoute>
           } />
           <Route path="/support" element={
             <Layout>
