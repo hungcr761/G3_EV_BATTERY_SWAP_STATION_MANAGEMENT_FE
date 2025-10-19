@@ -73,4 +73,12 @@ export const subscriptionAPI = {
     getByVehicleId: (vehicleId) => api.get(`/subscription/vehicle/${vehicleId}`),
     // Hủy subscription
     cancel: (subscriptionId) => api.delete(`/subscription/${subscriptionId}`)
-} 
+};
+
+export const stationAPI = {
+    getAll: () => api.get('/station'),
+    getById: (id) => api.get(`/station/${id}`),
+    create: (data) => api.post('/station', data),
+    update: (id, data) => api.put(`/station/${id}`, data),
+    delete: (id) => api.delete(`/station/${id}`),
+};
