@@ -20,7 +20,8 @@ const BookingConfirmation = ({
     onBack,
     isSubmitting = false
 }) => {
-    const [countdown, setCountdown] = useState(15 * 60); // 15 minutes in seconds
+    const [countdown, setCountdown] = useState(0);
+    const [bookingStartTime] = useState(new Date());
 
     React.useEffect(() => {
         if (selectedTime) {
@@ -69,6 +70,15 @@ const BookingConfirmation = ({
     };
 
     const isTimeExpired = countdown <= 0;
+    const getActiveTimeRange = () => {
+        if (!selectedTime) return { start: '', end: '' };
+        const startTime = bookingStartTime;
+        const endTime = new Date(selectedTime.time);
+        return {
+            start: formatTime(startTime),
+            end: formatTime(endTime)
+        };
+    };
 
     return (
         <div className="space-y-6">
@@ -81,40 +91,24 @@ const BookingConfirmation = ({
                 </p>
             </div>
 
-            {/* Countdown Timer */}
-            <div className={`p-4 rounded-lg border ${countdown > 300
-                ? 'bg-green-50 border-green-200'
-                : countdown > 60
-                    ? 'bg-yellow-50 border-yellow-200'
-                    : 'bg-red-50 border-red-200'
-                }`}>
+            {/* Active Time Range */}
+            <div className="p-4 rounded-lg border bg-blue-50 border-blue-200">
                 <div className="flex items-center justify-center space-x-2">
-                    <Clock className={`h-5 w-5 ${countdown > 300
-                        ? 'text-green-600'
-                        : countdown > 60
-                            ? 'text-yellow-600'
-                            : 'text-red-600'
-                        }`} />
-                    <span className={`font-bold text-lg ${countdown > 300
-                        ? 'text-green-700'
-                        : countdown > 60
-                            ? 'text-yellow-700'
-                            : 'text-red-700'
-                        }`}>
-                        {formatCountdown(countdown)}
+                    <Clock className="h-5 w-5 text-blue-600" />
+                    <span className="font-bold text-lg text-blue-700">
+                        {getActiveTimeRange().start} - {getActiveTimeRange().end}
                     </span>
                 </div>
-                <p className={`text-center text-sm mt-1 ${countdown > 300
-                    ? 'text-green-600'
-                    : countdown > 60
-                        ? 'text-yellow-600'
-                        : 'text-red-600'
-                    }`}>
-                    {isTimeExpired
-                        ? 'Thời gian đặt lịch đã hết hạn'
-                        : 'Thời gian còn lại để xác nhận đặt lịch'
-                    }
+                <p className="text-center text-sm mt-1 text-blue-600">
+                    Thời gian lệnh đặt sẽ active
                 </p>
+                {countdown > 0 && (
+                    <div className="mt-2 text-center">
+                        <p className="text-sm text-blue-600">
+                            Còn lại: {formatCountdown(countdown)} để đến trạm
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* Vehicle Information */}
@@ -202,7 +196,7 @@ const BookingConfirmation = ({
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Thời gian active:</span>
                             <span className="font-medium">
-                                {formatTime(selectedTime?.time)} - {formatTime(new Date(selectedTime?.time.getTime() + 15 * 60000))}
+                                {getActiveTimeRange().start} - {getActiveTimeRange().end}
                             </span>
                         </div>
                     </div>
@@ -216,7 +210,8 @@ const BookingConfirmation = ({
                     <div className="text-sm text-blue-800">
                         <p className="font-medium mb-1">Lưu ý quan trọng:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li>Lệnh đặt lịch chỉ có hiệu lực trong 15 phút từ thời điểm bạn chọn</li>
+                            <li>Lệnh đặt lịch sẽ active ngay từ khi bạn xác nhận</li>
+                            <li>Lệnh đặt sẽ kết thúc vào thời gian bạn chọn đến trạm</li>
                             <li>Nếu không đến trạm trong thời gian quy định, lệnh đặt sẽ tự động bị hủy</li>
                             <li>Vui lòng đến trạm đúng giờ để đảm bảo có pin sẵn sàng</li>
                         </ul>

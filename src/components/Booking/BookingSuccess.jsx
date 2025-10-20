@@ -25,11 +25,11 @@ const BookingSuccess = ({ bookingData, onClose }) => {
     };
 
     const getActiveTimeRange = (scheduledTime) => {
-        const startTime = new Date(scheduledTime);
-        const endTime = new Date(startTime.getTime() + 15 * 60000); // +15 minutes
+        const now = new Date();
+        const endTime = new Date(scheduledTime);
 
         return {
-            start: formatTime(startTime),
+            start: formatTime(now),
             end: formatTime(endTime)
         };
     };
@@ -171,7 +171,8 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                     <div className="text-sm text-blue-800">
                         <p className="font-medium mb-2">Lưu ý quan trọng:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li>Lệnh đặt lịch chỉ có hiệu lực trong 15 phút từ thời điểm bạn chọn</li>
+                            <li>Lệnh đặt lịch đã active ngay từ khi bạn xác nhận</li>
+                            <li>Lệnh đặt sẽ kết thúc vào thời gian bạn chọn đến trạm</li>
                             <li>Nếu không đến trạm trong thời gian quy định, lệnh đặt sẽ tự động bị hủy</li>
                             <li>Vui lòng đến trạm đúng giờ để đảm bảo có pin sẵn sàng</li>
                             <li>Mang theo giấy tờ tùy thân và thông tin xe khi đến trạm</li>
