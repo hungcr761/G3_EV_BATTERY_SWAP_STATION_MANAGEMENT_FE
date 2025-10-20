@@ -21,7 +21,7 @@ export default function Payment() {
     const navigate = useNavigate();
     const { plan, vehicle } = location.state || {};
     const [processing, setProcessing] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState('vnpay');
+    const [paymentMethod, setPaymentMethod] = useState('momo');
 
     // Nếu không có data, redirect về services
     useEffect(() => {
@@ -49,6 +49,8 @@ export default function Payment() {
     // Tính tổng tiền
     const totalAmount = (parseFloat(plan.plan_fee) || 0) + (parseFloat(plan.deposit_fee) || 0);
 
+    const displayModelName = vehicle.model?.name || 'N/A';
+
     const handlePayment = async () => {
         setProcessing(true);
 
@@ -67,10 +69,7 @@ export default function Payment() {
     };
 
     const paymentMethods = [
-        { id: 'vnpay', name: 'VNPay', logo: '💳' },
-        { id: 'momo', name: 'MoMo', logo: '📱' },
-        { id: 'zalopay', name: 'ZaloPay', logo: '💰' },
-        { id: 'banking', name: 'Chuyển khoản ngân hàng', logo: '🏦' }
+        { id: 'momo', name: 'MoMo', logo: '📱' }
     ];
 
     return (
@@ -131,18 +130,6 @@ export default function Payment() {
                                                     SoH cap: <strong>{plan.soh_cap ? (parseFloat(plan.soh_cap) * 100).toFixed(0) : 0}%</strong>
                                                 </span>
                                             </div>
-                                            {/* <div className="flex items-center space-x-2">
-                                                <Check className="h-5 w-5 text-green-500" />
-                                                <span className="text-sm">
-                                                    Hỗ trợ 24/7
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <Check className="h-5 w-5 text-green-500" />
-                                                <span className="text-sm">
-                                                    Bảo hiểm toàn diện
-                                                </span>
-                                            </div> */}
                                         </div>
                                     </div>
                                 </div>
@@ -161,7 +148,7 @@ export default function Payment() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground mb-1">Tên xe</p>
-                                        <p className="font-semibold text-lg">{vehicle.model_name || 'N/A'}</p>
+                                        <p className="font-semibold text-lg">{displayModelName}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground mb-1">Biển số</p>
@@ -175,34 +162,7 @@ export default function Payment() {
                             </CardContent>
                         </Card>
 
-                        {/* Payment Method */}
-                        <Card className="shadow-lg">
-                            <CardHeader>
-                                <CardTitle className="flex items-center text-2xl">
-                                    <CreditCard className="mr-3 h-6 w-6" />
-                                    Phương thức thanh toán
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    {paymentMethods.map((method) => (
-                                        <button
-                                            key={method.id}
-                                            onClick={() => setPaymentMethod(method.id)}
-                                            className={`p-4 border-2 rounded-lg transition-all ${paymentMethod === method.id
-                                                ? 'border-primary bg-primary/5 shadow-md'
-                                                : 'border-gray-200 hover:border-primary/50'
-                                                }`}
-                                        >
-                                            <div className="flex items-center space-x-3">
-                                                <span className="text-3xl">{method.logo}</span>
-                                                <span className="font-medium">{method.name}</span>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
+                        {/* Payment Method removed from left column — MoMo will be shown in Price Summary on the right */}
                     </div>
 
                     {/* Right Column - Price Summary */}
@@ -227,25 +187,14 @@ export default function Payment() {
                                         </p>
                                     </div>
 
-                                    {/* Deposit Fee */}
-                                    <div className="flex justify-between items-center py-3 border-b">
-                                        <div>
-                                            <p className="font-medium">Phí đặt cọc</p>
-                                            <p className="text-sm text-muted-foreground">Hoàn trả khi hủy</p>
-                                        </div>
-                                        <p className="font-semibold text-lg">
-                                            {formatPrice(plan.deposit_fee || 0)}
-                                        </p>
-                                    </div>
-
                                     {/* Penalty Fee Info */}
                                     <div className="flex justify-between items-center py-3 border-b">
                                         <div>
-                                            <p className="font-medium">Phí phạt/lượt</p>
+                                            <p className="font-medium">Phí phạt/%</p>
                                             <p className="text-sm text-muted-foreground">Nếu vi phạm quy định</p>
                                         </div>
                                         <p className="font-semibold text-lg text-orange-600">
-                                            {formatPrice(plan.penalty_fee || 0)}
+                                            {formatPrice(plan.penalty_fee || 0)}/%
                                         </p>
                                     </div>
 
@@ -287,6 +236,21 @@ export default function Payment() {
                                         )}
                                     </Button>
 
+                                    {/* MoMo-only payment info */}
+                                    <div className="mt-4 p-4 border rounded-lg bg-white">
+                                        <h4 className="font-semibold mb-2 flex items-center">
+                                            <span className="text-2xl mr-2">📱</span>
+                                            Thanh toán bằng MoMo
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground mb-2">
+                                            Mở ứng dụng MoMo, chọn "Quét mã" hoặc "Chuyển tiền" để tiếp tục thanh toán.
+                                        </p>
+                                        <div className="text-sm text-muted-foreground">
+                                            <p>Phương thức được chọn: <strong className="text-foreground">{paymentMethods[0].name}</strong></p>
+                                            <p className="mt-2">Mẹo: Sử dụng QR để thanh toán nhanh.</p>
+                                        </div>
+                                    </div>
+
                                     {/* Security Note */}
                                     <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
                                         <div className="flex items-start space-x-2">
@@ -312,10 +276,6 @@ export default function Payment() {
                                         <li className="flex items-start">
                                             <Check className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />
                                             <span>Gói sẽ được kích hoạt ngay sau khi thanh toán</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <Check className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />
-                                            <span>Phí đặt cọc sẽ được hoàn trả khi hủy gói</span>
                                         </li>
                                         <li className="flex items-start">
                                             <Check className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />

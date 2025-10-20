@@ -26,6 +26,14 @@ export default function Services() {
         }).format(price);
     };
 
+    // Format percent values (avoid JS floating point artifacts)
+    const formatPercent = (value) => {
+        const num = Number(value) || 0;
+        const percent = num * 100;
+        const maximumFractionDigits = Number.isInteger(percent) ? 0 : 2;
+        return new Intl.NumberFormat('vi-VN', { maximumFractionDigits }).format(percent);
+    };
+
     // Fetch vehicles without subscription plan
     const fetchVehiclesWithoutPlan = async () => {
         setLoadingVehicles(true);
@@ -169,15 +177,15 @@ export default function Services() {
                                                     <li className="flex items-center space-x-2 lg:space-x-3">
                                                         <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
                                                         <span className="text-xs lg:text-sm text-muted-foreground">
-                                                            SoH cap: {parseFloat(plan.soh_cap) * 100}%
+                                                            SoH cap: {formatPercent(plan.soh_cap)}%
                                                         </span>
                                                     </li>
-                                                    {/* <li className="flex items-center space-x-2 lg:space-x-3">
+                                                    <li className="flex items-center space-x-2 lg:space-x-3">
                                                         <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
                                                         <span className="text-xs lg:text-sm text-muted-foreground">
-                                                            Phí phạt: {formatPrice(plan.penalty_fee)}/lượt
+                                                            Phí phạt: {formatPrice(plan.penalty_fee)}/%
                                                         </span>
-                                                    </li> */}
+                                                    </li>
                                                     <li className="flex items-center space-x-2 lg:space-x-3">
                                                         <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
                                                         <span className="text-xs lg:text-sm text-muted-foreground">
@@ -213,14 +221,11 @@ export default function Services() {
                         {plans.filter(plan => parseFloat(plan.swap_fee) > 0).length > 0 && (
                             <div className="space-y-6">
                                 <div className="text-center">
-                                    <Badge className="mb-3 bg-blue-500 text-white px-4 py-1.5 text-sm">
-                                        THANH TOÁN THEO LƯỢT
-                                    </Badge>
                                     <h2 className="text-2xl font-bold text-foreground">
                                         Gói Theo Lượt Đổi Pin
                                     </h2>
                                     <p className="text-muted-foreground mt-2">
-                                        Linh hoạt thanh toán - chỉ trả phí khi đổi pin thực tế
+                                        Trả phí theo lượt đổi pin, thanh toán tổng hợp cuối tháng.
                                     </p>
                                 </div>
 
@@ -258,15 +263,15 @@ export default function Services() {
                                                     <li className="flex items-center space-x-2 lg:space-x-3">
                                                         <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
                                                         <span className="text-xs lg:text-sm text-muted-foreground">
-                                                            SoH cap: {parseFloat(plan.soh_cap) * 100}%
+                                                            SoH cap: {formatPercent(plan.soh_cap)}%
                                                         </span>
                                                     </li>
-                                                    {/* <li className="flex items-center space-x-2 lg:space-x-3">
+                                                    <li className="flex items-center space-x-2 lg:space-x-3">
                                                         <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
                                                         <span className="text-xs lg:text-sm text-muted-foreground">
-                                                            Phí phạt: {formatPrice(plan.penalty_fee)}/lượt
+                                                            Phí phạt: {formatPrice(plan.penalty_fee)}/%
                                                         </span>
-                                                    </li> */}
+                                                    </li>
                                                     <li className="flex items-center space-x-2 lg:space-x-3">
                                                         <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
                                                         <span className="text-xs lg:text-sm text-muted-foreground">
@@ -307,27 +312,27 @@ export default function Services() {
                                 <h3 className="text-2xl font-bold text-foreground">
                                     Cách tính phí
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
                                     <div className="space-y-2">
                                         <h4 className="font-semibold text-foreground">Phí gói hàng tháng</h4>
                                         <p className="text-sm text-muted-foreground">
-                                            Thanh toán trước mỗi tháng theo gói đã chọn
+                                            Thanh toán cố định mỗi tháng theo gói dịch vụ đã chọn
+                                            (Không giới hạn hoặc Theo lượt).
                                         </p>
                                     </div>
+
                                     <div className="space-y-2">
-                                        <h4 className="font-semibold text-foreground">Phí vượt quá</h4>
+                                        <h4 className="font-semibold text-foreground">Phí hao mòn pin</h4>
                                         <p className="text-sm text-muted-foreground">
-                                            Tính theo delta SoH, trừ free allowance
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <h4 className="font-semibold text-foreground">Bảo hiểm</h4>
-                                        <p className="text-sm text-muted-foreground">
-                                            Tất cả gói đều bao gồm bảo hiểm pin toàn diện
+                                            Áp dụng khi SoH pin vượt ngưỡng 1% miễn phí. Mỗi 1% vượt thêm
+                                            tương đương 100.000&nbsp;VNĐ. Nếu nhỏ hơn 1%, tính theo tỷ lệ
+                                            phần trăm thực tế.
                                         </p>
                                     </div>
                                 </div>
                             </div>
+
                         </CardContent>
                     </Card>
                 </div>
