@@ -15,7 +15,6 @@ export default function Services() {
 
     const [showVehicleDialog, setShowVehicleDialog] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(null);
-    const [vehicles] = useState([]);
     const [vehiclesWithoutPlan, setVehiclesWithoutPlan] = useState([]);
     const [loadingVehicles, setLoadingVehicles] = useState(false);
     const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -133,14 +132,14 @@ export default function Services() {
                                 <Card key={plan.plan_id}>
                                     <CardHeader className="text-center pb-4">
                                         <CardTitle className="text-2xl font-bold">
-                                            <CardTitle className="text-2xl font-bold">{plan.plan_name}</CardTitle>
-                                            <CardDescription className="text-sm text-muted-foreground mt-2">
-                                                {plan.description}
-                                            </CardDescription>
-                                            <div className="text-3xl font-bold text-primary mt-4">
-                                                {formatPrice(plan.plan_fee)}/tháng
-                                            </div>
+                                            {plan.plan_name}
                                         </CardTitle>
+                                        <CardDescription className="text-sm text-muted-foreground mt-2">
+                                            {plan.description}
+                                        </CardDescription>
+                                        <div className="text-3xl font-bold text-primary mt-4">
+                                            {formatPrice(plan.plan_fee)}/tháng
+                                        </div>
                                     </CardHeader>
 
                                     <CardContent className="space-y-6">
