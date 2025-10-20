@@ -241,11 +241,11 @@ const Dashboard = () => {
                             <CardContent className="space-y-3">
                                 <Button className="w-full justify-start" variant="outline">
                                     <MapPin className="mr-2 h-4 w-4" />
-                                    Tìm trạm gần nhất
+                                    Lịch sử thanh toán
                                 </Button>
                                 <Button className="w-full justify-start" variant="outline">
                                     <Calendar className="mr-2 h-4 w-4" />
-                                    Đặt lịch đổi pin
+                                    Lịch sử đổi pin
                                 </Button>
                                 <Button
                                     className="w-full justify-start"
@@ -257,7 +257,7 @@ const Dashboard = () => {
                                 </Button>
                                 <Button className="w-full justify-start" variant="outline">
                                     <CreditCard className="mr-2 h-4 w-4" />
-                                    Xem hóa đơn
+                                    Quản lý gói dịch vụ
                                 </Button>
                             </CardContent>
                         </Card>

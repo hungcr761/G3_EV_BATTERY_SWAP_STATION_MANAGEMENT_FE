@@ -28,21 +28,20 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
         }
     }, [selectedVehicle, selectedStation]);
 
-    // Handle booking timer when time is selected
+    // Handle booking timer when booking is created
     useEffect(() => {
-        if (selectedTime && currentStep === 3) {
+        if (bookingId && selectedTime) {
+            // Booking is active immediately when created
+            setIsBookingActive(true);
+
+            // Set timer to delete booking at selected time
             const now = new Date();
             const selectedDateTime = new Date(selectedTime.time);
             const timeDiff = selectedDateTime.getTime() - now.getTime();
 
             if (timeDiff > 0) {
-                // Set timer to activate booking at selected time
-                timerRef.current = setTimeout(() => {
-                    setIsBookingActive(true);
-                    // Set timer to delete booking after 15 minutes
-                    deleteTimerRef.current = setTimeout(() => {
-                        handleAutoDeleteBooking();
-                    }, 15 * 60 * 1000); // 15 minutes
+                deleteTimerRef.current = setTimeout(() => {
+                    handleAutoDeleteBooking();
                 }, timeDiff);
             }
         }
@@ -51,15 +50,30 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             if (timerRef.current) clearTimeout(timerRef.current);
             if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
         };
-    }, [selectedTime, currentStep]);
+    }, [bookingId, selectedTime]);
 
     const checkAvailability = async () => {
         try {
-            const response = await bookingAPI.checkAvailability({
-                station_id: selectedStation.id,
-                battery_type: selectedVehicle.batteryTypeCode,
-                scheduled_time: selectedTime?.time?.toISOString()
+            console.log('Checking availability with:', {
+                selectedStation,
+                selectedVehicle,
+                stationId: selectedStation?.id,
+                vehicleId: selectedVehicle?.vehicle_id
             });
+
+            if (!selectedStation?.id || !selectedVehicle?.vehicle_id) {
+                console.error('Missing station or vehicle ID:', {
+                    stationId: selectedStation?.id,
+                    vehicleId: selectedVehicle?.vehicle_id
+                });
+                setError('Thiếu thông tin trạm hoặc xe');
+                return;
+            }
+
+            const response = await bookingAPI.checkAvailability(
+                selectedStation.id,
+                selectedVehicle.vehicle_id
+            );
 
             setAvailabilityData(response.data);
 

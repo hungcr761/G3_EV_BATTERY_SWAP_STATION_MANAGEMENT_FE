@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -46,6 +46,10 @@ const VehicleManagement = ({ onBack }) => {
     const [vehicleModels, setVehicleModels] = useState([]);
     const [batteryTypes, setBatteryTypes] = useState([]);
 
+    // Use refs to store latest data without causing re-renders
+    const vehicleModelsRef = useRef([]);
+    const batteryTypesRef = useRef([]);
+
     const {
         register,
         handleSubmit: handleFormSubmit,
@@ -62,7 +66,7 @@ const VehicleManagement = ({ onBack }) => {
         }
     });
 
-    {/* Fetch vehicle models and battery types for the select dropdown */ }
+    // Fetch vehicle models and battery types for the select dropdown
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -70,11 +74,13 @@ const VehicleManagement = ({ onBack }) => {
                 const modelsResponse = await modelAPI.getAll();
                 const models = modelsResponse.data?.payload?.vehicleModels || [];
                 setVehicleModels(models);
+                vehicleModelsRef.current = models;
 
                 // Fetch battery types
                 const batteryResponse = await batteryTypeAPI.getAll();
                 const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
                 setBatteryTypes(batteryTypesData);
+                batteryTypesRef.current = batteryTypesData;
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -83,7 +89,7 @@ const VehicleManagement = ({ onBack }) => {
         fetchData();
     }, []);
 
-    // Fetch vehicles function
+    // Fetch vehicles function - using refs to avoid infinite loop
     const fetchVehicles = useCallback(async () => {
         setLoading(true);
         try {
@@ -96,12 +102,12 @@ const VehicleManagement = ({ onBack }) => {
                 const modelName = vehicle.model?.name || 'Unknown Model';
 
                 // Find the corresponding model in vehicleModels to get battery_type_id
-                const vehicleModel = vehicleModels.find(vm => vm.model_id === vehicle.model_id);
+                const vehicleModel = vehicleModelsRef.current.find(vm => vm.model_id === vehicle.model_id);
 
                 // Get battery type name using battery_type_id from vehicle model
                 let batteryName = 'Unknown Battery';
                 if (vehicleModel?.battery_type_id) {
-                    const batteryType = batteryTypes.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
+                    const batteryType = batteryTypesRef.current.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
                     batteryName = batteryType?.battery_type_code || 'Unknown Battery';
                 }
 
@@ -118,12 +124,14 @@ const VehicleManagement = ({ onBack }) => {
         } finally {
             setLoading(false);
         }
-    }, [batteryTypes, vehicleModels]);
+    }, []); // No dependencies to prevent infinite loop
 
-    // Load vehicles when component mounts
+    // Load vehicles when component mounts and when data is available
     useEffect(() => {
-        fetchVehicles();
-    }, [fetchVehicles]);
+        if (vehicleModels.length > 0 && batteryTypes.length > 0) {
+            fetchVehicles();
+        }
+    }, [vehicleModels, batteryTypes, fetchVehicles]);
 
     const onSubmit = async (data) => {
         setIsSubmitting(true);
