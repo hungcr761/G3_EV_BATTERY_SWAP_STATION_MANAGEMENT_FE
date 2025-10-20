@@ -126,7 +126,7 @@ export default function Services() {
                 {!loading && !error && plans.length > 0 && (
                     <div className="space-y-12 max-w-7xl mx-auto">
                         {/* Gói KHÔNG THEO LƯỢT (fee_slot = 0) */}
-                        {plans.filter(plan => parseFloat(plan.fee_slot) === 0).length > 0 && (
+                        {plans.filter(plan => parseFloat(plan.swap_fee) === 0).length > 0 && (
                             <div className="space-y-6">
                                 <div className="text-center">
                                     <Badge className="mb-3 bg-green-500 text-white px-4 py-1.5 text-sm">
@@ -141,7 +141,7 @@ export default function Services() {
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                                    {plans.filter(plan => parseFloat(plan.fee_slot) === 0).map((plan) => (
+                                    {plans.filter(plan => parseFloat(plan.swap_fee) === 0).map((plan) => (
                                         <Card key={plan.plan_id} className="flex flex-col hover:shadow-xl transition-all duration-300">
                                             <CardHeader className="text-center pb-4 flex-shrink-0">
                                                 <CardTitle className="text-xl lg:text-2xl font-bold">
@@ -210,7 +210,7 @@ export default function Services() {
                         )}
 
                         {/* Gói THEO LƯỢT (fee_slot > 0) */}
-                        {plans.filter(plan => parseFloat(plan.fee_slot) > 0).length > 0 && (
+                        {plans.filter(plan => parseFloat(plan.swap_fee) > 0).length > 0 && (
                             <div className="space-y-6">
                                 <div className="text-center">
                                     <Badge className="mb-3 bg-blue-500 text-white px-4 py-1.5 text-sm">
@@ -225,7 +225,7 @@ export default function Services() {
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                                    {plans.filter(plan => parseFloat(plan.fee_slot) > 0).map((plan) => (
+                                    {plans.filter(plan => parseFloat(plan.swap_fee) > 0).map((plan) => (
                                         <Card key={plan.plan_id} className="flex flex-col hover:shadow-xl transition-all duration-300 border-blue-200">
                                             <CardHeader className="text-center pb-4 flex-shrink-0">
                                                 <CardTitle className="text-xl lg:text-2xl font-bold">
@@ -239,7 +239,7 @@ export default function Services() {
                                                         {formatPrice(plan.plan_fee)}/tháng
                                                     </div>
                                                     <div className="text-sm lg:text-base text-blue-600 font-semibold">
-                                                        + {formatPrice(plan.fee_slot)}/lượt
+                                                        + {formatPrice(plan.swap_fee)}/lượt
                                                     </div>
                                                 </div>
                                             </CardHeader>
@@ -276,7 +276,7 @@ export default function Services() {
                                                     <li className="flex items-center space-x-2 lg:space-x-3">
                                                         <Battery className="h-4 w-4 lg:h-5 lg:w-5 text-blue-500 flex-shrink-0" />
                                                         <span className="text-xs lg:text-sm font-semibold text-blue-600">
-                                                            Phí {formatPrice(plan.fee_slot)}/lần đổi
+                                                            Phí {formatPrice(plan.swap_fee)}/lần đổi
                                                         </span>
                                                     </li>
                                                 </ul>

@@ -18,12 +18,23 @@ export default function useSubscriptionPlan() {
         try {
             const response = await subscriptionPlanAPI.getAll();
             console.log('📦 Full Response:', response);
-            
-            // API trả về: {success: true, payload: {subscriptionPlans: [...]}}
-            const dataArray = response.data?.payload?.subscriptionPlans || [];
-            
-            
-            const activePlans = dataArray.filter(plan => plan.is_active === true);
+
+            // Hỗ trợ nhiều format payload khác nhau từ backend/mock
+            const payload = response?.data?.payload ?? response?.data ?? {};
+            const dataArray =
+                payload.subscriptionPlans ||
+                payload.plans ||
+                payload.data ||
+                [];
+
+            // Chuẩn hóa lọc theo trạng thái hoạt động: is_active | isActive | status === 'active'
+            const activePlans = (Array.isArray(dataArray) ? dataArray : []).filter((plan) => {
+                if (typeof plan?.is_active === 'boolean') return plan.is_active;
+                if (typeof plan?.isActive === 'boolean') return plan.isActive;
+                if (typeof plan?.status === 'string') return plan.status.toLowerCase() === 'active';
+                // Nếu không có cờ trạng thái, mặc định hiển thị
+                return true;
+            });
 
             setPlans(activePlans);
         } catch (err) {
@@ -37,7 +48,7 @@ export default function useSubscriptionPlan() {
     useEffect(() => {
         fetchPlans();
     }, []);
-    
+
     return {
         plans,
         loading,
