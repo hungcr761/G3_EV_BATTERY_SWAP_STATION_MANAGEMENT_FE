@@ -15,6 +15,7 @@ import {
     Shield,
     Calendar
 } from 'lucide-react';
+import { invoiceAPI, paymentAPI } from '@/lib/apiServices';
 
 export default function Payment() {
     const location = useLocation();
@@ -50,17 +51,47 @@ export default function Payment() {
     const totalAmount = (parseFloat(plan.plan_fee) || 0) + (parseFloat(plan.deposit_fee) || 0);
 
     const handlePayment = async () => {
+        if (!plan?.plan_id || !vehicle?.vehicle_id) {
+            alert('Thiếu thông tin gói dịch vụ hoặc xe. Vui lòng quay lại chọn lại.');
+            return;
+        }
+
         setProcessing(true);
-
         try {
-            // Simulate payment processing
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // 1) Tạo hóa đơn từ subscription
+            const invoiceRes = await invoiceAPI.createFromSubscription({
+                vehicle_id: vehicle.vehicle_id,
+                plan_id: plan.plan_id
+            });
 
-            alert('Thanh toán thành công! Đã kích hoạt gói dịch vụ cho xe của bạn.');
-            navigate('/dashboard');
+            const invoicePayload = invoiceRes?.data || invoiceRes; // hỗ trợ cả mock
+            const createdInvoice = invoicePayload?.data?.invoice || invoicePayload?.payload?.invoice;
+            const invoiceId = createdInvoice?.invoice_id || invoicePayload?.invoice_id;
+
+            if (!invoiceId) {
+                throw new Error('Không nhận được mã hóa đơn từ máy chủ');
+            }
+
+            // 2) Tạo payment để lấy payUrl MoMo
+            const paymentRes = await paymentAPI.create({
+                invoice_id: invoiceId,
+                vehicle_id: vehicle.vehicle_id,
+                plan_id: plan.plan_id
+            });
+
+            const paymentData = paymentRes?.data?.data || paymentRes?.data || {};
+            const payUrl = paymentData?.payUrl;
+
+            if (!payUrl) {
+                throw new Error('Không lấy được liên kết thanh toán');
+            }
+
+            // 3) Điều hướng sang cổng MoMo
+            window.location.assign(payUrl);
         } catch (error) {
             console.error('Payment error:', error);
-            alert('Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.');
+            const message = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi thanh toán.';
+            alert(message);
         } finally {
             setProcessing(false);
         }
