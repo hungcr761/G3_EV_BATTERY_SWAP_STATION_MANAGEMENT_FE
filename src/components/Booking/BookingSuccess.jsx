@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { CheckCircle, Clock, MapPin, Car, Battery } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, Motorbike, Battery } from 'lucide-react';
 
 const BookingSuccess = ({ bookingData, onClose }) => {
     const formatTime = (timeString) => {
@@ -108,7 +108,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
-                        <Car className="h-5 w-5" />
+                        <Motorbike className="h-5 w-5" />
                         <span>Thông tin xe</span>
                     </CardTitle>
                 </CardHeader>

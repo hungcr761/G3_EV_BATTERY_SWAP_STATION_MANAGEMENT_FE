@@ -8,7 +8,7 @@ import {
     Clock,
     Shield,
     Zap,
-    Car,
+    Motorbike,
     ArrowRight,
     Star,
     Users
@@ -114,7 +114,7 @@ const HeroSection = () => {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-3">
                                             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                                                <Car className="h-6 w-6 text-primary" />
+                                                <Motorbike className="h-6 w-6 text-primary" />
                                             </div>
                                             <div>
                                                 <h3 className="font-semibold">Trạm ABC - Quận 1</h3>

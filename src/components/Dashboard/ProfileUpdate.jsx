@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth } from '../../hooks/useAuth';
 import { userAPI } from '../../lib/apiServices';
 import { profileUpdateSchema } from '../../lib/validations';
-import { ArrowLeft, Save, User, Mail, Phone, Camera, AlertCircle, CheckCircle, CreditCard, Car } from 'lucide-react';
+import { ArrowLeft, Save, User, Mail, Phone, Camera, AlertCircle, CheckCircle, CreditCard, Motorbike } from 'lucide-react';
 
 const ProfileUpdate = ({ onBack }) => {
     const { user, updateUser } = useAuth();
@@ -267,7 +267,7 @@ const ProfileUpdate = ({ onBack }) => {
                                             Bằng lái xe <span className="text-red-500">*</span>
                                         </Label>
                                         <div className="relative">
-                                            <Car className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                            <Motorbike className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                             <Input
                                                 id="driving_license"
                                                 name="driving_license"

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { vehicleAPI } from '../../lib/apiServices';
-import { Car, Battery, CheckCircle } from 'lucide-react';
+import { Motorbike, Battery, CheckCircle } from 'lucide-react';
 
 const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
     const [vehicles, setVehicles] = useState([]);
@@ -77,7 +77,7 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
     if (vehicles.length === 0) {
         return (
             <div className="text-center py-8">
-                <Car className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <Motorbike className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">Bạn chưa có xe nào được đăng ký</p>
                 <Button variant="outline">Thêm xe mới</Button>
             </div>
@@ -100,8 +100,8 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
                     <Card
                         key={vehicle.vehicle_id}
                         className={`cursor-pointer transition-all hover:shadow-md ${selectedVehicle?.vehicle_id === vehicle.vehicle_id
-                                ? 'ring-2 ring-primary bg-primary/5'
-                                : 'hover:border-primary/50'
+                            ? 'ring-2 ring-primary bg-primary/5'
+                            : 'hover:border-primary/50'
                             }`}
                         onClick={() => handleVehicleSelect(vehicle)}
                     >
@@ -109,7 +109,7 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-2">
-                                        <Car className="h-5 w-5 text-primary" />
+                                        <Motorbike className="h-5 w-5 text-primary" />
                                         <h3 className="font-semibold text-lg">{vehicle.modelName}</h3>
                                         {selectedVehicle?.vehicle_id === vehicle.vehicle_id && (
                                             <CheckCircle className="h-5 w-5 text-green-500" />

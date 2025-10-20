@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import {
-    Car,
+    Motorbike,
     MapPin,
     Clock,
     Battery,
@@ -83,32 +83,32 @@ const BookingConfirmation = ({
 
             {/* Countdown Timer */}
             <div className={`p-4 rounded-lg border ${countdown > 300
-                    ? 'bg-green-50 border-green-200'
-                    : countdown > 60
-                        ? 'bg-yellow-50 border-yellow-200'
-                        : 'bg-red-50 border-red-200'
+                ? 'bg-green-50 border-green-200'
+                : countdown > 60
+                    ? 'bg-yellow-50 border-yellow-200'
+                    : 'bg-red-50 border-red-200'
                 }`}>
                 <div className="flex items-center justify-center space-x-2">
                     <Clock className={`h-5 w-5 ${countdown > 300
-                            ? 'text-green-600'
-                            : countdown > 60
-                                ? 'text-yellow-600'
-                                : 'text-red-600'
+                        ? 'text-green-600'
+                        : countdown > 60
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
                         }`} />
                     <span className={`font-bold text-lg ${countdown > 300
-                            ? 'text-green-700'
-                            : countdown > 60
-                                ? 'text-yellow-700'
-                                : 'text-red-700'
+                        ? 'text-green-700'
+                        : countdown > 60
+                            ? 'text-yellow-700'
+                            : 'text-red-700'
                         }`}>
                         {formatCountdown(countdown)}
                     </span>
                 </div>
                 <p className={`text-center text-sm mt-1 ${countdown > 300
-                        ? 'text-green-600'
-                        : countdown > 60
-                            ? 'text-yellow-600'
-                            : 'text-red-600'
+                    ? 'text-green-600'
+                    : countdown > 60
+                        ? 'text-yellow-600'
+                        : 'text-red-600'
                     }`}>
                     {isTimeExpired
                         ? 'Thời gian đặt lịch đã hết hạn'
@@ -121,7 +121,7 @@ const BookingConfirmation = ({
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
-                        <Car className="h-5 w-5" />
+                        <Motorbike className="h-5 w-5" />
                         <span>Thông tin xe</span>
                     </CardTitle>
                 </CardHeader>

@@ -16,7 +16,8 @@ import {
     Search,
     Filter,
     Navigation,
-    Calendar
+    Calendar,
+    Motorbike
 } from 'lucide-react';
 
 const Stations = () => {
@@ -275,7 +276,7 @@ const Stations = () => {
                         <div className="flex items-center space-x-4">
                             {selectedVehicle && (
                                 <div className="flex items-center space-x-2">
-                                    <Car className="h-5 w-5 text-primary" />
+                                    <Motorbike className="h-5 w-5 text-primary" />
                                     <div>
                                         <p className="font-medium">{selectedVehicle.modelName}</p>
                                         <p className="text-sm text-muted-foreground">

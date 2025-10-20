@@ -2,53 +2,71 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { vehicleAPI } from '../../lib/apiServices';
-import { Car, Battery, CheckCircle, ArrowRight } from 'lucide-react';
+import { vehicleAPI, modelAPI, batteryTypeAPI } from '../../lib/apiServices';
+import { Motorbike, Battery, CheckCircle, ArrowRight } from 'lucide-react';
 
 const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBooking = false }) => {
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [vehicleModels, setVehicleModels] = useState([]);
+    const [batteryTypes, setBatteryTypes] = useState([]);
 
     useEffect(() => {
-        const fetchVehicles = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
+
+                // Fetch vehicle models and battery types first
+                const [modelsResponse, batteryResponse] = await Promise.all([
+                    modelAPI.getAll(),
+                    batteryTypeAPI.getAll()
+                ]);
+
+                const models = modelsResponse.data?.payload?.vehicleModels || [];
+                const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
+
+                setVehicleModels(models);
+                setBatteryTypes(batteryTypesData);
+
+                // Then fetch vehicles
                 const response = await vehicleAPI.getAll();
-                const vehiclesData = response.data?.payload?.vehicles || response.data?.vehicles || [];
+                const vehiclesData = response.data?.vehicles || [];
 
                 // Map vehicles with battery type information
-                const mappedVehicles = vehiclesData.map(vehicle => ({
-                    ...vehicle,
-                    modelName: typeof vehicle.model === 'string' ? vehicle.model : (vehicle.model?.name || 'Unknown Model'),
-                    // Determine battery type based on model (this would come from backend in real implementation)
-                    batteryType: getBatteryTypeFromModel(vehicle.modelName),
-                    batteryTypeCode: getBatteryTypeCodeFromModel(vehicle.modelName)
-                }));
+                const mappedVehicles = vehiclesData.map(vehicle => {
+                    // Get model name from vehicle.model
+                    const modelName = vehicle.model?.name || 'Unknown Model';
+
+                    // Find the corresponding model in vehicleModels to get battery_type_id
+                    const vehicleModel = models.find(vm => vm.model_id === vehicle.model_id);
+
+                    // Get battery type name using battery_type_id from vehicle model
+                    let batteryName = 'Unknown Battery';
+                    if (vehicleModel?.battery_type_id) {
+                        const batteryType = batteryTypesData.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
+                        batteryName = batteryType?.battery_type_code || 'Unknown Battery';
+                    }
+
+                    return {
+                        ...vehicle,
+                        modelName,
+                        batteryName
+                    };
+                });
 
                 setVehicles(mappedVehicles);
             } catch (error) {
-                console.error('Error fetching vehicles:', error);
+                console.error('Error fetching data:', error);
                 setError('Không thể tải danh sách xe');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchVehicles();
+        fetchData();
     }, []);
 
-    // Helper function to determine battery type from model
-    const getBatteryTypeFromModel = (modelName) => {
-        // This is a simplified mapping - in real implementation, this would come from backend
-        const type1Models = ['VinFast Theon', 'VinFast Evo200'];
-        return type1Models.includes(modelName) ? 'Type 1' : 'Type 2';
-    };
-
-    const getBatteryTypeCodeFromModel = (modelName) => {
-        const type1Models = ['VinFast Theon', 'VinFast Evo200'];
-        return type1Models.includes(modelName) ? 'type1' : 'type2';
-    };
 
     const handleVehicleSelect = (vehicle) => {
         onVehicleSelect(vehicle);
@@ -77,7 +95,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
     if (vehicles.length === 0) {
         return (
             <div className="text-center py-8">
-                <Car className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <Motorbike className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">Bạn chưa có xe nào được đăng ký</p>
                 <Button variant="outline">Thêm xe mới</Button>
             </div>
@@ -112,7 +130,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-2">
-                                        <Car className="h-5 w-5 text-primary" />
+                                        <Motorbike className="h-5 w-5 text-primary" />
                                         <h3 className="font-semibold text-lg">{vehicle.modelName}</h3>
                                         {selectedVehicle?.vehicle_id === vehicle.vehicle_id && (
                                             <CheckCircle className="h-5 w-5 text-green-500" />
@@ -126,12 +144,8 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                                         </div>
 
                                         <div className="flex items-center space-x-4">
-                                            <div className="flex items-center space-x-1">
-                                                <Battery className="h-4 w-4" />
-                                                <span>SoH: {vehicle.battery_soh}%</span>
-                                            </div>
                                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                                {vehicle.batteryType}
+                                                {vehicle.batteryName}
                                             </Badge>
                                         </div>
                                     </div>

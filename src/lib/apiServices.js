@@ -44,6 +44,11 @@ export const modelAPI = {
     getAll: () => api.get('/vehicle-model')
 }
 
+// Battery Type API
+export const batteryTypeAPI = {
+    getAll: () => api.get('/battery-type')
+}
+
 // user APIs
 export const userAPI = {
     getAll: (params) => api.get('/api/user', { params }),
