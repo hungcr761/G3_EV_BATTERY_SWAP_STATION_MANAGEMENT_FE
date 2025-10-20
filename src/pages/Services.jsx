@@ -339,62 +339,71 @@ export default function Services() {
 
                 {/* Dialog chọn xe */}
                 <Dialog open={showVehicleDialog} onOpenChange={setShowVehicleDialog}>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-3xl">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl">
+                            <DialogTitle className="text-2xl font-bold text-foreground mb-2">
                                 Chọn xe để đăng ký gói {selectedPlan?.plan_name}
                             </DialogTitle>
-                            <DialogDescription>
+                            <DialogDescription className="text-base">
                                 Chỉ hiển thị các xe chưa đăng ký gói dịch vụ nào
                             </DialogDescription>
                         </DialogHeader>
 
                         <div className="py-4">
                             {loadingVehicles ? (
-                                <div className="text-center py-8">
-                                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                                    <p className="text-sm text-muted-foreground">Đang tải danh sách xe...</p>
+                                <div className="flex items-center justify-center py-12">
+                                    <div className="text-center">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                                        <p className="text-muted-foreground">Đang tải danh sách xe...</p>
+                                    </div>
                                 </div>
                             ) : vehiclesWithoutPlan.length === 0 ? (
-                                <div className="text-center py-8">
+                                <div className="text-center py-12">
                                     <Motorbike className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                                     <h3 className="text-lg font-semibold mb-2">Không có xe khả dụng</h3>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-sm text-muted-foreground mb-4">
                                         Tất cả xe của bạn đã có gói dịch vụ hoặc bạn chưa đăng ký xe nào.
                                     </p>
+                                    <Button variant="outline">Thêm xe mới</Button>
                                 </div>
                             ) : (
-                                <div className="grid gap-3 max-h-96 overflow-y-auto">
+                                <div className="space-y-4 max-h-96 overflow-y-auto">
                                     {vehiclesWithoutPlan.map((vehicle) => (
                                         <Card
                                             key={vehicle.vehicle_id}
-                                            className={`cursor-pointer transition-all ${selectedVehicle?.vehicle_id === vehicle.vehicle_id
-                                                ? 'border-primary bg-primary/5'
+                                            className={`cursor-pointer transition-all hover:shadow-md ${selectedVehicle?.vehicle_id === vehicle.vehicle_id
+                                                ? 'ring-2 ring-primary bg-primary/5'
                                                 : 'hover:border-primary/50'
                                                 }`}
                                             onClick={() => setSelectedVehicle(vehicle)}
                                         >
                                             <CardContent className="p-4">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-4">
-                                                        <div className="bg-primary/10 p-3 rounded-full">
-                                                            <Motorbike className="h-6 w-6 text-primary" />
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center space-x-2 mb-2">
+                                                            <Motorbike className="h-5 w-5 text-primary" />
+                                                            <h3 className="font-semibold text-lg">{vehicle.model_name}</h3>
+                                                            {selectedVehicle?.vehicle_id === vehicle.vehicle_id && (
+                                                                <Check className="h-5 w-5 text-green-500" />
+                                                            )}
                                                         </div>
-                                                        <div>
-                                                            <h4 className="font-semibold text-foreground">
-                                                                {vehicle.model_name}
-                                                            </h4>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Biển số: {vehicle.license_plate}
-                                                            </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                VIN: {vehicle.vin}
-                                                            </p>
+
+                                                        <div className="space-y-2 text-sm text-muted-foreground">
+                                                            <div className="flex items-center space-x-4">
+                                                                <span>VIN: {vehicle.vin}</span>
+                                                                <span>Biển số: {vehicle.license_plate}</span>
+                                                            </div>
+
+                                                            <div className="flex items-center space-x-4">
+                                                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                                                    {vehicle.battery_type || 'Chưa xác định'}
+                                                                </Badge>
+                                                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                                                    Sẵn sàng đăng ký
+                                                                </Badge>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    {selectedVehicle?.vehicle_id === vehicle.vehicle_id && (
-                                                        <Check className="h-6 w-6 text-primary" />
-                                                    )}
                                                 </div>
                                             </CardContent>
                                         </Card>
@@ -403,24 +412,28 @@ export default function Services() {
                             )}
                         </div>
 
-                        <DialogFooter>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setShowVehicleDialog(false);
-                                    setSelectedVehicle(null);
-                                }}
-                            >
-                                Hủy
-                            </Button>
-                            <Button
-                                onClick={handleSubscribe}
-                                disabled={!selectedVehicle}
-                            >
-                                <Zap className="mr-2 h-4 w-4" />
-                                Tiếp tục thanh toán
-                            </Button>
-                        </DialogFooter>
+                        {selectedVehicle && (
+                            <div className="flex justify-end pt-4 border-t">
+                                <div className="flex space-x-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setShowVehicleDialog(false);
+                                            setSelectedVehicle(null);
+                                        }}
+                                    >
+                                        Hủy
+                                    </Button>
+                                    <Button
+                                        onClick={handleSubscribe}
+                                        className="bg-primary hover:bg-primary/90"
+                                    >
+                                        <Zap className="mr-2 h-4 w-4" />
+                                        Tiếp tục thanh toán
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </DialogContent>
                 </Dialog>
             </div>

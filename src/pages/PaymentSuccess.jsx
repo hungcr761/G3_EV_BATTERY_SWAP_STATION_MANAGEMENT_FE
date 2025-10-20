@@ -289,22 +289,6 @@ export default function PaymentSuccess() {
                         </>
                     )}
                 </div>
-
-                {/* Debug Info (only in development) */}
-                {process.env.NODE_ENV === 'development' && (
-                    <Card className="mt-8 border-dashed">
-                        <CardHeader>
-                            <CardTitle className="text-sm text-muted-foreground">
-                                Debug Info (Development Only)
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <pre className="text-xs bg-muted p-4 rounded overflow-auto">
-                                {JSON.stringify(paymentData, null, 2)}
-                            </pre>
-                        </CardContent>
-                    </Card>
-                )}
             </div>
         </div>
     );
