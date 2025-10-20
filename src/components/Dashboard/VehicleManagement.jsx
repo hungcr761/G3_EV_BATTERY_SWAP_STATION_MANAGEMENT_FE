@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
-import { modelAPI, vehicleAPI } from '../../lib/apiServices';
+import { modelAPI, vehicleAPI, batteryTypeAPI } from '../../lib/apiServices';
 import { vehicleSchema } from '../../lib/validations';
 import {
     Select,
@@ -18,7 +18,7 @@ import {
 import {
     ArrowLeft,
     Plus,
-    Car,
+    Motorbike,
     Edit,
     Trash2,
     AlertCircle,
@@ -33,7 +33,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '../ui/dialog';
-  
+
 
 const VehicleManagement = ({ onBack }) => {
     const [vehicles, setVehicles] = useState([]);
@@ -44,6 +44,7 @@ const VehicleManagement = ({ onBack }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [apiError, setApiError] = useState('');
     const [vehicleModels, setVehicleModels] = useState([]);
+    const [batteryTypes, setBatteryTypes] = useState([]);
 
     const {
         register,
@@ -61,20 +62,25 @@ const VehicleManagement = ({ onBack }) => {
         }
     });
 
-    {/* Fetch vehicle models for the select dropdown */}
+    {/* Fetch vehicle models and battery types for the select dropdown */ }
     useEffect(() => {
-        const fetchModels = async () => {
+        const fetchData = async () => {
             try {
-
-                const response = await modelAPI.getAll();
-                const models = response.data?.payload?.vehicleModels || [];
+                // Fetch vehicle models
+                const modelsResponse = await modelAPI.getAll();
+                const models = modelsResponse.data?.payload?.vehicleModels || [];
                 setVehicleModels(models);
+
+                // Fetch battery types
+                const batteryResponse = await batteryTypeAPI.getAll();
+                const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
+                setBatteryTypes(batteryTypesData);
             } catch (error) {
-                console.error('Error fetching vehicle models:', error);
+                console.error('Error fetching data:', error);
             }
         };
 
-        fetchModels();
+        fetchData();
     }, []);
 
     // Fetch vehicles function
@@ -82,21 +88,37 @@ const VehicleManagement = ({ onBack }) => {
         setLoading(true);
         try {
             const response = await vehicleAPI.getAll();
-            // Mock API trả về response.data.payload.vehicles
-            const vehiclesData = response.data?.payload?.vehicles || response.data?.vehicles || [];
-            const mappedVehicles = vehiclesData.map(vehicle => ({
-                ...vehicle,
-                // Mock vehicles có trường 'model' (string), còn API thật có 'model.name'
-                modelName: typeof vehicle.model === 'string' ? vehicle.model : (vehicle.model?.name || 'Unknown Model')
-            }));
-            
+            // API trả về response.data.vehicles
+            const vehiclesData = response.data?.vehicles || [];
+
+            const mappedVehicles = vehiclesData.map(vehicle => {
+                // Get model name from vehicle.model
+                const modelName = vehicle.model?.name || 'Unknown Model';
+
+                // Find the corresponding model in vehicleModels to get battery_type_id
+                const vehicleModel = vehicleModels.find(vm => vm.model_id === vehicle.model_id);
+
+                // Get battery type name using battery_type_id from vehicle model
+                let batteryName = 'Unknown Battery';
+                if (vehicleModel?.battery_type_id) {
+                    const batteryType = batteryTypes.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
+                    batteryName = batteryType?.battery_type_code || 'Unknown Battery';
+                }
+
+                return {
+                    ...vehicle,
+                    modelName,
+                    batteryName
+                };
+            });
+
             setVehicles(mappedVehicles);
         } catch (error) {
             console.error('Error fetching vehicles:', error);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [batteryTypes, vehicleModels]);
 
     // Load vehicles when component mounts
     useEffect(() => {
@@ -110,7 +132,7 @@ const VehicleManagement = ({ onBack }) => {
         try {
             // Tìm model_id từ model name
             const selectedModel = vehicleModels.find(m => m.name === data.model);
-            
+
             if (!selectedModel) {
                 setApiError('Vui lòng chọn mẫu xe hợp lệ');
                 setIsSubmitting(false);
@@ -134,14 +156,14 @@ const VehicleManagement = ({ onBack }) => {
             console.log('✅ Response:', response.data);
 
             // Kiểm tra response thành công
-            const isSuccess = response.data?.success === true || 
-                             response.status === 200 || 
-                             response.status === 201;
+            const isSuccess = response.data?.success === true ||
+                response.status === 200 ||
+                response.status === 201;
 
             if (isSuccess) {
                 // Đóng dialog trước
                 handleCloseDialog();
-                
+
                 // Hiển thị thông báo
                 setMessage({
                     type: 'success',
@@ -270,7 +292,7 @@ const VehicleManagement = ({ onBack }) => {
                         <div className="col-span-full">
                             <Card>
                                 <CardContent className="py-12 text-center">
-                                    <Car className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                                    <Motorbike className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                                     <h3 className="text-lg font-semibold text-foreground mb-2">
                                         Chưa có xe nào
                                     </h3>
@@ -291,7 +313,7 @@ const VehicleManagement = ({ onBack }) => {
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center space-x-3">
                                             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                                                <Car className="h-6 w-6 text-primary" />
+                                                <Motorbike className="h-6 w-6 text-primary" />
                                             </div>
                                             <div>
                                                 <CardTitle className="text-lg">
@@ -309,6 +331,11 @@ const VehicleManagement = ({ onBack }) => {
                                         <div>
                                             <p className="text-sm text-muted-foreground">VIN</p>
                                             <p className="font-mono text-sm">{vehicle.vin}</p>
+                                        </div>
+
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Loại pin</p>
+                                            <p className="text-sm font-medium">{vehicle.batteryName}</p>
                                         </div>
 
                                         {/* {vehicle.battery_soh && (

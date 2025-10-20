@@ -44,6 +44,11 @@ export const modelAPI = {
     getAll: () => api.get('/vehicle-model')
 }
 
+// Battery Type API
+export const batteryTypeAPI = {
+    getAll: () => api.get('/battery-type')
+}
+
 // user APIs
 export const userAPI = {
     getAll: (params) => api.get('/api/user', { params }),
@@ -81,4 +86,15 @@ export const stationAPI = {
     create: (data) => api.post('/station', data),
     update: (id, data) => api.put(`/station/${id}`, data),
     delete: (id) => api.delete(`/station/${id}`),
+};
+
+// Booking APIs
+export const bookingAPI = {
+    checkAvailability: (data) => api.post('/booking/check-availability', data),
+    create: (data) => api.post('/booking', data),
+    getById: (id) => api.get(`/booking/${id}`),
+    update: (id, data) => api.put(`/booking/${id}`, data),
+    delete: (id) => api.delete(`/booking/${id}`),
+    getByUserId: (userId) => api.get(`/booking/user/${userId}`),
+    cancel: (id) => api.post(`/booking/${id}/cancel`),
 };
