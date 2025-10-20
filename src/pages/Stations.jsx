@@ -4,7 +4,10 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import GoongMap from '../components/Map/GoongMap';
-import { stationAPI } from '../lib/apiServices';
+import BookingFlow from '../components/Booking/BookingFlow';
+import VehicleSelector from '../components/Booking/VehicleSelector';
+import NoVehicleSelected from '../components/Booking/NoVehicleSelected';
+import { stationAPI, bookingAPI } from '../lib/apiServices';
 import {
     MapPin,
     Battery,
@@ -12,7 +15,8 @@ import {
     Star,
     Search,
     Filter,
-    Navigation
+    Navigation,
+    Calendar
 } from 'lucide-react';
 
 const Stations = () => {
@@ -24,6 +28,12 @@ const Stations = () => {
     const [stationsError, setStationsError] = useState(null);
     const [userLocation, setUserLocation] = useState(null);
     const [nearestStation, setNearestStation] = useState(null);
+    const [showBookingFlow, setShowBookingFlow] = useState(false);
+    const [bookingStation, setBookingStation] = useState(null);
+    const [selectedVehicle, setSelectedVehicle] = useState(null);
+    const [showVehicleSelector, setShowVehicleSelector] = useState(false);
+    const [stationAvailability, setStationAvailability] = useState({});
+    const [loadingAvailability, setLoadingAvailability] = useState(false);
 
     // Fetch stations from API
     useEffect(() => {
@@ -70,6 +80,13 @@ const Stations = () => {
         }
     }, [stations]);
 
+    // Check availability for all stations when vehicle is selected
+    useEffect(() => {
+        if (selectedVehicle && stations.length > 0) {
+            checkAllStationsAvailability();
+        }
+    }, [selectedVehicle, stations]);
+
     // Calculate distance between two points using Haversine formula
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371; // Earth's radius in kilometers
@@ -105,6 +122,56 @@ const Stations = () => {
         });
 
         setNearestStation(nearest);
+    };
+
+    // Check availability for all stations
+    const checkAllStationsAvailability = async () => {
+        if (!selectedVehicle || stations.length === 0) return;
+
+        setLoadingAvailability(true);
+        const availabilityData = {};
+
+        try {
+            // Check availability for each station
+            const promises = stations.map(async (station) => {
+                try {
+                    const response = await bookingAPI.checkAvailability({
+                        station_id: station.id,
+                        battery_type: selectedVehicle.batteryTypeCode,
+                        scheduled_time: new Date().toISOString()
+                    });
+
+                    return {
+                        stationId: station.id,
+                        data: response.data
+                    };
+                } catch (error) {
+                    console.error(`Error checking availability for station ${station.id}:`, error);
+                    return {
+                        stationId: station.id,
+                        data: { available: false, available_batteries_count: 0 }
+                    };
+                }
+            });
+
+            const results = await Promise.all(promises);
+
+            // Process results
+            results.forEach(({ stationId, data }) => {
+                availabilityData[stationId] = {
+                    available: data.available,
+                    availableCount: data.availability_details?.available_batteries_count || 0,
+                    totalSlots: data.availability_details?.total_slots || 0,
+                    stationStatus: data.availability_details?.station_status || 'unknown'
+                };
+            });
+
+            setStationAvailability(availabilityData);
+        } catch (error) {
+            console.error('Error checking stations availability:', error);
+        } finally {
+            setLoadingAvailability(false);
+        }
     };
 
     // Filter stations based on search and status
@@ -149,17 +216,83 @@ const Stations = () => {
         }
     };
 
+    // Handle booking
+    const handleBooking = (station) => {
+        if (!selectedVehicle) {
+            // Show vehicle selector first
+            setBookingStation(station);
+            setShowVehicleSelector(true);
+        } else {
+            // Proceed with booking
+            setBookingStation(station);
+            setShowBookingFlow(true);
+        }
+    };
+
+    const handleBookingSuccess = (bookingData) => {
+        console.log('Booking created successfully:', bookingData);
+        // You can add success notification here
+    };
+
+    const handleCloseBooking = () => {
+        setShowBookingFlow(false);
+        setBookingStation(null);
+    };
+
+    // Handle vehicle selection
+    const handleVehicleSelect = (vehicle) => {
+        setSelectedVehicle(vehicle);
+        setShowVehicleSelector(false);
+
+        // If there's a pending booking station, proceed to booking flow
+        if (bookingStation) {
+            setShowBookingFlow(true);
+        }
+    };
+
+    const handleShowVehicleSelector = () => {
+        setShowVehicleSelector(true);
+    };
+
+    const handleCloseVehicleSelector = () => {
+        setShowVehicleSelector(false);
+    };
+
     return (
         <div className="min-h-screen bg-background py-8">
             <div className="container mx-auto px-4">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-foreground mb-2">
-                        Tìm trạm đổi pin
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Tìm kiếm trạm đổi pin gần nhất với tình trạng pin sẵn có
-                    </p>
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-foreground mb-2">
+                                Tìm trạm đổi pin
+                            </h1>
+                            <p className="text-muted-foreground">
+                                Tìm kiếm trạm đổi pin gần nhất với tình trạng pin sẵn có
+                            </p>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            {selectedVehicle && (
+                                <div className="flex items-center space-x-2">
+                                    <Car className="h-5 w-5 text-primary" />
+                                    <div>
+                                        <p className="font-medium">{selectedVehicle.modelName}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {selectedVehicle.batteryType} • SoH: {selectedVehicle.battery_soh}%
+                                        </p>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleShowVehicleSelector}
+                                    >
+                                        Đổi xe
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
                     {/* Nearest Station Info */}
                     {nearestStation && (
@@ -297,13 +430,49 @@ const Stations = () => {
 
                                                 {/* Station Info */}
                                                 <div className="p-3 bg-gray-50 rounded-lg">
-                                                    <div className="flex items-center space-x-2">
-                                                        <Battery className="h-4 w-4 text-blue-600" />
-                                                        <span className="font-medium text-sm">Trạm đổi pin EV</span>
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div className="flex items-center space-x-2">
+                                                            <Battery className="h-4 w-4 text-blue-600" />
+                                                            <span className="font-medium text-sm">Trạm đổi pin EV</span>
+                                                        </div>
+                                                        {selectedVehicle && stationAvailability[station.id] ? (
+                                                            <div className="text-right">
+                                                                <div className="flex items-center space-x-1">
+                                                                    <span className="text-sm font-medium">
+                                                                        {stationAvailability[station.id].availableCount}
+                                                                    </span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        / {stationAvailability[station.id].totalSlots}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    pin {selectedVehicle.batteryType} có sẵn
+                                                                </p>
+                                                            </div>
+                                                        ) : selectedVehicle ? (
+                                                            <div className="text-right">
+                                                                <div className="flex items-center space-x-1">
+                                                                    <div className="animate-spin rounded-full h-3 w-3 border-b border-primary"></div>
+                                                                    <span className="text-xs text-muted-foreground">Đang kiểm tra...</span>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-right">
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    Chọn xe để xem số pin
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                    <p className="text-xs text-muted-foreground">
                                                         Dịch vụ đổi pin cho xe điện 24/7
                                                     </p>
+                                                    {loadingAvailability && (
+                                                        <div className="mt-2 flex items-center space-x-1">
+                                                            <div className="animate-spin rounded-full h-3 w-3 border-b border-primary"></div>
+                                                            <span className="text-xs text-muted-foreground">Đang kiểm tra...</span>
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 {/* Actions */}
@@ -316,7 +485,13 @@ const Stations = () => {
                                                         <Navigation className="mr-1 h-3 w-3" />
                                                         Chỉ đường
                                                     </Button>
-                                                    <Button size="sm" variant="outline" className="flex-1">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="flex-1"
+                                                        onClick={() => handleBooking(station)}
+                                                    >
+                                                        <Calendar className="mr-1 h-3 w-3" />
                                                         Đặt lịch
                                                     </Button>
                                                 </div>
@@ -348,6 +523,44 @@ const Stations = () => {
                     </div>
                 )}
             </div>
+
+            {/* Vehicle Selector Modal */}
+            {showVehicleSelector && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <Card>
+                            <CardContent className="p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-bold">Chọn xe</h2>
+                                    <Button variant="outline" onClick={handleCloseVehicleSelector}>
+                                        Đóng
+                                    </Button>
+                                </div>
+                                <VehicleSelector
+                                    onVehicleSelect={handleVehicleSelect}
+                                    selectedVehicle={selectedVehicle}
+                                    onContinue={handleCloseVehicleSelector}
+                                    isForBooking={!!bookingStation}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            )}
+
+            {/* Booking Flow Modal */}
+            {showBookingFlow && bookingStation && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <BookingFlow
+                            selectedStation={bookingStation}
+                            selectedVehicle={selectedVehicle}
+                            onBookingSuccess={handleBookingSuccess}
+                            onClose={handleCloseBooking}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
