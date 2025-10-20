@@ -46,7 +46,7 @@ const VehicleManagement = ({ onBack }) => {
     const [vehicleModels, setVehicleModels] = useState([]);
     const [confirmDelete, setConfirmDelete] = useState({ show: false, vehicle: null });
     const [batteryTypes, setBatteryTypes] = useState([]);
-    
+
     const {
         register,
         handleSubmit: handleFormSubmit,
@@ -89,14 +89,12 @@ const VehicleManagement = ({ onBack }) => {
         setLoading(true);
         try {
             const response = await vehicleAPI.getAll();
-            // API trả về response.data.vehicles
+
             const vehiclesData = response.data?.vehicles || [];
 
             const mappedVehicles = vehiclesData.map(vehicle => {
-                // Get model name from vehicle.model
                 const modelName = vehicle.model?.name || 'Unknown Model';
 
-                // Find the corresponding model in vehicleModels to get battery_type_id
                 const vehicleModel = vehicleModels.find(vm => vm.model_id === vehicle.model_id);
 
                 // Get battery type name using battery_type_id from vehicle model
@@ -211,7 +209,6 @@ const VehicleManagement = ({ onBack }) => {
             const isSuccess = response.data?.success === true || 
                              response.status === 200 || 
                              response.status === 204;
-            
             if (isSuccess) {
                 setMessage({
                     type: 'success',
