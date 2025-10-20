@@ -5,14 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Battery, Check, Star, Zap, Loader2, AlertCircle, Car } from 'lucide-react';
+import { Battery, Check, Star, Zap, Loader2, AlertCircle, Motorbike } from 'lucide-react';
 import useSubscriptionPlan from '@/hooks/useSubscriptionPlan';
 import { vehicleAPI } from '@/lib/apiServices';
 
 export default function Services() {
     const { plans, loading, error, refetch } = useSubscriptionPlan();
     const navigate = useNavigate();
-    
+
     const [showVehicleDialog, setShowVehicleDialog] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [vehicles] = useState([]);
@@ -35,7 +35,7 @@ export default function Services() {
             // Gọi API lấy xe chưa đăng ký gói (đã mock)
             const response = await vehicleAPI.getWithoutSubscription();
             const vehiclesWithout = response.data?.payload?.vehicles || [];
-            
+
             setVehiclesWithoutPlan(vehiclesWithout);
         } catch (err) {
             console.error('Error fetching vehicles:', err);
@@ -69,7 +69,7 @@ export default function Services() {
             <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
                     <h1 className="text-3xl font-bold text-foreground mb-4">
-                        Goi dich vụ đổi pin
+                        Gói dịch vụ đổi pin
                     </h1>
                     <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                         Chọn gói dịch vụ phù hợp với nhu cầu sử dụng của bạn.
@@ -242,7 +242,7 @@ export default function Services() {
                                 </div>
                             ) : vehiclesWithoutPlan.length === 0 ? (
                                 <div className="text-center py-8">
-                                    <Car className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                                    <Motorbike className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                                     <h3 className="text-lg font-semibold mb-2">Không có xe khả dụng</h3>
                                     <p className="text-sm text-muted-foreground">
                                         Tất cả xe của bạn đã có gói dịch vụ hoặc bạn chưa đăng ký xe nào.
@@ -253,18 +253,17 @@ export default function Services() {
                                     {vehiclesWithoutPlan.map((vehicle) => (
                                         <Card
                                             key={vehicle.vehicle_id}
-                                            className={`cursor-pointer transition-all ${
-                                                selectedVehicle?.vehicle_id === vehicle.vehicle_id
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'hover:border-primary/50'
-                                            }`}
+                                            className={`cursor-pointer transition-all ${selectedVehicle?.vehicle_id === vehicle.vehicle_id
+                                                ? 'border-primary bg-primary/5'
+                                                : 'hover:border-primary/50'
+                                                }`}
                                             onClick={() => setSelectedVehicle(vehicle)}
                                         >
                                             <CardContent className="p-4">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-4">
                                                         <div className="bg-primary/10 p-3 rounded-full">
-                                                            <Car className="h-6 w-6 text-primary" />
+                                                            <Motorbike className="h-6 w-6 text-primary" />
                                                         </div>
                                                         <div>
                                                             <h4 className="font-semibold text-foreground">

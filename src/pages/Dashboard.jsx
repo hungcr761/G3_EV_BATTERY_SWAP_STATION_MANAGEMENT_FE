@@ -8,7 +8,7 @@ import ProfileUpdate from '../components/Dashboard/ProfileUpdate';
 import VehicleManagement from '../components/Dashboard/VehicleManagement';
 import {
     Battery,
-    Car,
+    Motorbike,
     MapPin,
     Calendar,
     CreditCard,
@@ -129,7 +129,7 @@ const Dashboard = () => {
                                     <p className="text-sm font-medium text-muted-foreground">SoH hiện tại</p>
                                     <p className="text-2xl font-bold text-foreground">{userStats.currentBatterySoH}%</p>
                                 </div>
-                                <Car className="h-8 w-8 text-blue-500" />
+                                <Motorbike className="h-8 w-8 text-blue-500" />
                             </div>
                         </CardContent>
                     </Card>
@@ -252,7 +252,7 @@ const Dashboard = () => {
                                     variant="outline"
                                     onClick={() => setShowVehicleManagement(true)}
                                 >
-                                    <Car className="mr-2 h-4 w-4" />
+                                    <Motorbike className="mr-2 h-4 w-4" />
                                     Quản lý xe
                                 </Button>
                                 <Button className="w-full justify-start" variant="outline">
