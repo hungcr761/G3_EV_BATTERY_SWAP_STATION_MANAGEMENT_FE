@@ -98,3 +98,15 @@ export const bookingAPI = {
     getByUserId: (userId) => api.get(`/booking/user/${userId}`),
     cancel: (id) => api.post(`/booking/${id}/cancel`),
 };
+
+// Invoice APIs
+export const invoiceAPI = {
+    createFromSubscription: (data) =>
+        USE_MOCK_API ? mockApi.createInvoiceFromSubscription(data) : api.post('/invoice/create-from-subscription', data),
+};
+
+// Payment APIs
+export const paymentAPI = {
+    create: (data) =>
+        USE_MOCK_API ? mockApi.createPayment(data) : api.post('/payment/create', data),
+};

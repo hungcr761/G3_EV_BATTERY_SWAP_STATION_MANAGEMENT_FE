@@ -13,6 +13,7 @@ import Settings from './pages/Settings';
 import Stations from './pages/Stations';
 import Services from './pages/Services';
 import Payment from './pages/Payment';
+import PaymentSuccess from './pages/PaymentSuccess';
 import Support from './pages/Support';
 import './App.css';
 
@@ -56,6 +57,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Payment />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/payment-success" element={
+            <ProtectedRoute>
+              <Layout>
+                <PaymentSuccess />
               </Layout>
             </ProtectedRoute>
           } />
