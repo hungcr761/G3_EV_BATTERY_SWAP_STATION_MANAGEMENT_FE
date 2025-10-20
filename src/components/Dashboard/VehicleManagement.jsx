@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -44,11 +44,8 @@ const VehicleManagement = ({ onBack }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [apiError, setApiError] = useState('');
     const [vehicleModels, setVehicleModels] = useState([]);
+    const [confirmDelete, setConfirmDelete] = useState({ show: false, vehicle: null });
     const [batteryTypes, setBatteryTypes] = useState([]);
-
-    // Use refs to store latest data without causing re-renders
-    const vehicleModelsRef = useRef([]);
-    const batteryTypesRef = useRef([]);
 
     const {
         register,
@@ -66,7 +63,7 @@ const VehicleManagement = ({ onBack }) => {
         }
     });
 
-    // Fetch vehicle models and battery types for the select dropdown
+    {/* Fetch vehicle models and battery types for the select dropdown */ }
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -74,13 +71,11 @@ const VehicleManagement = ({ onBack }) => {
                 const modelsResponse = await modelAPI.getAll();
                 const models = modelsResponse.data?.payload?.vehicleModels || [];
                 setVehicleModels(models);
-                vehicleModelsRef.current = models;
 
                 // Fetch battery types
                 const batteryResponse = await batteryTypeAPI.getAll();
                 const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
                 setBatteryTypes(batteryTypesData);
-                batteryTypesRef.current = batteryTypesData;
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -89,25 +84,24 @@ const VehicleManagement = ({ onBack }) => {
         fetchData();
     }, []);
 
-    // Fetch vehicles function - using refs to avoid infinite loop
+    // Fetch vehicles function
     const fetchVehicles = useCallback(async () => {
         setLoading(true);
         try {
             const response = await vehicleAPI.getAll();
-            // API trả về response.data.vehicles
+            
             const vehiclesData = response.data?.vehicles || [];
-
             const mappedVehicles = vehiclesData.map(vehicle => {
                 // Get model name from vehicle.model
                 const modelName = vehicle.model?.name || 'Unknown Model';
 
                 // Find the corresponding model in vehicleModels to get battery_type_id
-                const vehicleModel = vehicleModelsRef.current.find(vm => vm.model_id === vehicle.model_id);
+                const vehicleModel = vehicleModels.find(vm => vm.model_id === vehicle.model_id);
 
                 // Get battery type name using battery_type_id from vehicle model
                 let batteryName = 'Unknown Battery';
                 if (vehicleModel?.battery_type_id) {
-                    const batteryType = batteryTypesRef.current.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
+                    const batteryType = batteryTypes.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
                     batteryName = batteryType?.battery_type_code || 'Unknown Battery';
                 }
 
@@ -124,14 +118,12 @@ const VehicleManagement = ({ onBack }) => {
         } finally {
             setLoading(false);
         }
-    }, []); // No dependencies to prevent infinite loop
+    }, [batteryTypes, vehicleModels]);
 
-    // Load vehicles when component mounts and when data is available
+    // Load vehicles when component mounts
     useEffect(() => {
-        if (vehicleModels.length > 0 && batteryTypes.length > 0) {
-            fetchVehicles();
-        }
-    }, [vehicleModels, batteryTypes, fetchVehicles]);
+        fetchVehicles();
+    }, [fetchVehicles]);
 
     const onSubmit = async (data) => {
         setIsSubmitting(true);
@@ -160,8 +152,6 @@ const VehicleManagement = ({ onBack }) => {
             } else {
                 response = await vehicleAPI.create(payload);
             }
-
-            console.log('✅ Response:', response.data);
 
             // Kiểm tra response thành công
             const isSuccess = response.data?.success === true ||
@@ -204,18 +194,29 @@ const VehicleManagement = ({ onBack }) => {
     };
 
     const handleDelete = async (vehicleId) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa xe này?')) {
-            return;
-        }
+        const vehicleToDelete = vehicles.find(v => v.vehicle_id === vehicleId);
+        setConfirmDelete({ show: true, vehicle: vehicleToDelete });
+    };
+
+    const executeDelete = async () => {
+        const vehicleToDelete = confirmDelete.vehicle;
+        const vehicleId = vehicleToDelete.vehicle_id;
+        
+        setConfirmDelete({ show: false, vehicle: null });
 
         try {
             const response = await vehicleAPI.delete(vehicleId);
-            if (response.data.success) {
+            
+            const isSuccess = response.data?.success === true || 
+                             response.status === 200 || 
+                             response.status === 204;
+            if (isSuccess) {
                 setMessage({
                     type: 'success',
-                    text: 'Xóa xe thành công!'
+                    text: `Đã xóa xe ${vehicleToDelete.modelName} (${vehicleToDelete.license_plate}) thành công!`
                 });
-                fetchVehicles();
+                
+                await fetchVehicles();
 
                 setTimeout(() => {
                     setMessage({ type: '', text: '' });
@@ -224,8 +225,12 @@ const VehicleManagement = ({ onBack }) => {
         } catch (error) {
             setMessage({
                 type: 'error',
-                text: error.response?.data?.message || 'Không thể xóa xe'
+                text: error.response?.data?.message || 'Không thể xóa xe. Vui lòng thử lại!'
             });
+            
+            setTimeout(() => {
+                setMessage({ type: '', text: '' });
+            }, 5000);
         }
     };
 
@@ -424,7 +429,9 @@ const VehicleManagement = ({ onBack }) => {
                                     type="text"
                                     placeholder="Nhập số VIN (17 ký tự)"
                                     maxLength={17}
-                                    className={`uppercase ${errors.vin ? 'border-red-500' : ''}`}
+                                    disabled={!!editingVehicle}
+                                    readOnly={!!editingVehicle}
+                                    className={`uppercase ${errors.vin ? 'border-red-500' : ''} ${editingVehicle ? 'bg-muted cursor-not-allowed' : ''}`}
                                     {...register('vin', {
                                         setValueAs: v => v.toUpperCase()
                                     })}
@@ -432,11 +439,16 @@ const VehicleManagement = ({ onBack }) => {
                                 {errors.vin && (
                                     <p className="text-sm text-red-600">{errors.vin.message}</p>
                                 )}
-                                {!errors.vin && (
+                                {!errors.vin && !editingVehicle && (
                                     <p className="text-xs text-gray-500">
                                         Vehicle Identification Number (Số khung xe, 17 ký tự)
                                     </p>
                                 )}
+                                {/* {editingVehicle && (
+                                    <p className="text-xs text-amber-600">
+                                        VIN không thể chỉnh sửa
+                                    </p>
+                                )} */}
                             </div>
 
                             {/* Model */}
@@ -525,6 +537,73 @@ const VehicleManagement = ({ onBack }) => {
                                 </Button>
                             </div>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Delete Confirmation Dialog */}
+                <Dialog open={confirmDelete.show} onOpenChange={(open) => !open && setConfirmDelete({ show: false, vehicle: null })}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader className="space-y-3">
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                                <Trash2 className="h-6 w-6 text-red-600" />
+                            </div>
+                            <DialogTitle className="text-center text-xl">Xác nhận xóa xe</DialogTitle>
+                            <DialogDescription className="text-center">
+                                Bạn có chắc chắn muốn xóa xe này không? Hành động này không thể hoàn tác.
+                            </DialogDescription>
+                        </DialogHeader>
+                        
+                        {confirmDelete.vehicle && (
+                            <div className="space-y-4 py-4">
+                                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <Car className="h-5 w-5 text-gray-400" />
+                                        <div className="flex-1">
+                                            <p className="text-xs text-gray-500">Mẫu xe</p>
+                                            <p className="text-sm font-semibold text-gray-900">
+                                                VinFast {confirmDelete.vehicle.modelName}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="h-px bg-gray-200" />
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <p className="text-xs text-gray-500 mb-1">Biển số</p>
+                                            <p className="text-sm font-mono font-semibold text-gray-900">
+                                                {confirmDelete.vehicle.license_plate}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 mb-1">VIN</p>
+                                            <p className="text-xs font-mono text-gray-700 break-all">
+                                                {confirmDelete.vehicle.vin}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setConfirmDelete({ show: false, vehicle: null })}
+                                        className="flex-1"
+                                    >
+                                        Hủy
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={executeDelete}
+                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Xóa xe
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </DialogContent>
                 </Dialog>
             </div>

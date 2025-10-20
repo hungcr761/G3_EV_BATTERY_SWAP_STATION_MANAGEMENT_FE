@@ -30,7 +30,7 @@ export const vehicleAPI = {
     getAll: () => USE_MOCK_API ? mockApi.getUserVehicles() : api.get('/vehicles'),
     getById: (id) => api.get(`/vehicles/${id}`),
     // Luôn dùng mock cho vehicles without subscription vì backend chưa có API này
-    getWithoutSubscription: () => mockApi.getVehiclesWithoutSubscription(),
+    getWithoutSubscription: () => USE_MOCK_API ? mockApi.getVehiclesWithoutSubscription() : api.get('/subscription/vehicles-without-subscription'),
     create: (data) =>
         USE_MOCK_API ? mockApi.createVehicle(data) : api.post('/vehicles', data),
     update: (id, data) =>

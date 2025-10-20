@@ -54,7 +54,9 @@ function App() {
           } />
           <Route path="/payment" element={
             <ProtectedRoute>
-              <Payment />
+              <Layout>
+                <Payment />
+              </Layout>
             </ProtectedRoute>
           } />
           <Route path="/support" element={

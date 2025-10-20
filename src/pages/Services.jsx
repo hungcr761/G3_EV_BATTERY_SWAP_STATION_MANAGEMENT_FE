@@ -12,10 +12,8 @@ import { vehicleAPI } from '@/lib/apiServices';
 export default function Services() {
     const { plans, loading, error, refetch } = useSubscriptionPlan();
     const navigate = useNavigate();
-
     const [showVehicleDialog, setShowVehicleDialog] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(null);
-    const [vehicles] = useState([]);
     const [vehiclesWithoutPlan, setVehiclesWithoutPlan] = useState([]);
     const [loadingVehicles, setLoadingVehicles] = useState(false);
     const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -73,7 +71,6 @@ export default function Services() {
                     </h1>
                     <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
                         Chọn gói dịch vụ phù hợp với nhu cầu sử dụng của bạn.
-
                     </p>
                 </div>
 
@@ -125,68 +122,181 @@ export default function Services() {
                     </div>
                 )}
 
-                {/* Plain grid */}
+                {/* Plan grid - Phân tách 2 loại gói */}
                 {!loading && !error && plans.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                        {plans.map((plan) => {
-                            return (
-                                <Card key={plan.plan_id}>
-                                    <CardHeader className="text-center pb-4">
-                                        <CardTitle className="text-2xl font-bold">
-                                            <CardTitle className="text-2xl font-bold">{plan.plan_name}</CardTitle>
-                                            <CardDescription className="text-sm text-muted-foreground mt-2">
-                                                {plan.description}
-                                            </CardDescription>
-                                            <div className="text-3xl font-bold text-primary mt-4">
-                                                {formatPrice(plan.plan_fee)}/tháng
-                                            </div>
-                                        </CardTitle>
-                                    </CardHeader>
+                    <div className="space-y-12 max-w-7xl mx-auto">
+                        {/* Gói KHÔNG THEO LƯỢT (fee_slot = 0) */}
+                        {plans.filter(plan => parseFloat(plan.fee_slot) === 0).length > 0 && (
+                            <div className="space-y-6">
+                                <div className="text-center">
+                                    <Badge className="mb-3 bg-green-500 text-white px-4 py-1.5 text-sm">
+                                        KHÔNG GIỚI HẠN LƯỢT ĐỔI
+                                    </Badge>
+                                    <h2 className="text-2xl font-bold text-foreground">
+                                        Gói Không Theo Lượt
+                                    </h2>
+                                    <p className="text-muted-foreground mt-2">
+                                        Đổi pin không giới hạn trong tháng - phù hợp người dùng thường xuyên
+                                    </p>
+                                </div>
 
-                                    <CardContent className="space-y-6">
-                                        {/* Battery Capacity */}
-                                        <div className="text-center">
-                                            <div className="text-2xl font-bold text-foreground mb-2">
-                                                {plan.battery_cap} pin
-                                            </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                Số lượng pin tối đa
-                                            </div>
-                                        </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                                    {plans.filter(plan => parseFloat(plan.fee_slot) === 0).map((plan) => (
+                                        <Card key={plan.plan_id} className="flex flex-col hover:shadow-xl transition-all duration-300">
+                                            <CardHeader className="text-center pb-4 flex-shrink-0">
+                                                <CardTitle className="text-xl lg:text-2xl font-bold">
+                                                    {plan.plan_name}
+                                                </CardTitle>
+                                                <CardDescription className="text-xs lg:text-sm text-muted-foreground mt-2 min-h-[40px]">
+                                                    {plan.description}
+                                                </CardDescription>
+                                                <div className="text-2xl lg:text-3xl font-bold text-primary mt-4">
+                                                    {formatPrice(plan.plan_fee)}/tháng
+                                                </div>
+                                            </CardHeader>
 
-                                        {/* Features List */}
-                                        <ul className="space-y-3">
-                                            <li className="flex items-center space-x-3">
-                                                <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                                                <span className="text-sm text-muted-foreground">
-                                                    Phí đặt cọc: {formatPrice(plan.deposit_fee)}
-                                                </span>
-                                            </li>
-                                            <li className="flex items-center space-x-3">
-                                                <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                                                <span className="text-sm text-muted-foreground">
-                                                    SoH cap: {parseFloat(plan.soh_cap) * 100}%
-                                                </span>
-                                            </li>
-                                            <li className="flex items-center space-x-3">
-                                                <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                                                <span className="text-sm text-muted-foreground">
-                                                    Phí phạt: {formatPrice(plan.penalty_fee)}/lượt
-                                                </span>
-                                            </li>
-                                        </ul>
+                                            <CardContent className="space-y-4 lg:space-y-6 flex-grow flex flex-col">
+                                                <div className="text-center py-3 bg-primary/5 rounded-lg">
+                                                    <div className="text-xl lg:text-2xl font-bold text-foreground mb-1">
+                                                        {plan.battery_cap} pin
+                                                    </div>
+                                                    <div className="text-xs lg:text-sm text-muted-foreground">
+                                                        Số lượng pin tối đa
+                                                    </div>
+                                                </div>
 
-                                        <Button
-                                            size="lg"
-                                            onClick={() => handleSelectSubscription(plan)}
-                                        >
-                                            <Zap className="mr-2 h-4 w-4" />
-                                            Chọn gói này
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
+                                                <ul className="space-y-2 lg:space-y-3 flex-grow">
+                                                    <li className="flex items-center space-x-2 lg:space-x-3">
+                                                        <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
+                                                        <span className="text-xs lg:text-sm text-muted-foreground">
+                                                            SoH cap: {parseFloat(plan.soh_cap) * 100}%
+                                                        </span>
+                                                    </li>
+                                                    {/* <li className="flex items-center space-x-2 lg:space-x-3">
+                                                        <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
+                                                        <span className="text-xs lg:text-sm text-muted-foreground">
+                                                            Phí phạt: {formatPrice(plan.penalty_fee)}/lượt
+                                                        </span>
+                                                    </li> */}
+                                                    <li className="flex items-center space-x-2 lg:space-x-3">
+                                                        <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
+                                                        <span className="text-xs lg:text-sm text-muted-foreground">
+                                                            Thời hạn: {plan.duration_days} ngày
+                                                        </span>
+                                                    </li>
+                                                    <li className="flex items-center space-x-2 lg:space-x-3">
+                                                        <Star className="h-4 w-4 lg:h-5 lg:w-5 text-yellow-500 flex-shrink-0" />
+                                                        <span className="text-xs lg:text-sm font-semibold text-green-600">
+                                                            Đổi pin không giới hạn
+                                                        </span>
+                                                    </li>
+                                                </ul>
+
+                                                <div className="flex justify-center pt-4">
+                                                    <Button
+                                                        size="lg"
+                                                        className="w-full lg:w-auto"
+                                                        onClick={() => handleSelectSubscription(plan)}
+                                                    >
+                                                        <Zap className="mr-2 h-4 w-4" />
+                                                        Chọn gói này
+                                                    </Button>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Gói THEO LƯỢT (fee_slot > 0) */}
+                        {plans.filter(plan => parseFloat(plan.fee_slot) > 0).length > 0 && (
+                            <div className="space-y-6">
+                                <div className="text-center">
+                                    <Badge className="mb-3 bg-blue-500 text-white px-4 py-1.5 text-sm">
+                                        THANH TOÁN THEO LƯỢT
+                                    </Badge>
+                                    <h2 className="text-2xl font-bold text-foreground">
+                                        Gói Theo Lượt Đổi Pin
+                                    </h2>
+                                    <p className="text-muted-foreground mt-2">
+                                        Linh hoạt thanh toán - chỉ trả phí khi đổi pin thực tế
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                                    {plans.filter(plan => parseFloat(plan.fee_slot) > 0).map((plan) => (
+                                        <Card key={plan.plan_id} className="flex flex-col hover:shadow-xl transition-all duration-300 border-blue-200">
+                                            <CardHeader className="text-center pb-4 flex-shrink-0">
+                                                <CardTitle className="text-xl lg:text-2xl font-bold">
+                                                    {plan.plan_name}
+                                                </CardTitle>
+                                                <CardDescription className="text-xs lg:text-sm text-muted-foreground mt-2 min-h-[40px]">
+                                                    {plan.description}
+                                                </CardDescription>
+                                                <div className="mt-4 space-y-1">
+                                                    <div className="text-2xl lg:text-3xl font-bold text-primary">
+                                                        {formatPrice(plan.plan_fee)}/tháng
+                                                    </div>
+                                                    <div className="text-sm lg:text-base text-blue-600 font-semibold">
+                                                        + {formatPrice(plan.fee_slot)}/lượt
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+
+                                            <CardContent className="space-y-4 lg:space-y-6 flex-grow flex flex-col">
+                                                <div className="text-center py-3 bg-blue-50 rounded-lg border border-blue-200">
+                                                    <div className="text-xl lg:text-2xl font-bold text-foreground mb-1">
+                                                        {plan.battery_cap} pin
+                                                    </div>
+                                                    <div className="text-xs lg:text-sm text-muted-foreground">
+                                                        Số lượng pin tối đa
+                                                    </div>
+                                                </div>
+
+                                                <ul className="space-y-2 lg:space-y-3 flex-grow">
+                                                    <li className="flex items-center space-x-2 lg:space-x-3">
+                                                        <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
+                                                        <span className="text-xs lg:text-sm text-muted-foreground">
+                                                            SoH cap: {parseFloat(plan.soh_cap) * 100}%
+                                                        </span>
+                                                    </li>
+                                                    {/* <li className="flex items-center space-x-2 lg:space-x-3">
+                                                        <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
+                                                        <span className="text-xs lg:text-sm text-muted-foreground">
+                                                            Phí phạt: {formatPrice(plan.penalty_fee)}/lượt
+                                                        </span>
+                                                    </li> */}
+                                                    <li className="flex items-center space-x-2 lg:space-x-3">
+                                                        <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />
+                                                        <span className="text-xs lg:text-sm text-muted-foreground">
+                                                            Thời hạn: {plan.duration_days} ngày
+                                                        </span>
+                                                    </li>
+                                                    <li className="flex items-center space-x-2 lg:space-x-3">
+                                                        <Battery className="h-4 w-4 lg:h-5 lg:w-5 text-blue-500 flex-shrink-0" />
+                                                        <span className="text-xs lg:text-sm font-semibold text-blue-600">
+                                                            Phí {formatPrice(plan.fee_slot)}/lần đổi
+                                                        </span>
+                                                    </li>
+                                                </ul>
+
+                                                <div className="flex justify-center pt-4">
+                                                    <Button
+                                                        size="lg"
+                                                        className="w-full lg:w-auto"
+                                                        onClick={() => handleSelectSubscription(plan)}
+                                                    >
+                                                        <Zap className="mr-2 h-4 w-4" />
+                                                        Chọn gói này
+                                                    </Button>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

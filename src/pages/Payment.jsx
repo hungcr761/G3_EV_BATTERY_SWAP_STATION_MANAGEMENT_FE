@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,14 +20,23 @@ export default function Payment() {
     const location = useLocation();
     const navigate = useNavigate();
     const { plan, vehicle } = location.state || {};
-
     const [processing, setProcessing] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('vnpay');
 
     // Nếu không có data, redirect về services
+    useEffect(() => {
+        if (!plan || !vehicle) {
+            navigate('/services', { replace: true });
+        }
+    }, [plan, vehicle, navigate]);
+
+    // Show loading while redirecting
     if (!plan || !vehicle) {
-        navigate('/services');
-        return null;
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
     const formatPrice = (price) => {
@@ -38,7 +47,7 @@ export default function Payment() {
     };
 
     // Tính tổng tiền
-    const totalAmount = parseFloat(plan.plan_fee) + parseFloat(plan.deposit_fee);
+    const totalAmount = (parseFloat(plan.plan_fee) || 0) + (parseFloat(plan.deposit_fee) || 0);
 
     const handlePayment = async () => {
         setProcessing(true);
@@ -102,10 +111,10 @@ export default function Payment() {
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                         <Badge className="mb-3 bg-primary">
-                                            {plan.plan_name}
+                                            {plan.plan_name || 'Gói dịch vụ'}
                                         </Badge>
                                         <p className="text-muted-foreground mb-4">
-                                            {plan.description}
+                                            {plan.description || 'Không có mô tả'}
                                         </p>
 
                                         {/* Features */}
@@ -113,13 +122,13 @@ export default function Payment() {
                                             <div className="flex items-center space-x-2">
                                                 <Check className="h-5 w-5 text-green-500" />
                                                 <span className="text-sm">
-                                                    Số pin tối đa: <strong>{plan.battery_cap}</strong>
+                                                    Số pin tối đa: <strong>{plan.battery_cap || 0}</strong>
                                                 </span>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <Check className="h-5 w-5 text-green-500" />
                                                 <span className="text-sm">
-                                                    SoH cap: <strong>{parseFloat(plan.soh_cap) * 100}%</strong>
+                                                    SoH cap: <strong>{plan.soh_cap ? (parseFloat(plan.soh_cap) * 100).toFixed(0) : 0}%</strong>
                                                 </span>
                                             </div>
                                             {/* <div className="flex items-center space-x-2">
@@ -152,15 +161,15 @@ export default function Payment() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground mb-1">Tên xe</p>
-                                        <p className="font-semibold text-lg">{vehicle.model}</p>
+                                        <p className="font-semibold text-lg">{vehicle.model_name || 'N/A'}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground mb-1">Biển số</p>
-                                        <p className="font-semibold text-lg">{vehicle.license_plate}</p>
+                                        <p className="font-semibold text-lg">{vehicle.license_plate || 'N/A'}</p>
                                     </div>
                                     <div className="col-span-2">
                                         <p className="text-sm text-muted-foreground mb-1">Số VIN</p>
-                                        <p className="font-mono text-sm bg-muted p-2 rounded">{vehicle.vin}</p>
+                                        <p className="font-mono text-sm bg-muted p-2 rounded">{vehicle.vin || 'N/A'}</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -214,7 +223,7 @@ export default function Payment() {
                                             <p className="text-sm text-muted-foreground">Thanh toán định kỳ</p>
                                         </div>
                                         <p className="font-semibold text-lg">
-                                            {formatPrice(plan.plan_fee)}
+                                            {formatPrice(plan.plan_fee || 0)}
                                         </p>
                                     </div>
 
@@ -225,7 +234,7 @@ export default function Payment() {
                                             <p className="text-sm text-muted-foreground">Hoàn trả khi hủy</p>
                                         </div>
                                         <p className="font-semibold text-lg">
-                                            {formatPrice(plan.deposit_fee)}
+                                            {formatPrice(plan.deposit_fee || 0)}
                                         </p>
                                     </div>
 
@@ -236,7 +245,7 @@ export default function Payment() {
                                             <p className="text-sm text-muted-foreground">Nếu vi phạm quy định</p>
                                         </div>
                                         <p className="font-semibold text-lg text-orange-600">
-                                            {formatPrice(plan.penalty_fee)}
+                                            {formatPrice(plan.penalty_fee || 0)}
                                         </p>
                                     </div>
 
