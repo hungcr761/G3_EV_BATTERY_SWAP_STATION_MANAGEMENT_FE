@@ -90,7 +90,7 @@ export const stationAPI = {
 
 // Booking APIs
 export const bookingAPI = {
-    checkAvailability: (data) => api.post('/booking/check-availability', data),
+    checkAvailability: (stationId, vehicleId) => api.get(`/booking/check-availability?station_id=${stationId}&vehicle_id=${vehicleId}`),
     create: (data) => api.post('/booking', data),
     getById: (id) => api.get(`/booking/${id}`),
     update: (id, data) => api.put(`/booking/${id}`, data),

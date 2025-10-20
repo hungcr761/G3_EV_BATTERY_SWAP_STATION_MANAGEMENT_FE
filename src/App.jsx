@@ -7,12 +7,10 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Stations from './pages/Stations';
-import Booking from './pages/Booking';
 import Services from './pages/Services';
 import Payment from './pages/Payment';
 import Support from './pages/Support';
@@ -49,11 +47,6 @@ function App() {
               <Stations />
             </Layout>
           } />
-          <Route path="/booking" element={
-            <Layout>
-              <Booking />
-            </Layout>
-          } />
           <Route path="/services" element={
             <Layout>
               <Services />
@@ -76,7 +69,6 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected routes with layout */}
           <Route path="/dashboard" element={

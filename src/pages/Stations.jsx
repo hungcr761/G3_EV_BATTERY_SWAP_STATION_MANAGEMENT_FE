@@ -7,7 +7,7 @@ import GoongMap from '../components/Map/GoongMap';
 import BookingFlow from '../components/Booking/BookingFlow';
 import VehicleSelector from '../components/Booking/VehicleSelector';
 import NoVehicleSelected from '../components/Booking/NoVehicleSelected';
-import { stationAPI, bookingAPI } from '../lib/apiServices';
+import { stationAPI, bookingAPI, vehicleAPI, modelAPI, batteryTypeAPI } from '../lib/apiServices';
 import {
     MapPin,
     Battery,
@@ -35,6 +35,9 @@ const Stations = () => {
     const [showVehicleSelector, setShowVehicleSelector] = useState(false);
     const [stationAvailability, setStationAvailability] = useState({});
     const [loadingAvailability, setLoadingAvailability] = useState(false);
+    const [userVehicles, setUserVehicles] = useState([]);
+    const [vehiclesLoading, setVehiclesLoading] = useState(true);
+    const [showVehiclePrompt, setShowVehiclePrompt] = useState(false);
 
     // Fetch stations from API
     useEffect(() => {
@@ -63,6 +66,65 @@ const Stations = () => {
         };
 
         fetchStations();
+    }, []);
+
+    // Fetch user vehicles and auto-select if only one vehicle
+    useEffect(() => {
+        const fetchUserVehicles = async () => {
+            setVehiclesLoading(true);
+            try {
+                // Fetch vehicle models and battery types first
+                const [modelsResponse, batteryResponse] = await Promise.all([
+                    modelAPI.getAll(),
+                    batteryTypeAPI.getAll()
+                ]);
+
+                const models = modelsResponse.data?.payload?.vehicleModels || [];
+                const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
+
+                // Then fetch vehicles
+                const response = await vehicleAPI.getAll();
+                const vehiclesData = response.data?.vehicles || [];
+
+                // Map vehicles with battery type information
+                const mappedVehicles = vehiclesData.map(vehicle => {
+                    const modelName = vehicle.model?.name || 'Unknown Model';
+                    const vehicleModel = models.find(vm => vm.model_id === vehicle.model_id);
+
+                    let batteryName = 'Unknown Battery';
+                    let batteryTypeCode = 'type2'; // default
+                    if (vehicleModel?.battery_type_id) {
+                        const batteryType = batteryTypesData.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
+                        batteryName = batteryType?.battery_type_code || 'Unknown Battery';
+                        batteryTypeCode = batteryType?.battery_type_code || 'type2';
+                    }
+
+                    return {
+                        ...vehicle,
+                        modelName,
+                        batteryName,
+                        batteryType: batteryName,
+                        batteryTypeCode
+                    };
+                });
+
+                setUserVehicles(mappedVehicles);
+
+                // Auto-select vehicle if only one exists
+                if (mappedVehicles.length === 1) {
+                    setSelectedVehicle(mappedVehicles[0]);
+                } else if (mappedVehicles.length > 1) {
+                    // Show prompt to select vehicle
+                    setShowVehiclePrompt(true);
+                }
+            } catch (error) {
+                console.error('Error fetching user vehicles:', error);
+            } finally {
+                setVehiclesLoading(false);
+            }
+        };
+
+        fetchUserVehicles();
     }, []);
 
     // Get user location and find nearest station
@@ -136,11 +198,10 @@ const Stations = () => {
             // Check availability for each station
             const promises = stations.map(async (station) => {
                 try {
-                    const response = await bookingAPI.checkAvailability({
-                        station_id: station.id,
-                        battery_type: selectedVehicle.batteryTypeCode,
-                        scheduled_time: new Date().toISOString()
-                    });
+                    const response = await bookingAPI.checkAvailability(
+                        station.id,
+                        selectedVehicle.vehicle_id
+                    );
 
                     return {
                         stationId: station.id,
@@ -163,7 +224,10 @@ const Stations = () => {
                     available: data.available,
                     availableCount: data.availability_details?.available_batteries_count || 0,
                     totalSlots: data.availability_details?.total_slots || 0,
-                    stationStatus: data.availability_details?.station_status || 'unknown'
+                    stationStatus: data.availability_details?.station_status || 'unknown',
+                    batteryType: data.battery_type,
+                    station: data.station,
+                    message: data.message
                 };
             });
 
@@ -194,12 +258,6 @@ const Stations = () => {
                     behavior: 'smooth',
                     block: 'center'
                 });
-
-                // Add a temporary highlight effect
-                stationElement.classList.add('animate-pulse');
-                setTimeout(() => {
-                    stationElement.classList.remove('animate-pulse');
-                }, 2000);
             }
         }, 100);
     };
@@ -274,13 +332,18 @@ const Stations = () => {
                             </p>
                         </div>
                         <div className="flex items-center space-x-4">
-                            {selectedVehicle && (
+                            {vehiclesLoading ? (
+                                <div className="flex items-center space-x-2">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                                    <span className="text-sm text-muted-foreground">Đang tải xe...</span>
+                                </div>
+                            ) : selectedVehicle ? (
                                 <div className="flex items-center space-x-2">
                                     <Motorbike className="h-5 w-5 text-primary" />
                                     <div>
                                         <p className="font-medium">{selectedVehicle.modelName}</p>
                                         <p className="text-sm text-muted-foreground">
-                                            {selectedVehicle.batteryType} • SoH: {selectedVehicle.battery_soh}%
+                                            {selectedVehicle.batteryType}
                                         </p>
                                     </div>
                                     <Button
@@ -291,9 +354,64 @@ const Stations = () => {
                                         Đổi xe
                                     </Button>
                                 </div>
+                            ) : userVehicles.length > 0 ? (
+                                <div className="flex items-center space-x-2">
+                                    <Motorbike className="h-5 w-5 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-medium text-muted-foreground">Chưa chọn xe</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Chọn xe để xem tình trạng pin tại các trạm
+                                        </p>
+                                    </div>
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={handleShowVehicleSelector}
+                                    >
+                                        Chọn xe
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center space-x-2">
+                                    <Motorbike className="h-5 w-5 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-medium text-muted-foreground">Chưa có xe</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Thêm xe để sử dụng dịch vụ
+                                        </p>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {/* Navigate to add vehicle */ }}
+                                    >
+                                        Thêm xe
+                                    </Button>
+                                </div>
                             )}
                         </div>
                     </div>
+
+                    {/* Vehicle Selection Prompt */}
+                    {!vehiclesLoading && userVehicles.length > 1 && !selectedVehicle && (
+                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                                <Motorbike className="h-5 w-5 text-blue-600" />
+                                <span className="font-semibold text-blue-800">Chọn xe để tiếp tục</span>
+                            </div>
+                            <p className="text-blue-700 mt-1">
+                                Bạn có {userVehicles.length} xe. Vui lòng chọn xe để xem tình trạng pin tại các trạm.
+                            </p>
+                            <Button
+                                variant="default"
+                                size="sm"
+                                className="mt-2"
+                                onClick={handleShowVehicleSelector}
+                            >
+                                Chọn xe ngay
+                            </Button>
+                        </div>
+                    )}
 
                     {/* Nearest Station Info */}
                     {nearestStation && (
@@ -490,10 +608,16 @@ const Stations = () => {
                                                         size="sm"
                                                         variant="outline"
                                                         className="flex-1"
+                                                        disabled={!selectedVehicle || (stationAvailability[station.id]?.availableCount || 0) === 0}
                                                         onClick={() => handleBooking(station)}
                                                     >
                                                         <Calendar className="mr-1 h-3 w-3" />
-                                                        Đặt lịch
+                                                        {!selectedVehicle
+                                                            ? 'Chọn xe trước'
+                                                            : (stationAvailability[station.id]?.availableCount || 0) === 0
+                                                                ? 'Hết pin'
+                                                                : 'Đặt lịch'
+                                                        }
                                                     </Button>
                                                 </div>
                                             </div>
@@ -542,6 +666,7 @@ const Stations = () => {
                                     selectedVehicle={selectedVehicle}
                                     onContinue={handleCloseVehicleSelector}
                                     isForBooking={!!bookingStation}
+                                    vehicles={userVehicles}
                                 />
                             </CardContent>
                         </Card>

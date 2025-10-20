@@ -5,14 +5,20 @@ import { Badge } from '../ui/badge';
 import { vehicleAPI, modelAPI, batteryTypeAPI } from '../../lib/apiServices';
 import { Motorbike, Battery, CheckCircle, ArrowRight } from 'lucide-react';
 
-const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBooking = false }) => {
-    const [vehicles, setVehicles] = useState([]);
+const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBooking = false, vehicles = null }) => {
+    const [internalVehicles, setInternalVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [vehicleModels, setVehicleModels] = useState([]);
-    const [batteryTypes, setBatteryTypes] = useState([]);
 
     useEffect(() => {
+        // If vehicles are provided via props, use them directly
+        if (vehicles && vehicles.length > 0) {
+            setInternalVehicles(vehicles);
+            setLoading(false);
+            return;
+        }
+
+        // Otherwise, fetch vehicles as before
         const fetchData = async () => {
             try {
                 setLoading(true);
@@ -25,9 +31,6 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
 
                 const models = modelsResponse.data?.payload?.vehicleModels || [];
                 const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
-
-                setVehicleModels(models);
-                setBatteryTypes(batteryTypesData);
 
                 // Then fetch vehicles
                 const response = await vehicleAPI.getAll();
@@ -55,7 +58,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                     };
                 });
 
-                setVehicles(mappedVehicles);
+                setInternalVehicles(mappedVehicles);
             } catch (error) {
                 console.error('Error fetching data:', error);
                 setError('Không thể tải danh sách xe');
@@ -65,7 +68,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
         };
 
         fetchData();
-    }, []);
+    }, [vehicles]);
 
 
     const handleVehicleSelect = (vehicle) => {
@@ -92,7 +95,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
         );
     }
 
-    if (vehicles.length === 0) {
+    if (internalVehicles.length === 0) {
         return (
             <div className="text-center py-8">
                 <Motorbike className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -117,7 +120,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
             </div>
 
             <div className="grid gap-4">
-                {vehicles.map((vehicle) => (
+                {internalVehicles.map((vehicle) => (
                     <Card
                         key={vehicle.vehicle_id}
                         className={`cursor-pointer transition-all hover:shadow-md ${selectedVehicle?.vehicle_id === vehicle.vehicle_id
@@ -145,7 +148,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
 
                                         <div className="flex items-center space-x-4">
                                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                                {vehicle.batteryName}
+                                                {vehicle.batteryType || vehicle.batteryName}
                                             </Badge>
                                         </div>
                                     </div>

@@ -39,7 +39,7 @@ const Header = () => {
     };
 
     const navigationItems = [
-        { label: 'Tìm trạm', href: '/stations' },
+        { label: 'Đặt lịch', href: '/stations' },
         { label: 'Dịch vụ', href: '/services' },
         { label: 'Hỗ trợ', href: '/support' },
     ];
@@ -53,9 +53,6 @@ const Header = () => {
                         <Battery className="h-8 w-8 text-primary" />
                         <Link to="/" className="flex items-center space-x-2">
                             <span className="text-xl font-bold">EVSwap</span>
-                            <Badge variant="secondary" className="text-xs">
-                                Beta
-                            </Badge>
                         </Link>
                     </div>
 
