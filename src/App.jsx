@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout/Layout';
+import KioskLayout from './components/Layout/KioskLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -15,6 +16,10 @@ import Services from './pages/Services';
 import Payment from './pages/Payment';
 import PaymentSuccess from './pages/PaymentSuccess';
 import Support from './pages/Support';
+// Kiosk pages
+import KioskHome from './pages/kiosk/KioskHome';
+import SwapStatus from './pages/kiosk/SwapStatus';
+import SwapComplete from './pages/kiosk/SwapComplete';
 import './App.css';
 
 // Protected Route Component
@@ -100,6 +105,11 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+
+          {/* Kiosk routes - separate layout, no auth required */}
+          <Route path="/kiosk/:stationId" element={<KioskLayout><KioskHome /></KioskLayout>} />
+          <Route path="/kiosk/:stationId/swap/:bookingId" element={<KioskLayout><SwapStatus /></KioskLayout>} />
+          <Route path="/kiosk/:stationId/complete/:bookingId" element={<KioskLayout><SwapComplete /></KioskLayout>} />
 
           {/* Redirect unknown routes to home */}
           <Route path="*" element={<Navigate to="/" replace />} />

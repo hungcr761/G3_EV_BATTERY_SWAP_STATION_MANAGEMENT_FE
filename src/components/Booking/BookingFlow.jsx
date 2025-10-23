@@ -118,7 +118,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                 station_id: selectedStation.id,
                 vehicle_id: selectedVehicle.vehicle_id,
                 battery_type: selectedVehicle.batteryTypeCode,
-                scheduled_time: selectedTime.time.toISOString(),
+                scheduled_start_time: selectedTime.time.toISOString(),
                 status: 'pending'
             };
 
@@ -131,7 +131,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     ...bookingResponse,
                     vehicle: selectedVehicle,
                     station: selectedStation,
-                    scheduled_time: selectedTime.time.toISOString()
+                    scheduled_start_time: selectedTime.time.toISOString()
                 });
                 setCurrentStep(4); // Success step
                 onBookingSuccess?.(bookingResponse);
