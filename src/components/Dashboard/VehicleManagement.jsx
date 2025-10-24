@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
-import { modelAPI, vehicleAPI, batteryTypeAPI } from '../../lib/apiServices';
+import { modelAPI, vehicleAPI } from '../../lib/apiServices';
 import { vehicleSchema } from '../../lib/validations';
 import {
     Select,
@@ -46,7 +46,6 @@ const VehicleManagement = ({ onBack }) => {
     const [apiError, setApiError] = useState('');
     const [vehicleModels, setVehicleModels] = useState([]);
     const [confirmDelete, setConfirmDelete] = useState({ show: false, vehicle: null });
-    const [batteryTypes, setBatteryTypes] = useState([]);
 
     const {
         register,
@@ -64,7 +63,7 @@ const VehicleManagement = ({ onBack }) => {
         }
     });
 
-    {/* Fetch vehicle models and battery types for the select dropdown */ }
+    {/* Fetch vehicle models for the select dropdown */ }
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -72,11 +71,6 @@ const VehicleManagement = ({ onBack }) => {
                 const modelsResponse = await modelAPI.getAll();
                 const models = modelsResponse.data?.payload?.vehicleModels || [];
                 setVehicleModels(models);
-
-                // Fetch battery types
-                const batteryResponse = await batteryTypeAPI.getAll();
-                const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
-                setBatteryTypes(batteryTypesData);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -96,21 +90,9 @@ const VehicleManagement = ({ onBack }) => {
                 // Get model name from vehicle.model
                 const modelName = vehicle.model?.name || 'Unknown Model';
 
-                // Find the corresponding model in vehicleModels to get battery_type_id and battery_slot
-                const vehicleModel = vehicleModels.find(vm => vm.model_id === vehicle.model_id);
-
-                // Get battery type name using battery_type_id from vehicle model
-                let batteryName = 'Unknown Battery';
-                let batterySlot = 0;
-                if (vehicleModel?.battery_type_id) {
-                    const batteryType = batteryTypes.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
-                    batteryName = batteryType?.battery_type_code || 'Unknown Battery';
-                }
-
-                // Get battery_slot from vehicle model
-                if (vehicleModel?.battery_slot) {
-                    batterySlot = vehicleModel.battery_slot;
-                }
+                // Get battery type name and slot directly from vehicle.model.batteryType
+                const batteryName = vehicle.model?.batteryType?.battery_type_code || 'Unknown Battery';
+                const batterySlot = vehicle.model?.battery_slot || 0;
 
                 return {
                     ...vehicle,
@@ -126,7 +108,7 @@ const VehicleManagement = ({ onBack }) => {
         } finally {
             setLoading(false);
         }
-    }, [batteryTypes, vehicleModels]);
+    }, []);
 
     // Load vehicles when component mounts
     useEffect(() => {

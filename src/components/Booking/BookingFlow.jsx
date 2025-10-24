@@ -155,17 +155,34 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
             const response = await bookingAPI.create(bookingData);
 
-            if (response.data && response.data.success) {
-                const bookingResponse = response.data;
-                setBookingId(bookingResponse.payload?.booking_id || bookingResponse.booking_id);
+            if (response.data && response.data.booking) {
+                const bookingResponse = response.data.booking;
+                setBookingId(bookingResponse.booking_id);
                 setBookingData({
-                    ...bookingResponse,
-                    vehicle: selectedVehicle,
-                    station: selectedStation,
-                    scheduled_start_time: selectedTime.time.toISOString()
+                    booking_id: bookingResponse.booking_id,
+                    status: bookingResponse.status,
+                    scheduled_time: bookingResponse.scheduled_start_time,
+                    vehicle: {
+                        ...bookingResponse.vehicle,
+                        modelName: bookingResponse.vehicle.model.name,
+                        batteryType: bookingResponse.vehicle.model.batteryType.battery_type_code,
+                        vin: bookingResponse.vehicle.vin,
+                        license_plate: bookingResponse.vehicle.license_plate
+                    },
+                    station: {
+                        ...bookingResponse.station,
+                        name: bookingResponse.station.station_name,
+                        address: bookingResponse.station.address,
+                        status: bookingResponse.station.status
+                    },
+                    driver: bookingResponse.driver,
+                    batteries: bookingResponse.batteries,
+                    create_time: bookingResponse.create_time,
+                    scheduled_start_time: bookingResponse.scheduled_start_time,
+                    scheduled_end_time: bookingResponse.scheduled_end_time
                 });
                 setCurrentStep(4); // Success step
-                onBookingSuccess?.(bookingResponse);
+                onBookingSuccess?.(response.data);
             } else {
                 setError(response.data?.message || 'Không thể tạo lệnh đặt lịch');
             }
