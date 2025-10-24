@@ -814,6 +814,54 @@ export const mockApi = {
                 }
             }
         };
+    },
+
+    // Mock get subscription plan by ID
+    async getSubscriptionPlanById(id) {
+        await delay(300);
+
+        const plan = mockSubscriptionPlans.find(p => p.plan_id == id);
+        if (!plan) {
+            return Promise.reject({
+                response: {
+                    status: 404,
+                    data: {
+                        message: "Gói dịch vụ không tồn tại"
+                    }
+                }
+            });
+        }
+
+        return {
+            data: {
+                success: true,
+                payload: plan
+            }
+        };
+    },
+
+    // Mock get vehicle by ID
+    async getVehicleById(id) {
+        await delay(300);
+
+        const vehicle = mockVehicles.find(v => v.vehicle_id === id);
+        if (!vehicle) {
+            return Promise.reject({
+                response: {
+                    status: 404,
+                    data: {
+                        message: "Xe không tồn tại"
+                    }
+                }
+            });
+        }
+
+        return {
+            data: {
+                success: true,
+                payload: vehicle
+            }
+        };
     }
 };
 

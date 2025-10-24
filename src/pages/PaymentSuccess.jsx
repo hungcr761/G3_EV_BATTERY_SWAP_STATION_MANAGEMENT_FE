@@ -15,6 +15,7 @@ import {
     Calendar,
     ExternalLink
 } from 'lucide-react';
+import { subscriptionPlanAPI, vehicleAPI } from '@/lib/apiServices';
 
 export default function PaymentSuccess() {
     const [searchParams] = useSearchParams();
@@ -22,6 +23,7 @@ export default function PaymentSuccess() {
     const [loading, setLoading] = useState(true);
     const [paymentData, setPaymentData] = useState(null);
     const [error, setError] = useState(null);
+    const [retryLoading, setRetryLoading] = useState(false);
 
     useEffect(() => {
         const extractPaymentData = () => {
@@ -82,6 +84,108 @@ export default function PaymentSuccess() {
 
     const handleBackToServices = () => {
         navigate('/services');
+    };
+
+    const handleRetryPayment = async () => {
+        setRetryLoading(true);
+
+        try {
+            // Navigate back to payment page with preserved plan and vehicle data
+            if (paymentData?.planId && paymentData?.vehicleId) {
+                try {
+                    // Try to fetch full plan and vehicle data
+                    console.log('Attempting to fetch plan and vehicle data...');
+                    const [planResponse, vehicleResponse] = await Promise.all([
+                        subscriptionPlanAPI.getById(paymentData.planId),
+                        vehicleAPI.getById(paymentData.vehicleId)
+                    ]);
+
+                    console.log('Plan Response:', planResponse);
+                    console.log('Plan Response data:', planResponse?.data);
+                    console.log('Plan Response data.subscriptionPlan:', planResponse?.data?.subscriptionPlan);
+                    console.log('Vehicle Response:', vehicleResponse);
+                    console.log('Vehicle Response data:', vehicleResponse?.data);
+                    console.log('Vehicle Response data.vehicle:', vehicleResponse?.data?.vehicle);
+
+                    // Handle different API response formats
+                    let plan = null;
+                    let vehicle = null;
+
+                    // Extract plan data from various possible response formats
+                    if (planResponse?.data?.payload?.subscriptionPlan) {
+                        plan = planResponse.data.payload.subscriptionPlan;
+                    } else if (planResponse?.data?.subscriptionPlan) {
+                        plan = planResponse.data.subscriptionPlan;
+                    } else if (planResponse?.data?.payload) {
+                        plan = planResponse.data.payload;
+                    } else if (planResponse?.data?.data) {
+                        plan = planResponse.data.data;
+                    } else if (planResponse?.data) {
+                        plan = planResponse.data;
+                    } else {
+                        plan = { plan_id: paymentData.planId };
+                    }
+
+                    // Extract vehicle data from various possible response formats
+                    if (vehicleResponse?.data?.vehicle) {
+                        vehicle = vehicleResponse.data.vehicle;
+                    } else if (vehicleResponse?.data?.payload) {
+                        vehicle = vehicleResponse.data.payload;
+                    } else if (vehicleResponse?.data?.data) {
+                        vehicle = vehicleResponse.data.data;
+                    } else if (vehicleResponse?.data) {
+                        vehicle = vehicleResponse.data;
+                    } else {
+                        vehicle = { vehicle_id: paymentData.vehicleId };
+                    }
+
+                    console.log('Final Plan Data:', plan);
+                    console.log('Final Plan Data keys:', plan ? Object.keys(plan) : 'No plan');
+                    console.log('Final Vehicle Data:', vehicle);
+                    console.log('Final Vehicle Data keys:', vehicle ? Object.keys(vehicle) : 'No vehicle');
+
+                    navigate('/payment', {
+                        state: { plan, vehicle }
+                    });
+                } catch (error) {
+                    console.error('Error fetching plan/vehicle data:', error);
+                    console.log('API endpoints may not exist, using fallback approach...');
+
+                    // Alternative approach: Try to get data from localStorage or use minimal data
+                    // Check if we can get data from localStorage (if user was previously on services page)
+                    const storedPlan = localStorage.getItem('selectedPlan');
+                    const storedVehicle = localStorage.getItem('selectedVehicle');
+
+                    let plan, vehicle;
+
+                    if (storedPlan && storedVehicle) {
+                        try {
+                            plan = JSON.parse(storedPlan);
+                            vehicle = JSON.parse(storedVehicle);
+                            console.log('Using stored plan and vehicle data:', plan, vehicle);
+                        } catch (e) {
+                            console.error('Error parsing stored data:', e);
+                            plan = { plan_id: paymentData.planId };
+                            vehicle = { vehicle_id: paymentData.vehicleId };
+                        }
+                    } else {
+                        // Fallback: navigate with minimal data
+                        plan = { plan_id: paymentData.planId };
+                        vehicle = { vehicle_id: paymentData.vehicleId };
+                        console.log('Using minimal fallback data:', plan, vehicle);
+                    }
+
+                    navigate('/payment', {
+                        state: { plan, vehicle }
+                    });
+                }
+            } else {
+                // Fallback to services page if we don't have the required data
+                navigate('/services');
+            }
+        } finally {
+            setRetryLoading(false);
+        }
     };
 
     if (loading) {
@@ -271,12 +375,22 @@ export default function PaymentSuccess() {
                     ) : (
                         <>
                             <Button
-                                onClick={handleBackToServices}
+                                onClick={handleRetryPayment}
+                                disabled={retryLoading}
                                 size="lg"
                                 className="bg-primary hover:bg-primary/90"
                             >
-                                <ArrowLeft className="mr-2 h-5 w-5" />
-                                Thử lại thanh toán
+                                {retryLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                        Đang tải...
+                                    </>
+                                ) : (
+                                    <>
+                                        <ArrowLeft className="mr-2 h-5 w-5" />
+                                        Thử lại thanh toán
+                                    </>
+                                )}
                             </Button>
                             <Button
                                 onClick={() => navigate('/dashboard')}
