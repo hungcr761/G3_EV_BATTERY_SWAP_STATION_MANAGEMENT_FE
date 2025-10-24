@@ -41,20 +41,27 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                     // Get model name from vehicle.model
                     const modelName = vehicle.model?.name || 'Unknown Model';
 
-                    // Find the corresponding model in vehicleModels to get battery_type_id
+                    // Find the corresponding model in vehicleModels to get battery_type_id and battery_slot
                     const vehicleModel = models.find(vm => vm.model_id === vehicle.model_id);
 
                     // Get battery type name using battery_type_id from vehicle model
                     let batteryName = 'Unknown Battery';
+                    let batterySlot = 0;
                     if (vehicleModel?.battery_type_id) {
                         const batteryType = batteryTypesData.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
                         batteryName = batteryType?.battery_type_code || 'Unknown Battery';
                     }
 
+                    // Get battery_slot from vehicle model
+                    if (vehicleModel?.battery_slot) {
+                        batterySlot = vehicleModel.battery_slot;
+                    }
+
                     return {
                         ...vehicle,
                         modelName,
-                        batteryName
+                        batteryName,
+                        batterySlot
                     };
                 });
 
@@ -150,6 +157,11 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                                                 {vehicle.batteryType || vehicle.batteryName}
                                             </Badge>
+                                            {vehicle.batterySlot > 0 && (
+                                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                                    {vehicle.batterySlot} khe pin
+                                                </Badge>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

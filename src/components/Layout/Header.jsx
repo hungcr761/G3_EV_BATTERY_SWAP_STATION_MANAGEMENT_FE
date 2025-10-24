@@ -90,7 +90,7 @@ const Header = () => {
                                                 <div className="flex flex-col items-start">
                                                     <span className="text-sm font-medium">{user?.fullname}</span>
                                                     <span className="text-xs text-muted-foreground">
-                                                        {user?.permission === 'driver' ? 'Tài xế' : user?.permission}
+                                                        {user?.role === 'driver' ? 'Tài xế' : user?.role}
                                                     </span>
                                                 </div>
                                                 <ChevronDown className="h-4 w-4 text-muted-foreground" />

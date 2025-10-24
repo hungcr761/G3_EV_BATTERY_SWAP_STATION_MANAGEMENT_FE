@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { useAuth } from '../hooks/useAuth'
 import ProfileUpdate from '../components/Dashboard/ProfileUpdate';
 import VehicleManagement from '../components/Dashboard/VehicleManagement';
@@ -16,7 +15,8 @@ import {
     Plus,
     Eye,
     TrendingUp,
-    TestTube
+    TestTube,
+    User
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -79,18 +79,15 @@ const Dashboard = () => {
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center space-x-4">
-                        <Avatar className="h-16 w-16">
-                            <AvatarImage src={user?.avatar} alt={user?.fullname} />
-                            <AvatarFallback className="text-lg">
-                                {user?.fullname?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                            </AvatarFallback>
-                        </Avatar>
+                        <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center">
+                            <User className="h-8 w-8 text-primary" />
+                        </div>
                         <div>
                             <h1 className="text-2xl font-bold text-foreground">
                                 Chào mừng, {user?.fullname}!
                             </h1>
                             <p className="text-muted-foreground">
-                                {user?.permission === 'driver' ? 'Tài xế xe điện' : 'Quản trị viên'} • {user?.email}
+                                {user?.role === 'driver' ? 'Tài xế xe điện' : 'Quản trị viên'} • {user?.email}
                             </p>
                         </div>
                     </div>

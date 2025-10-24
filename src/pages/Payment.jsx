@@ -24,6 +24,16 @@ export default function Payment() {
     const [processing, setProcessing] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('momo');
 
+    // Debug logging
+    console.log('Payment page received plan:', plan);
+    console.log('Payment page received vehicle:', vehicle);
+    console.log('Plan keys:', plan ? Object.keys(plan) : 'No plan');
+    console.log('Vehicle keys:', vehicle ? Object.keys(vehicle) : 'No vehicle');
+    console.log('Plan plan_id:', plan?.plan_id);
+    console.log('Plan plan_name:', plan?.plan_name);
+    console.log('Vehicle vehicle_id:', vehicle?.vehicle_id);
+    console.log('Vehicle model_name:', vehicle?.model_name);
+
     // Nếu không có data, redirect về services
     useEffect(() => {
         if (!plan || !vehicle) {

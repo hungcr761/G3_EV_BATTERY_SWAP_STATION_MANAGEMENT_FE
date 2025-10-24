@@ -61,6 +61,10 @@ export default function Services() {
     const handleSubscribe = () => {
         if (!selectedVehicle || !selectedPlan) return;
 
+        // Store plan and vehicle data in localStorage for potential retry scenarios
+        localStorage.setItem('selectedPlan', JSON.stringify(selectedPlan));
+        localStorage.setItem('selectedVehicle', JSON.stringify(selectedVehicle));
+
         // Navigate sang trang Payment với plan và vehicle info
         navigate('/payment', {
             state: {

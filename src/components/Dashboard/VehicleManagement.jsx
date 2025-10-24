@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
-import { modelAPI, vehicleAPI, batteryTypeAPI } from '../../lib/apiServices';
+import { modelAPI, vehicleAPI } from '../../lib/apiServices';
 import { vehicleSchema } from '../../lib/validations';
 import {
     Select,
@@ -24,7 +24,8 @@ import {
     AlertCircle,
     CheckCircle,
     Save,
-    Loader2
+    Loader2,
+    Car
 } from 'lucide-react';
 import {
     Dialog,
@@ -45,7 +46,6 @@ const VehicleManagement = ({ onBack }) => {
     const [apiError, setApiError] = useState('');
     const [vehicleModels, setVehicleModels] = useState([]);
     const [confirmDelete, setConfirmDelete] = useState({ show: false, vehicle: null });
-    const [batteryTypes, setBatteryTypes] = useState([]);
 
     const {
         register,
@@ -63,7 +63,7 @@ const VehicleManagement = ({ onBack }) => {
         }
     });
 
-    {/* Fetch vehicle models and battery types for the select dropdown */ }
+    {/* Fetch vehicle models for the select dropdown */ }
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -71,11 +71,6 @@ const VehicleManagement = ({ onBack }) => {
                 const modelsResponse = await modelAPI.getAll();
                 const models = modelsResponse.data?.payload?.vehicleModels || [];
                 setVehicleModels(models);
-
-                // Fetch battery types
-                const batteryResponse = await batteryTypeAPI.getAll();
-                const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
-                setBatteryTypes(batteryTypesData);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -89,26 +84,21 @@ const VehicleManagement = ({ onBack }) => {
         setLoading(true);
         try {
             const response = await vehicleAPI.getAll();
-            
+
             const vehiclesData = response.data?.vehicles || [];
             const mappedVehicles = vehiclesData.map(vehicle => {
                 // Get model name from vehicle.model
                 const modelName = vehicle.model?.name || 'Unknown Model';
 
-                // Find the corresponding model in vehicleModels to get battery_type_id
-                const vehicleModel = vehicleModels.find(vm => vm.model_id === vehicle.model_id);
-
-                // Get battery type name using battery_type_id from vehicle model
-                let batteryName = 'Unknown Battery';
-                if (vehicleModel?.battery_type_id) {
-                    const batteryType = batteryTypes.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
-                    batteryName = batteryType?.battery_type_code || 'Unknown Battery';
-                }
+                // Get battery type name and slot directly from vehicle.model.batteryType
+                const batteryName = vehicle.model?.batteryType?.battery_type_code || 'Unknown Battery';
+                const batterySlot = vehicle.model?.battery_slot || 0;
 
                 return {
                     ...vehicle,
                     modelName,
-                    batteryName
+                    batteryName,
+                    batterySlot
                 };
             });
 
@@ -118,7 +108,7 @@ const VehicleManagement = ({ onBack }) => {
         } finally {
             setLoading(false);
         }
-    }, [batteryTypes, vehicleModels]);
+    }, []);
 
     // Load vehicles when component mounts
     useEffect(() => {
@@ -201,21 +191,21 @@ const VehicleManagement = ({ onBack }) => {
     const executeDelete = async () => {
         const vehicleToDelete = confirmDelete.vehicle;
         const vehicleId = vehicleToDelete.vehicle_id;
-        
+
         setConfirmDelete({ show: false, vehicle: null });
 
         try {
             const response = await vehicleAPI.delete(vehicleId);
-            
-            const isSuccess = response.data?.success === true || 
-                             response.status === 200 || 
-                             response.status === 204;
+
+            const isSuccess = response.data?.success === true ||
+                response.status === 200 ||
+                response.status === 204;
             if (isSuccess) {
                 setMessage({
                     type: 'success',
                     text: `Đã xóa xe ${vehicleToDelete.modelName} (${vehicleToDelete.license_plate}) thành công!`
                 });
-                
+
                 await fetchVehicles();
 
                 setTimeout(() => {
@@ -227,7 +217,7 @@ const VehicleManagement = ({ onBack }) => {
                 type: 'error',
                 text: error.response?.data?.message || 'Không thể xóa xe. Vui lòng thử lại!'
             });
-            
+
             setTimeout(() => {
                 setMessage({ type: '', text: '' });
             }, 5000);
@@ -351,6 +341,11 @@ const VehicleManagement = ({ onBack }) => {
                                             <p className="text-sm font-medium">{vehicle.batteryName}</p>
                                         </div>
 
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Số khe pin</p>
+                                            <p className="text-sm font-medium">{vehicle.batterySlot} khe</p>
+                                        </div>
+
                                         {/* {vehicle.battery_soh && (
                                             <div>
                                                 <p className="text-sm text-muted-foreground">Tình trạng pin</p>
@@ -470,7 +465,7 @@ const VehicleManagement = ({ onBack }) => {
                                             <SelectContent>
                                                 {vehicleModels.map(model => (
                                                     <SelectItem key={model.model_id} value={model.name}>
-                                                        VinFast {model.name}
+                                                        VinFast {model.name} {model.battery_slot ? `(${model.battery_slot} khe pin)` : ''}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -552,12 +547,12 @@ const VehicleManagement = ({ onBack }) => {
                                 Bạn có chắc chắn muốn xóa xe này không? Hành động này không thể hoàn tác.
                             </DialogDescription>
                         </DialogHeader>
-                        
+
                         {confirmDelete.vehicle && (
                             <div className="space-y-4 py-4">
                                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
                                     <div className="flex items-center gap-3">
-                                        <Car className="h-5 w-5 text-gray-400" />
+                                        <Motorbike className="h-5 w-5 text-gray-400" />
                                         <div className="flex-1">
                                             <p className="text-xs text-gray-500">Mẫu xe</p>
                                             <p className="text-sm font-semibold text-gray-900">
@@ -565,9 +560,9 @@ const VehicleManagement = ({ onBack }) => {
                                             </p>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="h-px bg-gray-200" />
-                                    
+
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <p className="text-xs text-gray-500 mb-1">Biển số</p>

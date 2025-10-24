@@ -136,6 +136,42 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                 </CardContent>
             </Card>
 
+            {/* Battery Information */}
+            {bookingData?.batteries && bookingData.batteries.length > 0 && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center space-x-2">
+                            <Battery className="h-5 w-5" />
+                            <span>Thông tin pin được phân bổ</span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            {bookingData.batteries.map((battery, index) => (
+                                <div key={battery.battery_id} className="p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm font-medium text-muted-foreground">Pin #{index + 1}</span>
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                            {battery.current_soc}% SOC
+                                        </Badge>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        <div>
+                                            <span className="text-muted-foreground">Serial:</span>
+                                            <span className="font-mono ml-1">{battery.battery_serial}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-muted-foreground">SOH:</span>
+                                            <span className="ml-1">{battery.current_soh}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {/* Station Information */}
             <Card>
                 <CardHeader>
@@ -156,8 +192,8 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Trạng thái:</span>
-                            <Badge variant={bookingData?.station?.status === 'available' ? 'default' : 'secondary'}>
-                                {bookingData?.station?.status === 'available' ? 'Sẵn sàng' : 'Hạn chế'}
+                            <Badge variant={bookingData?.station?.status === 'operational' ? 'default' : 'secondary'}>
+                                {bookingData?.station?.status === 'operational' ? 'Hoạt động' : 'Hạn chế'}
                             </Badge>
                         </div>
                     </div>

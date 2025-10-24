@@ -6,7 +6,7 @@ const mockUsers = [
         password: "admin1234",
         fullname: "Quản trị viên",
         phone_number: "0123456789",
-        permission: "admin",
+        role: "admin",
         status: "active"
     },
     {
@@ -16,7 +16,7 @@ const mockUsers = [
         password: "H25022k5",
         fullname: "Le Hong Minh",
         phone_number: "0987654321",
-        permission: "driver",
+        role: "driver",
         status: "active"
     }
 ];
@@ -48,15 +48,15 @@ const mockVehicles = [
 ];
 
 const mockVehicleModels = [
-    { model_id: 19, name: 'Ludo', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.10'},
-    { model_id: 20, name: 'Impes', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.20'},
-    { model_id: 21, name: 'Klara S', brand: 'VinFast', battery_type_id: 10 , avg_energy_usage: '2.50'},
-    { model_id: 22, name: 'Theon', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.80'},
-    { model_id: 23, name: 'Vento', brand: 'VinFast', battery_type_id: 11 , avg_energy_usage: '2.60'},
-    { model_id: 24, name: 'Theon S', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.90'},
-    { model_id: 25, name: 'Vento S', brand: 'VinFast', battery_type_id: 11 , avg_energy_usage: '2.70'},
-    { model_id: 26, name: 'Feliz S', brand: 'VinFast', battery_type_id: 10 , avg_energy_usage: '2.40'},
-    { model_id: 27, name: 'Evo200', brand: 'VinFast', battery_type_id: 12 , avg_energy_usage: '2.30'},
+    { model_id: 19, name: 'Ludo', brand: 'VinFast', battery_type_id: 12, avg_energy_usage: '2.10' },
+    { model_id: 20, name: 'Impes', brand: 'VinFast', battery_type_id: 12, avg_energy_usage: '2.20' },
+    { model_id: 21, name: 'Klara S', brand: 'VinFast', battery_type_id: 10, avg_energy_usage: '2.50' },
+    { model_id: 22, name: 'Theon', brand: 'VinFast', battery_type_id: 12, avg_energy_usage: '2.80' },
+    { model_id: 23, name: 'Vento', brand: 'VinFast', battery_type_id: 11, avg_energy_usage: '2.60' },
+    { model_id: 24, name: 'Theon S', brand: 'VinFast', battery_type_id: 12, avg_energy_usage: '2.90' },
+    { model_id: 25, name: 'Vento S', brand: 'VinFast', battery_type_id: 11, avg_energy_usage: '2.70' },
+    { model_id: 26, name: 'Feliz S', brand: 'VinFast', battery_type_id: 10, avg_energy_usage: '2.40' },
+    { model_id: 27, name: 'Evo200', brand: 'VinFast', battery_type_id: 12, avg_energy_usage: '2.30' },
 ];
 
 // Mock subscription plans (fee_slot = 0: không theo lượt, fee_slot > 0: có theo lượt)
@@ -216,7 +216,7 @@ export const mockApi = {
             password, // In real app, this would be hashed
             fullname,
             phone_number: phone,
-            permission: "driver",
+            role: "driver",
             status: "active"
         };
 
@@ -744,7 +744,7 @@ export const mockApi = {
     // Mock get subscription plans
     async getSubscriptionPlans() {
         await delay(500);
-        
+
         return {
             data: {
                 success: true,
@@ -784,7 +784,7 @@ export const mockApi = {
         // Lọc ra xe chưa có subscription
         const vehicleIdsWithSubscription = mockSubscriptions.map(sub => sub.vehicle_id);
         console.log('📋 Vehicle IDs with subscription:', vehicleIdsWithSubscription);
-        
+
         const vehiclesWithout = userVehicles.filter(
             v => !vehicleIdsWithSubscription.includes(v.vehicle_id)
         );
@@ -812,6 +812,54 @@ export const mockApi = {
                 payload: {
                     subscriptions: userSubscriptions
                 }
+            }
+        };
+    },
+
+    // Mock get subscription plan by ID
+    async getSubscriptionPlanById(id) {
+        await delay(300);
+
+        const plan = mockSubscriptionPlans.find(p => p.plan_id == id);
+        if (!plan) {
+            return Promise.reject({
+                response: {
+                    status: 404,
+                    data: {
+                        message: "Gói dịch vụ không tồn tại"
+                    }
+                }
+            });
+        }
+
+        return {
+            data: {
+                success: true,
+                payload: plan
+            }
+        };
+    },
+
+    // Mock get vehicle by ID
+    async getVehicleById(id) {
+        await delay(300);
+
+        const vehicle = mockVehicles.find(v => v.vehicle_id === id);
+        if (!vehicle) {
+            return Promise.reject({
+                response: {
+                    status: 404,
+                    data: {
+                        message: "Xe không tồn tại"
+                    }
+                }
+            });
+        }
+
+        return {
+            data: {
+                success: true,
+                payload: vehicle
             }
         };
     }

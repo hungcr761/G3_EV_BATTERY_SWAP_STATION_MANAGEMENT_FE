@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { vehicleAPI } from '../../lib/apiServices';
+import { vehicleAPI, modelAPI, batteryTypeAPI } from '../../lib/apiServices';
 import { Motorbike, Battery, CheckCircle } from 'lucide-react';
 
 const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
@@ -14,17 +14,59 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
         const fetchVehicles = async () => {
             try {
                 setLoading(true);
-                const response = await vehicleAPI.getAll();
-                const vehiclesData = response.data?.payload?.vehicles || response.data?.vehicles || [];
 
-                // Map vehicles with battery type information
-                const mappedVehicles = vehiclesData.map(vehicle => ({
-                    ...vehicle,
-                    modelName: typeof vehicle.model === 'string' ? vehicle.model : (vehicle.model?.name || 'Unknown Model'),
-                    // Determine battery type based on model (this would come from backend in real implementation)
-                    batteryType: getBatteryTypeFromModel(vehicle.modelName),
-                    batteryTypeCode: getBatteryTypeCodeFromModel(vehicle.modelName)
-                }));
+                // Fetch vehicle models and battery types first
+                const [modelsResponse, batteryResponse] = await Promise.all([
+                    modelAPI.getAll(),
+                    batteryTypeAPI.getAll()
+                ]);
+
+                const models = modelsResponse.data?.payload?.vehicleModels || [];
+                const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
+
+                // Then fetch vehicles
+                const response = await vehicleAPI.getAll();
+                const vehiclesData = response.data?.vehicles || [];
+
+                // Map vehicles with battery type and battery slot information
+                const mappedVehicles = vehiclesData.map(vehicle => {
+                    // Get model name from vehicle.model
+                    const modelName = vehicle.model?.name || 'Unknown Model';
+
+                    // Find the corresponding model in vehicleModels to get battery_type_id and battery_slot
+                    const vehicleModel = models.find(vm => vm.model_id === vehicle.model_id);
+
+                    // Debug: Log model mapping
+                    console.log('Mapping vehicle:', {
+                        vehicleId: vehicle.vehicle_id,
+                        modelId: vehicle.model_id,
+                        modelName,
+                        vehicleModel,
+                        batterySlot: vehicleModel?.battery_slot
+                    });
+
+                    // Get battery type name using battery_type_id from vehicle model
+                    let batteryName = 'Unknown Battery';
+                    let batterySlot = 0;
+                    if (vehicleModel?.battery_type_id) {
+                        const batteryType = batteryTypesData.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
+                        batteryName = batteryType?.battery_type_code || 'Unknown Battery';
+                    }
+
+                    // Get battery_slot from vehicle model
+                    if (vehicleModel?.battery_slot) {
+                        batterySlot = vehicleModel.battery_slot;
+                    }
+
+                    return {
+                        ...vehicle,
+                        modelName,
+                        batteryName,
+                        batterySlot,
+                        batteryType: batteryName,
+                        batteryTypeCode: getBatteryTypeCodeFromModel(modelName)
+                    };
+                });
 
                 setVehicles(mappedVehicles);
             } catch (error) {
@@ -130,6 +172,11 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
                                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                                                 {vehicle.batteryType}
                                             </Badge>
+                                            {vehicle.batterySlot > 0 && (
+                                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                                    {vehicle.batterySlot} khe pin
+                                                </Badge>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
