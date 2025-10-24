@@ -49,13 +49,13 @@ const KioskHome = () => {
             const bookingData = response.data;
 
             // Check if response is valid
-            if (!bookingData || !bookingData.payload) {
+            if (!bookingData || !bookingData.booking) {
                 setError('Không tìm thấy booking. Vui lòng kiểm tra lại mã booking.');
                 setValidating(false);
                 return;
             }
 
-            const booking = bookingData.payload.booking;
+            const booking = bookingData.booking;
 
             // VALIDATION 1: Check if booking is for this station
             if (booking.station_id !== parseInt(stationId)) {
@@ -71,8 +71,8 @@ const KioskHome = () => {
             }
 
             // VALIDATION 2: Check if booking is still valid (not expired)
-            if (booking.booking_end_time) {
-                const bookingEndTime = new Date(booking.booking_end_time);
+            if (booking.scheduled_end_time) {
+                const bookingEndTime = new Date(booking.scheduled_end_time);
                 const now = new Date();
                 if (now > bookingEndTime) {
                     setError(
@@ -87,7 +87,7 @@ const KioskHome = () => {
             }
 
             // VALIDATION 3: Check booking status
-            if (booking.booking_status === 'completed') {
+            if (booking.status === 'completed') {
                 setError(
                     `❌ Booking đã được sử dụng!\n\n` +
                     `Booking này đã được hoàn thành.\n` +
@@ -97,7 +97,7 @@ const KioskHome = () => {
                 return;
             }
 
-            if (booking.booking_status === 'cancelled') {
+            if (booking.status === 'cancelled') {
                 setError(
                     `❌ Booking đã bị hủy!\n\n` +
                     `Vui lòng tạo booking mới để sử dụng dịch vụ.`

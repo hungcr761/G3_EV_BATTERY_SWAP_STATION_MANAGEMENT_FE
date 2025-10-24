@@ -148,8 +148,8 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                                         id="qr-reader"
                                         ref={scannerRef}
                                         className={`w-full rounded-2xl overflow-hidden ${scanning
-                                                ? 'border-4 border-primary min-h-[400px]'
-                                                : 'border-4 border-gray-300 aspect-square flex items-center justify-center bg-gray-50'
+                                            ? 'border-4 border-primary min-h-[400px]'
+                                            : 'border-4 border-gray-300 aspect-square flex items-center justify-center bg-gray-50'
                                             }`}
                                     >
                                         {!scanning && (

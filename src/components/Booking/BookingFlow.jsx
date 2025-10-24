@@ -5,12 +5,14 @@ import { bookingAPI } from '../../lib/apiServices';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import VehicleSelection from './VehicleSelection';
 import TimeSelection from './TimeSelection';
+import BatterySelection from './BatterySelection';
 import BookingConfirmation from './BookingConfirmation';
 import BookingSuccess from './BookingSuccess';
 
 const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClose }) => {
     const [currentStep, setCurrentStep] = useState(1);
     const [selectedTime, setSelectedTime] = useState(null);
+    const [selectedBatteries, setSelectedBatteries] = useState([]);
     const [availabilityData, setAvailabilityData] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
@@ -92,9 +94,32 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
         setError(null);
     };
 
+    const handleBatterySelection = (batteries) => {
+        setSelectedBatteries(batteries);
+        setError(null);
+    };
+
     const handleNext = () => {
         if (currentStep === 1 && selectedTime) {
-            setCurrentStep(2);
+            // Debug: Log vehicle info
+            console.log('Vehicle info for battery selection:', {
+                selectedVehicle,
+                batterySlot: selectedVehicle?.batterySlot,
+                modelName: selectedVehicle?.modelName
+            });
+
+            // Check if vehicle has multiple battery slots
+            if (selectedVehicle?.batterySlot > 1) {
+                console.log('Vehicle has multiple battery slots, going to battery selection');
+                setCurrentStep(2); // Go to battery selection
+            } else {
+                console.log('Vehicle has single battery slot, skipping battery selection');
+                // Set default battery selection for single battery vehicles
+                setSelectedBatteries([1]);
+                setCurrentStep(3); // Skip battery selection, go to confirmation
+            }
+        } else if (currentStep === 2 && selectedBatteries.length > 0) {
+            setCurrentStep(3); // Go to confirmation
         }
     };
 
@@ -114,13 +139,19 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
         setError(null);
 
         try {
+            const batteryQuantity = selectedBatteries.length > 0 ? selectedBatteries.length : 1;
             const bookingData = {
                 station_id: selectedStation.id,
                 vehicle_id: selectedVehicle.vehicle_id,
-                battery_type: selectedVehicle.batteryTypeCode,
                 scheduled_start_time: selectedTime.time.toISOString(),
-                status: 'pending'
+                battery_quantity: batteryQuantity,
             };
+
+            console.log('Creating booking with data:', {
+                bookingData,
+                selectedBatteries,
+                batteryQuantity
+            });
 
             const response = await bookingAPI.create(bookingData);
 
@@ -177,16 +208,26 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                 );
             case 2:
                 return (
+                    <BatterySelection
+                        selectedVehicle={selectedVehicle}
+                        onBatterySelection={handleBatterySelection}
+                        onNext={handleNext}
+                        onBack={handleBack}
+                    />
+                );
+            case 3:
+                return (
                     <BookingConfirmation
                         selectedVehicle={selectedVehicle}
                         selectedTime={selectedTime}
                         selectedStation={selectedStation}
+                        selectedBatteries={selectedBatteries}
                         onConfirm={handleConfirmBooking}
                         onBack={handleBack}
                         isSubmitting={isSubmitting}
                     />
                 );
-            case 3:
+            case 4:
                 return (
                     <BookingSuccess
                         bookingData={bookingData}
@@ -201,10 +242,15 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     const getStepTitle = () => {
         switch (currentStep) {
             case 1: return 'Chọn thời gian';
-            case 2: return 'Xác nhận đặt lịch';
-            case 3: return 'Hoàn thành';
+            case 2: return 'Chọn số lượng pin';
+            case 3: return 'Xác nhận đặt lịch';
+            case 4: return 'Hoàn thành';
             default: return '';
         }
+    };
+
+    const getTotalSteps = () => {
+        return selectedVehicle?.batterySlot > 1 ? 4 : 3;
     };
 
     return (
@@ -224,7 +270,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
                         {/* Progress Steps */}
                         <div className="flex items-center space-x-4">
-                            {[1, 2, 3].map((step) => (
+                            {Array.from({ length: getTotalSteps() }, (_, i) => i + 1).map((step) => (
                                 <div key={step} className="flex items-center">
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${currentStep >= step
                                         ? 'bg-primary text-primary-foreground'
@@ -236,7 +282,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                                             step
                                         )}
                                     </div>
-                                    {step < 3 && (
+                                    {step < getTotalSteps() && (
                                         <div className={`w-8 h-0.5 mx-2 ${currentStep > step ? 'bg-primary' : 'bg-muted'
                                             }`} />
                                     )}
@@ -246,7 +292,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
                         <div className="mt-2">
                             <p className="text-sm text-muted-foreground">
-                                Bước {currentStep}/3: {getStepTitle()}
+                                Bước {currentStep}/{getTotalSteps()}: {getStepTitle()}
                             </p>
                         </div>
                     </div>

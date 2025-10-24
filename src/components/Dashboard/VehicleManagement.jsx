@@ -96,20 +96,27 @@ const VehicleManagement = ({ onBack }) => {
                 // Get model name from vehicle.model
                 const modelName = vehicle.model?.name || 'Unknown Model';
 
-                // Find the corresponding model in vehicleModels to get battery_type_id
+                // Find the corresponding model in vehicleModels to get battery_type_id and battery_slot
                 const vehicleModel = vehicleModels.find(vm => vm.model_id === vehicle.model_id);
 
                 // Get battery type name using battery_type_id from vehicle model
                 let batteryName = 'Unknown Battery';
+                let batterySlot = 0;
                 if (vehicleModel?.battery_type_id) {
                     const batteryType = batteryTypes.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
                     batteryName = batteryType?.battery_type_code || 'Unknown Battery';
                 }
 
+                // Get battery_slot from vehicle model
+                if (vehicleModel?.battery_slot) {
+                    batterySlot = vehicleModel.battery_slot;
+                }
+
                 return {
                     ...vehicle,
                     modelName,
-                    batteryName
+                    batteryName,
+                    batterySlot
                 };
             });
 
@@ -352,6 +359,11 @@ const VehicleManagement = ({ onBack }) => {
                                             <p className="text-sm font-medium">{vehicle.batteryName}</p>
                                         </div>
 
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Số khe pin</p>
+                                            <p className="text-sm font-medium">{vehicle.batterySlot} khe</p>
+                                        </div>
+
                                         {/* {vehicle.battery_soh && (
                                             <div>
                                                 <p className="text-sm text-muted-foreground">Tình trạng pin</p>
@@ -471,7 +483,7 @@ const VehicleManagement = ({ onBack }) => {
                                             <SelectContent>
                                                 {vehicleModels.map(model => (
                                                     <SelectItem key={model.model_id} value={model.name}>
-                                                        VinFast {model.name}
+                                                        VinFast {model.name} {model.battery_slot ? `(${model.battery_slot} khe pin)` : ''}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>

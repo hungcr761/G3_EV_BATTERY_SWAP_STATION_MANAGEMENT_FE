@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { Battery, CheckCircle2, AlertCircle, Clock, User, Car } from 'lucide-react';
+import { Battery, CheckCircle2, AlertCircle, Clock, User, Motorbike } from 'lucide-react';
 import SwapProgress from '../../components/Kiosk/SwapProgress';
 import { bookingAPI } from '../../lib/apiServices';
 
@@ -24,26 +24,26 @@ const SwapStatus = () => {
                     const booking = location.state.booking;
                     setBookingData({
                         bookingId: booking.booking_id,
-                        userName: booking.user?.full_name || 'Khách hàng',
+                        userName: booking.driver?.fullname || 'Khách hàng',
                         vehicleModel: booking.vehicle?.model?.name || 'Unknown Model',
                         vehiclePlate: booking.vehicle?.license_plate || 'N/A',
-                        batteryType: booking.battery_type?.battery_type_code || 'Type 2',
+                        batteryType: booking.vehicle?.model?.batteryType?.battery_type_code || 'Type 2',
                         stationName: booking.station?.station_name || `Trạm #${stationId}`,
-                        scheduledTime: new Date(booking.booking_start_time).toLocaleString('vi-VN'),
+                        scheduledTime: new Date(booking.scheduled_start_time).toLocaleString('vi-VN'),
                     });
                 } else {
                     // Fetch from API
                     const response = await bookingAPI.getById(bookingId);
-                    const booking = response.data.payload.booking;
+                    const booking = response.data.booking;
 
                     setBookingData({
                         bookingId: booking.booking_id,
-                        userName: booking.user?.full_name || 'Khách hàng',
+                        userName: booking.driver?.fullname || 'Khách hàng',
                         vehicleModel: booking.vehicle?.model?.name || 'Unknown Model',
                         vehiclePlate: booking.vehicle?.license_plate || 'N/A',
-                        batteryType: booking.battery_type?.battery_type_code || 'Type 2',
+                        batteryType: booking.vehicle?.model?.batteryType?.battery_type_code || 'Type 2',
                         stationName: booking.station?.station_name || `Trạm #${stationId}`,
-                        scheduledTime: new Date(booking.booking_start_time).toLocaleString('vi-VN'),
+                        scheduledTime: new Date(booking.scheduled_start_time).toLocaleString('vi-VN'),
                     });
                 }
             } catch (error) {
@@ -52,9 +52,9 @@ const SwapStatus = () => {
                 setBookingData({
                     bookingId: bookingId,
                     userName: 'Khách hàng',
-                    vehicleModel: 'VinFast Evo200',
-                    vehiclePlate: '29A-12345',
-                    batteryType: 'Type 2',
+                    vehicleModel: 'VinFast Klara S',
+                    vehiclePlate: '30B-98761',
+                    batteryType: 'NMC-50',
                     stationName: `Trạm #${stationId}`,
                     scheduledTime: new Date().toLocaleTimeString('vi-VN'),
                 });
@@ -73,31 +73,36 @@ const SwapStatus = () => {
             estimatedTime: '10 giây'
         },
         {
-            title: 'Chuẩn bị vị trí đỗ xe',
-            description: 'Hệ thống đang chuẩn bị vị trí đổi pin',
+            title: 'Chuẩn bị slot pin',
+            description: 'Hệ thống đang chuẩn bị slot pin cho bạn',
             status: 'pending',
         },
         {
-            title: 'Tháo pin cũ',
-            description: 'Robot đang tháo pin cũ khỏi xe',
+            title: 'Lắp pin cũ vào slot',
+            description: 'Vui lòng lắp pin cũ vào slot được chỉ định',
             status: 'pending',
         },
         {
-            title: 'Lắp pin mới',
-            description: 'Robot đang lắp pin đầy vào xe',
+            title: 'Kiểm tra pin cũ',
+            description: 'Hệ thống đang kiểm tra tình trạng pin cũ',
             status: 'pending',
         },
         {
-            title: 'Kiểm tra và hoàn tất',
-            description: 'Kiểm tra kết nối và hoàn tất quy trình',
+            title: 'Lấy pin mới',
+            description: 'Slot pin mới đã mở, vui lòng lấy pin',
+            status: 'pending',
+        },
+        {
+            title: 'Hoàn tất đổi pin',
+            description: 'Kiểm tra và hoàn tất quy trình đổi pin',
             status: 'pending',
         }
     ]);
 
-    // Simulate swap progress
+    // Manual swap process - wait for user actions
     useEffect(() => {
-        const stepDurations = [3000, 4000, 8000, 8000, 3000]; // milliseconds for each step
-        const stepEstimatedTimes = ['10 giây', '15 giây', '30 giây', '30 giây', '10 giây'];
+        const stepDurations = [3000, 2000, 0, 5000, 0, 2000]; // milliseconds for each step
+        const stepEstimatedTimes = ['10 giây', '5 giây', 'Chờ người dùng', '10 giây', 'Chờ người dùng', '5 giây'];
 
         let currentStepIndex = 0;
         let progressInterval;
@@ -106,45 +111,63 @@ const SwapStatus = () => {
             if (currentStepIndex < steps.length) {
                 // Update progress for current step
                 let progress = 0;
-                progressInterval = setInterval(() => {
-                    progress += 5;
-                    if (progress <= 100) {
-                        setSteps(prev => prev.map((step, idx) => {
-                            if (idx === currentStepIndex) {
-                                return {
-                                    ...step,
-                                    status: 'in_progress',
-                                    progress: progress,
-                                    estimatedTime: stepEstimatedTimes[idx]
-                                };
-                            }
-                            return step;
-                        }));
-                    } else {
-                        clearInterval(progressInterval);
+                const duration = stepDurations[currentStepIndex];
 
-                        // Mark current step as completed
-                        setSteps(prev => prev.map((step, idx) => {
-                            if (idx === currentStepIndex) {
-                                return { ...step, status: 'completed', progress: 100 };
-                            }
-                            return step;
-                        }));
-
-                        currentStepIndex++;
-                        setCurrentStep(currentStepIndex);
-
-                        if (currentStepIndex < steps.length) {
-                            setTimeout(progressStep, 500);
+                if (duration > 0) {
+                    // Auto-progress steps
+                    progressInterval = setInterval(() => {
+                        progress += 5;
+                        if (progress <= 100) {
+                            setSteps(prev => prev.map((step, idx) => {
+                                if (idx === currentStepIndex) {
+                                    return {
+                                        ...step,
+                                        status: 'in_progress',
+                                        progress: progress,
+                                        estimatedTime: stepEstimatedTimes[idx]
+                                    };
+                                }
+                                return step;
+                            }));
                         } else {
-                            // All steps completed
-                            setTimeout(() => {
-                                setSwapComplete(true);
-                                navigate(`/kiosk/${stationId}/complete/${bookingId}`);
-                            }, 1000);
+                            clearInterval(progressInterval);
+
+                            // Mark current step as completed
+                            setSteps(prev => prev.map((step, idx) => {
+                                if (idx === currentStepIndex) {
+                                    return { ...step, status: 'completed', progress: 100 };
+                                }
+                                return step;
+                            }));
+
+                            currentStepIndex++;
+                            setCurrentStep(currentStepIndex);
+
+                            if (currentStepIndex < steps.length) {
+                                setTimeout(progressStep, 500);
+                            } else {
+                                // All steps completed
+                                setTimeout(() => {
+                                    setSwapComplete(true);
+                                    navigate(`/kiosk/${stationId}/complete/${bookingId}`);
+                                }, 1000);
+                            }
                         }
-                    }
-                }, stepDurations[currentStepIndex] / 20);
+                    }, duration / 20);
+                } else {
+                    // Manual steps - wait for user action
+                    setSteps(prev => prev.map((step, idx) => {
+                        if (idx === currentStepIndex) {
+                            return {
+                                ...step,
+                                status: 'in_progress',
+                                progress: 0,
+                                estimatedTime: stepEstimatedTimes[idx]
+                            };
+                        }
+                        return step;
+                    }));
+                }
             }
         };
 
@@ -155,6 +178,45 @@ const SwapStatus = () => {
             clearInterval(progressInterval);
         };
     }, [bookingId, stationId, navigate]);
+
+    // Handle manual step completion
+    const handleStepComplete = () => {
+        if (currentStep < steps.length) {
+            // Mark current step as completed
+            setSteps(prev => prev.map((step, idx) => {
+                if (idx === currentStep) {
+                    return { ...step, status: 'completed', progress: 100 };
+                }
+                return step;
+            }));
+
+            const nextStep = currentStep + 1;
+            setCurrentStep(nextStep);
+
+            if (nextStep < steps.length) {
+                // Start next step
+                setTimeout(() => {
+                    setSteps(prev => prev.map((step, idx) => {
+                        if (idx === nextStep) {
+                            return {
+                                ...step,
+                                status: 'in_progress',
+                                progress: 0,
+                                estimatedTime: step.estimatedTime
+                            };
+                        }
+                        return step;
+                    }));
+                }, 500);
+            } else {
+                // All steps completed
+                setTimeout(() => {
+                    setSwapComplete(true);
+                    navigate(`/kiosk/${stationId}/complete/${bookingId}`);
+                }, 1000);
+            }
+        }
+    };
 
     if (!bookingData) {
         return (
@@ -197,7 +259,7 @@ const SwapStatus = () => {
                                 </div>
                             </div>
                             <div className="flex items-center space-x-3">
-                                <Car className="h-8 w-8 text-primary" />
+                                <Motorbike className="h-8 w-8 text-primary" />
                                 <div>
                                     <p className="text-muted-foreground">Xe</p>
                                     <p className="font-semibold text-2xl">
@@ -230,6 +292,49 @@ const SwapStatus = () => {
                 <div>
                     <h2 className="text-3xl font-bold mb-6">Tiến trình đổi pin</h2>
                     <SwapProgress currentStep={currentStep} steps={steps} />
+
+                    {/* Manual Action Buttons */}
+                    {currentStep === 2 && steps[2]?.status === 'in_progress' && (
+                        <Card className="mt-6 bg-blue-50 border-blue-300">
+                            <CardContent className="p-8">
+                                <div className="text-center space-y-6">
+                                    <div className="text-6xl font-bold text-blue-600">Slot #3</div>
+                                    <h3 className="text-2xl font-bold">Lắp pin cũ vào slot</h3>
+                                    <p className="text-xl text-muted-foreground">
+                                        Vui lòng lắp pin cũ vào slot #3 được chỉ định
+                                    </p>
+                                    <Button
+                                        size="lg"
+                                        onClick={handleStepComplete}
+                                        className="text-2xl px-12 py-8 h-auto"
+                                    >
+                                        Đã lắp pin cũ
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {currentStep === 4 && steps[4]?.status === 'in_progress' && (
+                        <Card className="mt-6 bg-green-50 border-green-300">
+                            <CardContent className="p-8">
+                                <div className="text-center space-y-6">
+                                    <div className="text-6xl font-bold text-green-600">Slot #7</div>
+                                    <h3 className="text-2xl font-bold">Lấy pin mới</h3>
+                                    <p className="text-xl text-muted-foreground">
+                                        Slot pin mới đã mở, vui lòng lấy pin từ slot #7
+                                    </p>
+                                    <Button
+                                        size="lg"
+                                        onClick={handleStepComplete}
+                                        className="text-2xl px-12 py-8 h-auto"
+                                    >
+                                        Đã lấy pin mới
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
 
                 {/* Safety Notice */}
@@ -239,11 +344,13 @@ const SwapStatus = () => {
                             <AlertCircle className="h-10 w-10 text-blue-600 flex-shrink-0" />
                             <div>
                                 <h3 className="text-2xl font-bold text-blue-800 mb-3">
-                                    Lưu ý an toàn
+                                    Hướng dẫn đổi pin
                                 </h3>
                                 <ul className="space-y-2 text-xl text-blue-700">
-                                    <li>• Vui lòng không rời khỏi vị trí khi đang đổi pin</li>
-                                    <li>• Không chạm vào xe hoặc thiết bị đổi pin</li>
+                                    <li>• Lắp pin cũ vào slot được chỉ định (thường là slot #3)</li>
+                                    <li>• Chờ hệ thống kiểm tra pin cũ</li>
+                                    <li>• Lấy pin mới từ slot được mở (thường là slot #7)</li>
+                                    <li>• Lắp pin mới vào xe của bạn</li>
                                     <li>• Trong trường hợp khẩn cấp, nhấn nút "Dừng khẩn cấp" màu đỏ</li>
                                 </ul>
                             </div>

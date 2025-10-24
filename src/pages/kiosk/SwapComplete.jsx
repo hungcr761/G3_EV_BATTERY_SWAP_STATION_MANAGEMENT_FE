@@ -17,11 +17,11 @@ const SwapComplete = () => {
         const fetchSwapData = async () => {
             try {
                 const response = await bookingAPI.getById(bookingId);
-                const booking = response.data.payload.booking;
+                const booking = response.data.booking;
 
                 setSwapData({
                     bookingId: booking.booking_id,
-                    userName: booking.user?.full_name || 'Khách hàng',
+                    userName: booking.driver?.fullname || 'Khách hàng',
                     vehicleModel: booking.vehicle?.model?.name || 'Unknown Model',
                     vehiclePlate: booking.vehicle?.license_plate || 'N/A',
                     oldBatteryLevel: '15%', // Would come from battery data
@@ -37,9 +37,9 @@ const SwapComplete = () => {
                 // Fallback to mock data
                 setSwapData({
                     bookingId: bookingId,
-                    userName: 'Khách hàng',
-                    vehicleModel: 'VinFast Evo200',
-                    vehiclePlate: '29A-12345',
+                    userName: 'hung le',
+                    vehicleModel: 'VinFast Klara S',
+                    vehiclePlate: '30B-98761',
                     oldBatteryLevel: '15%',
                     newBatteryLevel: '100%',
                     swapDuration: '4 phút 32 giây',
