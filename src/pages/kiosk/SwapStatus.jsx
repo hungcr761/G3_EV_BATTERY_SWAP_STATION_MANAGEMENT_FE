@@ -29,7 +29,7 @@ const SwapStatus = () => {
                         vehiclePlate: booking.vehicle?.license_plate || 'N/A',
                         batteryType: booking.vehicle?.model?.batteryType?.battery_type_code || 'Type 2',
                         stationName: booking.station?.station_name || `Trạm #${stationId}`,
-                        scheduledTime: new Date(booking.scheduled_start_time).toLocaleString('vi-VN'),
+                        scheduledTime: new Date(booking.scheduled_time).toLocaleString('vi-VN'),
                     });
                 } else {
                     // Fetch from API
@@ -43,7 +43,7 @@ const SwapStatus = () => {
                         vehiclePlate: booking.vehicle?.license_plate || 'N/A',
                         batteryType: booking.vehicle?.model?.batteryType?.battery_type_code || 'Type 2',
                         stationName: booking.station?.station_name || `Trạm #${stationId}`,
-                        scheduledTime: new Date(booking.scheduled_start_time).toLocaleString('vi-VN'),
+                        scheduledTime: new Date(booking.scheduled_time).toLocaleString('vi-VN'),
                     });
                 }
             } catch (error) {

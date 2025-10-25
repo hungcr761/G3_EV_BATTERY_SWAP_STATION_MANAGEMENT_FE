@@ -178,36 +178,6 @@ const RegisterForm = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="citizen_id">Căn cước công dân *</Label>
-                                <Input
-                                    id="citizen_id"
-                                    type="text"
-                                    placeholder="123456789012"
-                                    maxLength={12}
-                                    {...register('citizen_id')}
-                                    className={errors.citizen_id ? 'border-red-500' : ''}
-                                />
-                                {errors.citizen_id && (
-                                    <p className="text-sm text-red-600">{errors.citizen_id.message}</p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="driving_license">Bằng lái xe *</Label>
-                                <Input
-                                    id="driving_license"
-                                    type="text"
-                                    placeholder="123456789012"
-                                    maxLength={12}
-                                    {...register('driving_license')}
-                                    className={errors.driving_license ? 'border-red-500' : ''}
-                                />
-                                {errors.driving_license && (
-                                    <p className="text-sm text-red-600">{errors.driving_license.message}</p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
                                 <Label htmlFor="password">Mật khẩu *</Label>
                                 <div className="relative">
                                     <Input

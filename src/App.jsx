@@ -11,7 +11,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
-import Stations from './pages/Stations';
+import Stations from './pages/Booking.jsx';
 import Services from './pages/Services';
 import Payment from './pages/Payment';
 import PaymentSuccess from './pages/PaymentSuccess';
@@ -48,7 +48,7 @@ function App() {
               <Home />
             </Layout>
           } />
-          <Route path="/stations" element={
+          <Route path="/booking" element={
             <Layout>
               <Stations />
             </Layout>

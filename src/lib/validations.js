@@ -54,26 +54,6 @@ export const registerSchema = z.object({
             'Email không đúng định dạng'),
     phone_number: z.string()
         .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số'),
-    citizen_id: z.string()
-        .min(1, 'Căn cước công dân là bắt buộc')
-        .regex(/^[0-9]{12}$/, 'Căn cước công dân phải có đúng 12 chữ số')
-        .refine((val) => {
-            // Kiểm tra mã tỉnh trong CCCD (2 chữ số đầu)
-            const provinceCode = parseInt(val.substring(0, 2));
-            return provinceCode >= 1 && provinceCode <= 96;
-        }, {
-            message: 'Mã tỉnh trong căn cước công dân không hợp lệ'
-        }),
-    driving_license: z.string()
-        .min(1, 'Bằng lái xe là bắt buộc')
-        .regex(/^[0-9]{12}$/, 'Bằng lái xe phải có đúng 12 chữ số')
-        .refine((val) => {
-            // Kiểm tra mã tỉnh trong bằng lái xe (2 chữ số đầu)
-            const provinceCode = parseInt(val.substring(0, 2));
-            return provinceCode >= 1 && provinceCode <= 96;
-        }, {
-            message: 'Mã tỉnh trong bằng lái xe không hợp lệ'
-        })
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Mật khẩu xác nhận không khớp',
     path: ['confirmPassword'],

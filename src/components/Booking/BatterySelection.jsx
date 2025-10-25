@@ -11,7 +11,8 @@ const BatterySelection = ({
     onBack
 }) => {
     const [batteryQuantity, setBatteryQuantity] = useState(1);
-    const maxBatteries = selectedVehicle?.batterySlot || 1;
+    const maxBatteries = selectedVehicle?.batterySlot || selectedVehicle.model?.battery_slot || 1;
+
 
     const handleQuantityChange = (newQuantity) => {
         if (newQuantity >= 1 && newQuantity <= maxBatteries) {
@@ -20,11 +21,13 @@ const BatterySelection = ({
     };
 
     const handleNext = () => {
+        console.log('BatterySelection handleNext called:', { batteryQuantity });
         if (batteryQuantity > 0) {
             // Create array of battery IDs based on quantity
             const selectedBatteries = Array.from({ length: batteryQuantity }, (_, index) => index + 1);
+            console.log('Calling onBatterySelection with:', selectedBatteries);
             onBatterySelection(selectedBatteries);
-            onNext();
+            // Note: onNext() is no longer called here as useEffect in BookingFlow will handle the step transition
         }
     };
 
@@ -58,7 +61,7 @@ const BatterySelection = ({
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Số khe pin:</span>
                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                {selectedVehicle?.batterySlot} khe
+                                {maxBatteries} khe
                             </Badge>
                         </div>
                         <div className="flex justify-between">
