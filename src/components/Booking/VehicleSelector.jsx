@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { vehicleAPI, modelAPI, batteryTypeAPI } from '../../lib/apiServices';
+import { vehicleAPI } from '../../lib/apiServices';
 import { Motorbike, Battery, CheckCircle, ArrowRight } from 'lucide-react';
 
 const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBooking = false, vehicles = null }) => {
@@ -18,54 +18,13 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
             return;
         }
 
-        // Otherwise, fetch vehicles as before
+        // Fetch vehicles - API now returns all necessary information
         const fetchData = async () => {
             try {
                 setLoading(true);
-
-                // Fetch vehicle models and battery types first
-                const [modelsResponse, batteryResponse] = await Promise.all([
-                    modelAPI.getAll(),
-                    batteryTypeAPI.getAll()
-                ]);
-
-                const models = modelsResponse.data?.payload?.vehicleModels || [];
-                const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
-
-                // Then fetch vehicles
                 const response = await vehicleAPI.getAll();
                 const vehiclesData = response.data?.vehicles || [];
-
-                // Map vehicles with battery type information
-                const mappedVehicles = vehiclesData.map(vehicle => {
-                    // Get model name from vehicle.model
-                    const modelName = vehicle.model?.name || 'Unknown Model';
-
-                    // Find the corresponding model in vehicleModels to get battery_type_id and battery_slot
-                    const vehicleModel = models.find(vm => vm.model_id === vehicle.model_id);
-
-                    // Get battery type name using battery_type_id from vehicle model
-                    let batteryName = 'Unknown Battery';
-                    let batterySlot = 0;
-                    if (vehicleModel?.battery_type_id) {
-                        const batteryType = batteryTypesData.find(bt => bt.battery_type_id === vehicleModel.battery_type_id);
-                        batteryName = batteryType?.battery_type_code || 'Unknown Battery';
-                    }
-
-                    // Get battery_slot from vehicle model
-                    if (vehicleModel?.battery_slot) {
-                        batterySlot = vehicleModel.battery_slot;
-                    }
-
-                    return {
-                        ...vehicle,
-                        modelName,
-                        batteryName,
-                        batterySlot
-                    };
-                });
-
-                setInternalVehicles(mappedVehicles);
+                setInternalVehicles(vehiclesData);
             } catch (error) {
                 console.error('Error fetching data:', error);
                 setError('Không thể tải danh sách xe');
@@ -141,7 +100,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                                 <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-2">
                                         <Motorbike className="h-5 w-5 text-primary" />
-                                        <h3 className="font-semibold text-lg">{vehicle.modelName}</h3>
+                                        <h3 className="font-semibold text-lg">{vehicle.model?.name || 'Unknown Model'}</h3>
                                         {selectedVehicle?.vehicle_id === vehicle.vehicle_id && (
                                             <CheckCircle className="h-5 w-5 text-green-500" />
                                         )}
@@ -155,11 +114,11 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
 
                                         <div className="flex items-center space-x-4">
                                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                                {vehicle.batteryType || vehicle.batteryName}
+                                                {vehicle.model?.batteryType?.battery_type_code || 'Unknown Battery'}
                                             </Badge>
-                                            {vehicle.batterySlot > 0 && (
+                                            {vehicle.model?.battery_slot > 0 && (
                                                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                                    {vehicle.batterySlot} khe pin
+                                                    {vehicle.model.battery_slot} pin
                                                 </Badge>
                                             )}
                                         </div>

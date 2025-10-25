@@ -39,7 +39,7 @@ const Header = () => {
     };
 
     const navigationItems = [
-        { label: 'Đặt lịch', href: '/stations' },
+        { label: 'Đặt lịch', href: '/booking' },
         { label: 'Dịch vụ', href: '/services' },
         { label: 'Hỗ trợ', href: '/support' },
     ];
