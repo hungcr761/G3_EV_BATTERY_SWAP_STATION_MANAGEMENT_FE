@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../hooks/useAuth'
 import ProfileUpdate from '../components/Dashboard/ProfileUpdate';
-import VehicleManagement from '../components/Dashboard/VehicleManagement';
+import VehicleManagement from './EVDriver/VehicleManagement';
 import {
     Battery,
     Motorbike,
@@ -23,7 +24,7 @@ const Dashboard = () => {
     const { user } = useAuth();
     const [showMockTest, setShowMockTest] = useState(false);
     const [showProfileUpdate, setShowProfileUpdate] = useState(false);
-    const [showVehicleManagement, setShowVehicleManagement] = useState(false);
+    const navigate = useNavigate();
 
     // Mock data - in real app, this would come from API
     const userStats = {
@@ -68,10 +69,7 @@ const Dashboard = () => {
         return <ProfileUpdate onBack={() => setShowProfileUpdate(false)} />;
     }
 
-    // If showing vehicle management, render that component
-    if (showVehicleManagement) {
-        return <VehicleManagement onBack={() => setShowVehicleManagement(false)} />;
-    }
+    // Vehicle management is now a separate route (/vehiclesManagement) — navigation handled via router
 
     return (
         <div className="min-h-screen bg-background py-8">
@@ -247,7 +245,7 @@ const Dashboard = () => {
                                 <Button
                                     className="w-full justify-start"
                                     variant="outline"
-                                    onClick={() => setShowVehicleManagement(true)}
+                                    onClick={() => navigate('/vehiclesManagement')}
                                 >
                                     <Motorbike className="mr-2 h-4 w-4" />
                                     Quản lý xe

@@ -82,33 +82,31 @@ export const registerSchema = z.object({
 // Vehicle schemas
 export const vehicleSchema = z.object({
     vin: z.string()
-        .min(1, 'Số VIN là bắt buộc')
-        .length(17, 'VIN phải có đúng 17 ký tự')
-        .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'VIN không hợp lệ (chỉ chứa chữ in hoa và số, không có I, O, Q)')
+        .min(1, 'VIN is required')
+        .length(17, 'VIN must be exactly 17 characters')
+        .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'VIN is invalid (only uppercase letters and numbers, no I, O, Q)')
         .transform(val => val.toUpperCase()),
     model: z.string()
-        .min(1, 'Vui lòng chọn ')
-        .max(100, 'Mẫu xe không được quá 100 ký tự'),
+        .min(1, 'Please select a vehicle model')
+        .max(100, 'Model name cannot exceed 100 characters'),
     license_plate: z.string()
-        .min(1, 'Biển số xe là bắt buộc')
-        .max(15, 'Biển số xe không được quá 15 ký tự')
+        .min(8, 'License plate is required')
+        .max(9, 'License plate cannot exceed 9 characters')
         .regex(
-            /^[0-9]{2}[A-Z]{1,2}-[0-9]{3,5}(\.[0-9]{2})?$/,
-            'Biển số xe không đúng định dạng (VD: 29A-12345, 30B-123.45)'
+            /^[0-9]{2}[A-Z]-[0-9]{4,5}$/,
+            'License plate format is invalid (e.g., 20A-1234 or 20A-12345)'
         )
         .transform(val => val.toUpperCase())
         .refine((val) => {
-            const provideCode = parseInt(val.substring(0, 2));
+            const provinceCode = parseInt(val.substring(0, 2));
             const excludeCode = [42, 44, 45, 46, 87, 91, 96];
-            const hasInvalidProvince = provideCode < 11 || provideCode > 99 || excludeCode.includes(provideCode);
-            const hasDoubleDot = val.includes('..');
-            const hasSpace = val.includes(' ');
+            const hasInvalidProvince =
+                provinceCode < 11 || provinceCode > 99 || excludeCode.includes(provinceCode);
 
-            if (!hasInvalidProvince && !hasDoubleDot && !hasSpace) {
-                return true;
-            }
+            return !hasInvalidProvince;
         }, {
-            message: 'Biển số xe không hợp lệ: Không chứa khoảng trắng, không có dấu chấm đôi, mã tỉnh từ 11–99 (trừ mã đặc biệt: 42, 44, 45, 46, 87, 91, 96).'
+            message:
+                'Invalid license plate: province code must be between 11–99 and not one of 42, 44, 45, 46, 87, 91, 96.'
         })
 });
 
