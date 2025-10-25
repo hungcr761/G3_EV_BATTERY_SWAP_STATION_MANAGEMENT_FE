@@ -30,6 +30,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
         }
     }, [selectedVehicle, selectedStation]);
 
+
     // Handle booking timer when booking is created
     useEffect(() => {
         if (bookingId && selectedTime) {
@@ -95,21 +96,30 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     };
 
     const handleBatterySelection = (batteries) => {
+        console.log('BookingFlow handleBatterySelection called with:', batteries);
         setSelectedBatteries(batteries);
         setError(null);
     };
+
+    // Auto-advance to next step when batteries are selected
+    useEffect(() => {
+        if (currentStep === 2 && selectedBatteries.length > 0) {
+            console.log('Auto-advancing from step 2 to step 3, selectedBatteries:', selectedBatteries);
+            setCurrentStep(3);
+        }
+    }, [selectedBatteries, currentStep]);
 
     const handleNext = () => {
         if (currentStep === 1 && selectedTime) {
             // Debug: Log vehicle info
             console.log('Vehicle info for battery selection:', {
                 selectedVehicle,
-                batterySlot: selectedVehicle?.batterySlot,
+                batterySlot: selectedVehicle.model?.battery_slot,
                 modelName: selectedVehicle?.modelName
             });
 
             // Check if vehicle has multiple battery slots
-            if (selectedVehicle?.batterySlot > 1) {
+            if (selectedVehicle.model?.battery_slot > 1) {
                 console.log('Vehicle has multiple battery slots, going to battery selection');
                 setCurrentStep(2); // Go to battery selection
             } else {
@@ -119,7 +129,10 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                 setCurrentStep(3); // Skip battery selection, go to confirmation
             }
         } else if (currentStep === 2 && selectedBatteries.length > 0) {
+            console.log('BookingFlow: Moving from step 2 to step 3, selectedBatteries:', selectedBatteries);
             setCurrentStep(3); // Go to confirmation
+        } else if (currentStep === 2) {
+            console.log('BookingFlow: Still on step 2, selectedBatteries:', selectedBatteries, 'length:', selectedBatteries.length);
         }
     };
 
@@ -143,7 +156,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             const bookingData = {
                 station_id: selectedStation.id,
                 vehicle_id: selectedVehicle.vehicle_id,
-                scheduled_start_time: selectedTime.time.toISOString(),
+                scheduled_time: selectedTime.time.toISOString(),
                 battery_quantity: batteryQuantity,
             };
 
@@ -161,7 +174,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                 setBookingData({
                     booking_id: bookingResponse.booking_id,
                     status: bookingResponse.status,
-                    scheduled_time: bookingResponse.scheduled_start_time,
+                    scheduled_time: bookingResponse.scheduled_time,
                     vehicle: {
                         ...bookingResponse.vehicle,
                         modelName: bookingResponse.vehicle.model.name,
@@ -178,7 +191,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     driver: bookingResponse.driver,
                     batteries: bookingResponse.batteries,
                     create_time: bookingResponse.create_time,
-                    scheduled_start_time: bookingResponse.scheduled_start_time,
+                    scheduled_time: bookingResponse.scheduled_time,
                     scheduled_end_time: bookingResponse.scheduled_end_time
                 });
                 setCurrentStep(4); // Success step
@@ -267,7 +280,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     };
 
     const getTotalSteps = () => {
-        return selectedVehicle?.batterySlot > 1 ? 4 : 3;
+        return selectedVehicle.model?.battery_slot > 1 ? 4 : 3;
     };
 
     return (

@@ -178,7 +178,7 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                             {/* Instructions */}
                             <div className="text-center space-y-4">
                                 <h3 className="text-3xl font-bold">
-                                    {scanning ? 'Đang quét mã QR...' : 'Quét mã QR booking'}
+                                    {scanning ? 'Đang quét mã QR...' : 'Quét mã QR code'}
                                 </h3>
                                 <p className="text-xl text-muted-foreground max-w-md">
                                     {scanning
@@ -244,9 +244,9 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                         <div className="space-y-8">
                             <div className="text-center">
                                 <Keyboard className="h-24 w-24 text-primary mx-auto mb-4" />
-                                <h3 className="text-3xl font-bold mb-2">Nhập mã booking</h3>
+                                <h3 className="text-3xl font-bold mb-2">Nhập mã code</h3>
                                 <p className="text-xl text-muted-foreground">
-                                    Nhập mã booking từ email hoặc app của bạn
+                                    Nhập mã từ app của bạn
                                 </p>
                             </div>
 

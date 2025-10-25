@@ -141,10 +141,6 @@ const BookingConfirmation = ({
                             </Badge>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Tình trạng pin:</span>
-                            <span className="font-medium">{selectedVehicle?.battery_soh}%</span>
-                        </div>
-                        <div className="flex justify-between">
                             <span className="text-muted-foreground">Số lượng pin:</span>
                             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                                 {selectedBatteries.length} {selectedBatteries.length === 1 ? 'pin' : 'pin'}

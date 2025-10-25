@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { CheckCircle, Clock, MapPin, Motorbike, Battery } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, Motorbike, Battery, QrCode } from 'lucide-react';
+import QRCodeLib from 'qrcode';
 
 const BookingSuccess = ({ bookingData, onClose }) => {
+    const qrCodeRef = useRef(null);
+
+    useEffect(() => {
+        if (bookingData?.booking_id && qrCodeRef.current) {
+            QRCodeLib.toCanvas(qrCodeRef.current, bookingData.booking_id, {
+                width: 200,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }).catch(err => {
+                console.error('Error generating QR code:', err);
+            });
+        }
+    }, [bookingData?.booking_id]);
+
     const formatTime = (timeString) => {
         const date = new Date(timeString);
         return date.toLocaleTimeString('vi-VN', {
@@ -58,12 +76,12 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-3">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Mã đặt lịch:</span>
-                                    <span className="font-medium font-mono">
-                                        #{bookingData?.booking_id || 'N/A'}
+                                    <span className="font-medium font-mono text-sm">
+                                        {bookingData?.booking_id || 'N/A'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -72,8 +90,6 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                                         Đã đặt lịch
                                     </Badge>
                                 </div>
-                            </div>
-                            <div className="space-y-3">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Ngày:</span>
                                     <span className="font-medium">
@@ -81,25 +97,27 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Giờ đến:</span>
+                                    <span className="text-muted-foreground">Giờ đặt lịch:</span>
                                     <span className="font-medium">
                                         {bookingData?.scheduled_time ? formatTime(bookingData.scheduled_time) : 'N/A'}
                                     </span>
                                 </div>
                             </div>
-                        </div>
-
-                        {bookingData?.scheduled_time && (
-                            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <div className="flex items-center space-x-2 mb-2">
-                                    <Clock className="h-4 w-4 text-yellow-600" />
-                                    <span className="font-medium text-yellow-800">Thời gian active:</span>
+                            <div className="flex flex-col items-end space-y-3 -mt-12">
+                                <div className="text-center">
+                                    <div className="flex items-center justify-center space-x-2 mb-2">
+                                        <QrCode className="h-4 w-4 text-muted-foreground" />
+                                        <span className="text-sm font-medium text-muted-foreground">Mã QR đặt lịch</span>
+                                    </div>
+                                    <div className="bg-white p-4 rounded-lg border-2 border-gray-200 inline-block">
+                                        <canvas ref={qrCodeRef} className="block" />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-2 max-w-[200px] text-center ml-3">
+                                        Quét mã QR này tại kiosk để xác nhận đặt lịch
+                                    </p>
                                 </div>
-                                <p className="text-sm text-yellow-700">
-                                    {getActiveTimeRange(bookingData.scheduled_time).start} - {getActiveTimeRange(bookingData.scheduled_time).end}
-                                </p>
                             </div>
-                        )}
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -211,7 +229,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                             <li>Lệnh đặt sẽ kết thúc vào thời gian bạn chọn đến trạm</li>
                             <li>Nếu không đến trạm trong thời gian quy định, lệnh đặt sẽ tự động bị hủy</li>
                             <li>Vui lòng đến trạm đúng giờ để đảm bảo có pin sẵn sàng</li>
-                            <li>Mang theo giấy tờ tùy thân và thông tin xe khi đến trạm</li>
+                            <li><strong>Quan trọng:</strong> Mang theo mã QR này và quét tại kiosk để xác nhận đặt lịch</li>
                         </ul>
                     </div>
                 </div>

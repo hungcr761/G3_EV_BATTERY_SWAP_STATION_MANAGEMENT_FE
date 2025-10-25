@@ -18,7 +18,7 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
     const [isResending, setIsResending] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
-    const [countdown, setCountdown] = useState(60);
+    const [countdown, setCountdown] = useState(10);
     const [canResend, setCanResend] = useState(false);
 
     const navigate = useNavigate();

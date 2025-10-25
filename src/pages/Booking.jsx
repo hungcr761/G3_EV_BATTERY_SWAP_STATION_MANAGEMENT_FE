@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
+import { useNavigate } from 'react-router';
 import GoongMap from '../components/Map/GoongMap';
 import BookingFlow from '../components/Booking/BookingFlow';
 import VehicleSelector from '../components/Booking/VehicleSelector';
@@ -383,7 +384,7 @@ const Stations = () => {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => {/* Navigate to add vehicle */ }}
+                                        onClick={() => navigate('/dashboard')}
                                     >
                                         Thêm xe
                                     </Button>
@@ -650,44 +651,48 @@ const Stations = () => {
             </div>
 
             {/* Vehicle Selector Modal */}
-            {showVehicleSelector && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <Card>
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold">Chọn xe</h2>
-                                    <Button variant="outline" onClick={handleCloseVehicleSelector}>
-                                        Đóng
-                                    </Button>
-                                </div>
-                                <VehicleSelector
-                                    onVehicleSelect={handleVehicleSelect}
-                                    selectedVehicle={selectedVehicle}
-                                    onContinue={handleCloseVehicleSelector}
-                                    isForBooking={!!bookingStation}
-                                    vehicles={userVehicles}
-                                />
-                            </CardContent>
-                        </Card>
+            {
+                showVehicleSelector && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h2 className="text-xl font-bold">Chọn xe</h2>
+                                        <Button variant="outline" onClick={handleCloseVehicleSelector}>
+                                            Đóng
+                                        </Button>
+                                    </div>
+                                    <VehicleSelector
+                                        onVehicleSelect={handleVehicleSelect}
+                                        selectedVehicle={selectedVehicle}
+                                        onContinue={handleCloseVehicleSelector}
+                                        isForBooking={!!bookingStation}
+                                        vehicles={userVehicles}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Booking Flow Modal */}
-            {showBookingFlow && bookingStation && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <BookingFlow
-                            selectedStation={bookingStation}
-                            selectedVehicle={selectedVehicle}
-                            onBookingSuccess={handleBookingSuccess}
-                            onClose={handleCloseBooking}
-                        />
+            {
+                showBookingFlow && bookingStation && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                            <BookingFlow
+                                selectedStation={bookingStation}
+                                selectedVehicle={selectedVehicle}
+                                onBookingSuccess={handleBookingSuccess}
+                                onClose={handleCloseBooking}
+                            />
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
