@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -7,13 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth } from '../../hooks/useAuth';
 import { userAPI } from '../../lib/apiServices';
 import { profileUpdateSchema } from '../../lib/validations';
-import { ArrowLeft, Save, User, Mail, Phone, Camera, AlertCircle, CheckCircle, CreditCard, Motorbike } from 'lucide-react';
+import { ArrowLeft, Save, User, Mail, Phone, Camera, AlertCircle, CheckCircle, CreditCard, Motorbike, QrCode } from 'lucide-react';
+import QRCode from 'qrcode';
 
 const ProfileUpdate = ({ onBack }) => {
     const { user, updateUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [errors, setErrors] = useState({});
+    const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
     const [formData, setFormData] = useState({
         fullname: user?.fullname || '',
         email: user?.email || '',
@@ -21,6 +23,31 @@ const ProfileUpdate = ({ onBack }) => {
         citizen_id: user?.citizen_id || '',
         driving_license: user?.driving_license || ''
     });
+
+    // Generate QR code for account_id
+    useEffect(() => {
+        const generateQR = async () => {
+            if (user?.account_id) {
+                try {
+                    const qrData = await QRCode.toDataURL(user.account_id, {
+                        errorCorrectionLevel: 'H',
+                        type: 'image/png',
+                        quality: 0.92,
+                        margin: 1,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        },
+                        width: 300
+                    });
+                    setQrCodeDataUrl(qrData);
+                } catch (err) {
+                    console.error('Error generating QR code:', err);
+                }
+            }
+        };
+        generateQR();
+    }, [user?.account_id]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -313,6 +340,49 @@ const ProfileUpdate = ({ onBack }) => {
                                         </Button>
                                     </div>
                                 </form>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* QR Code Card */}
+                    <div className="lg:col-span-1">
+                        <Card className="sticky top-8">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <QrCode className="h-5 w-5" />
+                                    Mã QR cá nhân
+                                </CardTitle>
+                                <CardDescription>
+                                    Quét mã tại trạm để đổi pin
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex flex-col items-center space-y-6">
+                                {qrCodeDataUrl ? (
+                                    <>
+                                        <div className="p-4 bg-white rounded-lg border-2 border-gray-200">
+                                            <img
+                                                src={qrCodeDataUrl}
+                                                alt="Account QR Code"
+                                                className="w-full h-auto"
+                                            />
+                                        </div>
+                                        <div className="text-center space-y-2">
+                                            <p className="text-sm font-medium text-gray-700">
+                                                Mã tài khoản:
+                                            </p>
+                                            <p className="text-xs text-gray-500 font-mono bg-gray-50 p-2 rounded break-all">
+                                                {user?.account_id}
+                                            </p>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex items-center justify-center h-64">
+                                        <div className="text-center">
+                                            <QrCode className="h-16 w-16 text-gray-300 mx-auto mb-2" />
+                                            <p className="text-sm text-gray-500">Đang tải mã QR...</p>
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>

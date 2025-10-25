@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import QRScanner from '../../components/Kiosk/QRScanner';
-import { stationAPI, bookingAPI } from '../../lib/apiServices';
+import { stationAPI, bookingAPI, userAPI } from '../../lib/apiServices';
 
 const KioskHome = () => {
     const navigate = useNavigate();
     const { stationId } = useParams();
     const [showScanner, setShowScanner] = useState(false);
+    const [scanMode, setScanMode] = useState(null); // 'booking' or 'user'
     const [error, setError] = useState(null);
     const [validating, setValidating] = useState(false);
     const [stationInfo, setStationInfo] = useState(null);
@@ -39,10 +40,38 @@ const KioskHome = () => {
         }
     }, [stationId]);
 
-    const validateAndProceed = async (bookingId) => {
+    const handleQRScan = async (qrCode) => {
         setValidating(true);
         setError(null);
 
+        try {
+            if (scanMode === 'booking') {
+                // Only try booking validation
+                await validateBooking(qrCode);
+            } else if (scanMode === 'user') {
+                // Only try user validation
+                await validateUser(qrCode);
+            } else {
+                // Fallback: try both (for backward compatibility)
+                try {
+                    await validateBooking(qrCode);
+                } catch (bookingError) {
+                    try {
+                        await validateUser(qrCode);
+                    } catch (userError) {
+                        setError('Mã QR không hợp lệ. Vui lòng kiểm tra lại mã booking hoặc mã tài khoản.');
+                        setValidating(false);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error processing QR code:', error);
+            setError('Không thể xử lý mã QR. Vui lòng thử lại.');
+            setValidating(false);
+        }
+    };
+
+    const validateBooking = async (bookingId) => {
         try {
             // Fetch booking details from backend
             const response = await bookingAPI.getById(bookingId);
@@ -50,9 +79,7 @@ const KioskHome = () => {
 
             // Check if response is valid
             if (!bookingData || !bookingData.booking) {
-                setError('Không tìm thấy booking. Vui lòng kiểm tra lại mã booking.');
-                setValidating(false);
-                return;
+                throw new Error('Booking not found');
             }
 
             const booking = bookingData.booking;
@@ -114,24 +141,43 @@ const KioskHome = () => {
 
         } catch (error) {
             console.error('Error validating booking:', error);
-            setError(
-                `❌ Không thể xác thực booking\n\n` +
-                `${error.response?.data?.message || 'Lỗi kết nối đến server'}\n\n` +
-                `Vui lòng kiểm tra lại mã booking hoặc liên hệ hotline: 1900-XXXX`
-            );
-        } finally {
-            setValidating(false);
+            throw error; // Re-throw to be caught by the calling function
         }
     };
 
-    const handleScan = (bookingId) => {
-        console.log('Scanned booking ID:', bookingId);
-        validateAndProceed(bookingId);
+    const validateUser = async (accountId) => {
+        try {
+            // Fetch user details from backend using /user/id/{account_id}
+            const response = await userAPI.getById(accountId);
+            const userData = response.data;
+
+            // Check if response is valid
+            if (!userData || !userData.success) {
+                throw new Error('User not found');
+            }
+
+            const user = userData.payload.user;
+
+            // Navigate to user flow
+            console.log('✅ User validated:', user);
+            navigate(`/kiosk/${stationId}/user/${accountId}`, {
+                state: { user } // Pass user data to next screen
+            });
+
+        } catch (error) {
+            console.error('Error validating user:', error);
+            throw error; // Re-throw to be caught by the calling function
+        }
     };
 
-    const handleManualEntry = (bookingId) => {
-        console.log('Manual booking ID:', bookingId);
-        validateAndProceed(bookingId);
+    const handleScan = (qrCode) => {
+        console.log('Scanned QR code:', qrCode);
+        handleQRScan(qrCode);
+    };
+
+    const handleManualEntry = (qrCode) => {
+        console.log('Manual QR code:', qrCode);
+        handleQRScan(qrCode);
     };
 
     return (
@@ -180,17 +226,35 @@ const KioskHome = () => {
                         <CardHeader className="text-center space-y-4 pb-6">
                             <CardTitle className="text-4xl">Bắt đầu đổi pin</CardTitle>
                             <CardDescription className="text-2xl">
-                                Để tiếp tục, vui lòng quét mã QR booking của bạn
+                                Chọn loại mã QR bạn muốn quét
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="pb-12">
+                        <CardContent className="pb-12 space-y-6">
+                            {/* Booking QR Button */}
                             <Button
                                 size="lg"
-                                onClick={() => setShowScanner(true)}
+                                onClick={() => {
+                                    setScanMode('booking');
+                                    setShowScanner(true);
+                                }}
                                 className="w-full text-3xl py-12 h-auto"
                             >
                                 <QrCode className="mr-4 h-10 w-10" />
-                                Quét mã QR
+                                Quét mã QR booking
+                            </Button>
+
+                            {/* Account QR Button */}
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                onClick={() => {
+                                    setScanMode('user');
+                                    setShowScanner(true);
+                                }}
+                                className="w-full text-3xl py-12 h-auto"
+                            >
+                                <QrCode className="mr-4 h-10 w-10" />
+                                Quét mã QR tài khoản
                             </Button>
                         </CardContent>
                     </Card>
@@ -207,15 +271,26 @@ const KioskHome = () => {
                                         1
                                     </span>
                                     <div>
-                                        <p className="font-semibold">Quét mã QR booking</p>
+                                        <p className="font-semibold">Chọn loại QR code</p>
                                         <p className="text-xl text-muted-foreground">
-                                            Sử dụng mã QR từ email hoặc app booking
+                                            Booking QR (đã đặt trước) hoặc Account QR (chưa đặt)
                                         </p>
                                     </div>
                                 </li>
                                 <li className="flex items-start space-x-4">
                                     <span className="flex-shrink-0 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
                                         2
+                                    </span>
+                                    <div>
+                                        <p className="font-semibold">Quét mã QR</p>
+                                        <p className="text-xl text-muted-foreground">
+                                            Sử dụng mã QR từ email, app hoặc tài khoản
+                                        </p>
+                                    </div>
+                                </li>
+                                <li className="flex items-start space-x-4">
+                                    <span className="flex-shrink-0 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
+                                        3
                                     </span>
                                     <div>
                                         <p className="font-semibold">Đỗ xe vào vị trí</p>
@@ -226,10 +301,10 @@ const KioskHome = () => {
                                 </li>
                                 <li className="flex items-start space-x-4">
                                     <span className="flex-shrink-0 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
-                                        3
+                                        4
                                     </span>
                                     <div>
-                                        <p className="font-semibold">Chờ đổi pin tự động</p>
+                                        <p className="font-semibold">Làm theo hướng dẫn đổi pin</p>
                                         <p className="text-xl text-muted-foreground">
                                             Thời gian đổi pin: 3-5 phút
                                         </p>
@@ -237,7 +312,7 @@ const KioskHome = () => {
                                 </li>
                                 <li className="flex items-start space-x-4">
                                     <span className="flex-shrink-0 w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
-                                        4
+                                        5
                                     </span>
                                     <div>
                                         <p className="font-semibold">Hoàn tất và khởi hành</p>
@@ -279,6 +354,7 @@ const KioskHome = () => {
                             size="lg"
                             onClick={() => {
                                 setShowScanner(false);
+                                setScanMode(null);
                                 setError(null);
                             }}
                             className="text-xl px-8 py-6 h-auto"
@@ -326,4 +402,5 @@ const KioskHome = () => {
 };
 
 export default KioskHome;
+
 

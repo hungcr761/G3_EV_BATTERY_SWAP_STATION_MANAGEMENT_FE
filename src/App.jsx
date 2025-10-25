@@ -20,6 +20,11 @@ import Support from './pages/Support';
 import KioskHome from './pages/kiosk/KioskHome';
 import SwapStatus from './pages/kiosk/SwapStatus';
 import SwapComplete from './pages/kiosk/SwapComplete';
+// User flow pages
+import UserVerification from './pages/kiosk/UserVerification';
+import UserVehicleSelection from './pages/kiosk/UserVehicleSelection';
+import UserBatterySelection from './pages/kiosk/UserBatterySelection';
+import UserAvailabilityCheck from './pages/kiosk/UserAvailabilityCheck';
 import './App.css';
 
 // Protected Route Component
@@ -110,6 +115,13 @@ function App() {
           <Route path="/kiosk/:stationId" element={<KioskLayout><KioskHome /></KioskLayout>} />
           <Route path="/kiosk/:stationId/swap/:bookingId" element={<KioskLayout><SwapStatus /></KioskLayout>} />
           <Route path="/kiosk/:stationId/complete/:bookingId" element={<KioskLayout><SwapComplete /></KioskLayout>} />
+
+          {/* User flow routes - no booking required */}
+          <Route path="/kiosk/:stationId/user/:userId" element={<KioskLayout><UserVerification /></KioskLayout>} />
+          <Route path="/kiosk/:stationId/user/:userId/vehicle" element={<KioskLayout><UserVehicleSelection /></KioskLayout>} />
+          <Route path="/kiosk/:stationId/user/:userId/battery" element={<KioskLayout><UserBatterySelection /></KioskLayout>} />
+          <Route path="/kiosk/:stationId/user/:userId/availability" element={<KioskLayout><UserAvailabilityCheck /></KioskLayout>} />
+          <Route path="/kiosk/:stationId/user/:userId/swap" element={<KioskLayout><SwapStatus /></KioskLayout>} />
 
           {/* Redirect unknown routes to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
