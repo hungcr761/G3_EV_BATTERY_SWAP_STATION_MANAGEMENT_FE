@@ -8,7 +8,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useApi } from '../hooks/useApi';
 import { bookingAPI } from '../lib/apiServices';
 import ProfileUpdate from '../components/Dashboard/ProfileUpdate';
-import VehicleManagement from '../components/Dashboard/VehicleManagement';
+import VehicleManagement from './EVDriver/VehicleManagement';
 import QRCodeLib from 'qrcode';
 import {
     Battery,
@@ -154,10 +154,7 @@ const Dashboard = () => {
         return <ProfileUpdate onBack={() => setShowProfileUpdate(false)} />;
     }
 
-    // If showing vehicle management, render that component
-    if (showVehicleManagement) {
-        return <VehicleManagement onBack={() => setShowVehicleManagement(false)} />;
-    }
+    // Vehicle management is now a separate route (/vehiclesManagement) — navigation handled via router
 
     return (
         <div className="min-h-screen bg-background py-8">
@@ -377,7 +374,7 @@ const Dashboard = () => {
                                 <Button
                                     className="w-full justify-start"
                                     variant="outline"
-                                    onClick={() => setShowVehicleManagement(true)}
+                                    onClick={() => navigate('/vehiclesManagement')}
                                 >
                                     <Motorbike className="mr-2 h-4 w-4" />
                                     Quản lý xe

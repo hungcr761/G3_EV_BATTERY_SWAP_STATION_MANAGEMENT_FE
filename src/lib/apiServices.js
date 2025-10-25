@@ -70,13 +70,9 @@ export const subscriptionPlanAPI = {
 
 // Subscription APIs (User đăng ký gói cho xe)
 export const subscriptionAPI = {
-    // Tạo subscription mới cho xe
     create: (data) => api.post('/subscription', data),
-    // Lấy danh sách subscription của user (luôn dùng mock vì chưa có API)
     getByUserId: (userId) => mockApi.getSubscriptionsByUserId(userId),
-    // Lấy subscription của một xe
     getByVehicleId: (vehicleId) => api.get(`/subscription/vehicle/${vehicleId}`),
-    // Hủy subscription
     cancel: (subscriptionId) => api.delete(`/subscription/${subscriptionId}`)
 };
 

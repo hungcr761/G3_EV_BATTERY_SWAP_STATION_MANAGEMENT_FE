@@ -16,7 +16,6 @@ import Services from './pages/Services';
 import Payment from './pages/Payment';
 import PaymentSuccess from './pages/PaymentSuccess';
 import Support from './pages/Support';
-// Kiosk pages
 import KioskHome from './pages/kiosk/KioskHome';
 import SwapStatus from './pages/kiosk/SwapStatus';
 import SwapComplete from './pages/kiosk/SwapComplete';
@@ -26,6 +25,7 @@ import UserVehicleSelection from './pages/kiosk/UserVehicleSelection';
 import UserBatterySelection from './pages/kiosk/UserBatterySelection';
 import UserAvailabilityCheck from './pages/kiosk/UserAvailabilityCheck';
 import './App.css';
+import VehicleManagement from './pages/EVDriver/VehicleManagement.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -100,6 +100,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Profile />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/vehiclesManagement" element={
+            <ProtectedRoute>
+              <Layout>
+                <VehicleManagement />
               </Layout>
             </ProtectedRoute>
           } />
