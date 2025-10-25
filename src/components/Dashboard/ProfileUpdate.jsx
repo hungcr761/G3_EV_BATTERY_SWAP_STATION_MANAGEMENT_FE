@@ -145,40 +145,57 @@ const ProfileUpdate = ({ onBack }) => {
     };
 
     return (
-        <div className="min-h-screen bg-background py-8">
-            <div className="container mx-auto px-4 max-w-4xl">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
+            <div className="container mx-auto px-4 max-w-6xl">
                 {/* Header */}
                 <div className="mb-8">
                     <Button
                         variant="ghost"
                         onClick={onBack}
-                        className="mb-4"
+                        className="mb-6 hover:bg-white/60 transition-all duration-200"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Quay lại Dashboard
                     </Button>
-                    <h1 className="text-3xl font-bold text-foreground">
-                        Cập nhật thông tin cá nhân
-                    </h1>
-                    <p className="text-muted-foreground mt-2">
-                        Quản lý thông tin tài khoản của bạn
-                    </p>
+                    
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
+                        <div className="flex items-center space-x-4">
+                            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                                <User className="h-8 w-8 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                                    Cập nhật thông tin cá nhân
+                                </h1>
+                                <p className="text-slate-600 mt-1 text-lg">
+                                    Quản lý thông tin tài khoản của bạn
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Alert Message */}
                 {message.text && (
                     <div
-                        className={`mb-6 p-4 rounded-lg flex items-start space-x-3 ${message.type === 'success'
-                            ? 'bg-green-50 text-green-800 border border-green-200'
-                            : 'bg-red-50 text-red-800 border border-red-200'
-                            }`}
+                        className={`mb-8 p-5 rounded-xl flex items-start space-x-4 backdrop-blur-sm border shadow-md transition-all duration-300 animate-in slide-in-from-top ${
+                            message.type === 'success'
+                                ? 'bg-emerald-50/90 text-emerald-900 border-emerald-200 shadow-emerald-100'
+                                : 'bg-red-50/90 text-red-900 border-red-200 shadow-red-100'
+                        }`}
                     >
-                        {message.type === 'success' ? (
-                            <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                        ) : (
-                            <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                        )}
-                        <p>{message.text}</p>
+                        <div className={`p-2 rounded-lg ${
+                            message.type === 'success' 
+                                ? 'bg-emerald-100' 
+                                : 'bg-red-100'
+                        }`}>
+                            {message.type === 'success' ? (
+                                <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                            ) : (
+                                <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                            )}
+                        </div>
+                        <p className="font-medium">{message.text}</p>
                     </div>
                 )}
 
@@ -186,10 +203,10 @@ const ProfileUpdate = ({ onBack }) => {
 
                     {/* Profile Form */}
                     <div className="lg:col-span-2">
-                        <Card>
+                        <Card className="border-slate-200/60 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
                             <CardHeader>
-                                <CardTitle>Thông tin cá nhân</CardTitle>
-                                <CardDescription>
+                                <CardTitle className="text-2xl font-bold text-slate-800">Thông tin cá nhân</CardTitle>
+                                <CardDescription className="text-slate-600">
                                     Cập nhật thông tin cá nhân của bạn
                                 </CardDescription>
                             </CardHeader>
@@ -313,10 +330,10 @@ const ProfileUpdate = ({ onBack }) => {
                                     </div>
 
                                     {/* Action Buttons */}
-                                    <div className="flex space-x-4 pt-4">
+                                    <div className="flex space-x-4 pt-6 border-t border-slate-200">
                                         <Button
                                             type="submit"
-                                            className="flex-1"
+                                            className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200"
                                             disabled={loading}
                                         >
                                             {loading ? (
@@ -335,6 +352,7 @@ const ProfileUpdate = ({ onBack }) => {
                                             type="button"
                                             variant="outline"
                                             onClick={onBack}
+                                            className="border-slate-300 hover:bg-slate-50"
                                         >
                                             Hủy
                                         </Button>
@@ -346,31 +364,33 @@ const ProfileUpdate = ({ onBack }) => {
 
                     {/* QR Code Card */}
                     <div className="lg:col-span-1">
-                        <Card className="sticky top-8">
+                        <Card className="sticky top-8 border-slate-200/60 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <QrCode className="h-5 w-5" />
+                                <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-800">
+                                    <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
+                                        <QrCode className="h-5 w-5 text-white" />
+                                    </div>
                                     Mã QR cá nhân
                                 </CardTitle>
-                                <CardDescription>
+                                <CardDescription className="text-slate-600">
                                     Quét mã tại trạm để đổi pin
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col items-center space-y-6">
                                 {qrCodeDataUrl ? (
                                     <>
-                                        <div className="p-4 bg-white rounded-lg border-2 border-gray-200">
+                                        <div className="p-5 bg-white rounded-xl border-2 border-slate-300 shadow-lg">
                                             <img
                                                 src={qrCodeDataUrl}
                                                 alt="Account QR Code"
                                                 className="w-full h-auto"
                                             />
                                         </div>
-                                        <div className="text-center space-y-2">
-                                            <p className="text-sm font-medium text-gray-700">
+                                        <div className="text-center space-y-2 w-full">
+                                            <p className="text-sm font-semibold text-slate-700">
                                                 Mã tài khoản:
                                             </p>
-                                            <p className="text-xs text-gray-500 font-mono bg-gray-50 p-2 rounded break-all">
+                                            <p className="text-xs text-slate-600 font-mono bg-slate-50 p-3 rounded-lg border border-slate-200 break-all">
                                                 {user?.account_id}
                                             </p>
                                         </div>
@@ -378,8 +398,10 @@ const ProfileUpdate = ({ onBack }) => {
                                 ) : (
                                     <div className="flex items-center justify-center h-64">
                                         <div className="text-center">
-                                            <QrCode className="h-16 w-16 text-gray-300 mx-auto mb-2" />
-                                            <p className="text-sm text-gray-500">Đang tải mã QR...</p>
+                                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg mb-4">
+                                                <div className="h-8 w-8 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                                            </div>
+                                            <p className="text-sm text-slate-600">Đang tải mã QR...</p>
                                         </div>
                                     </div>
                                 )}
