@@ -64,114 +64,82 @@ const SwapStatus = () => {
         fetchBookingData();
     }, [bookingId, stationId, location.state]);
 
-    const [steps, setSteps] = useState([
-        {
-            title: 'Xác thực booking',
-            description: 'Đang kiểm tra thông tin booking của bạn',
-            status: 'in_progress',
-            progress: 0,
-            estimatedTime: '10 giây'
-        },
-        {
-            title: 'Chuẩn bị slot pin',
-            description: 'Hệ thống đang chuẩn bị slot pin cho bạn',
-            status: 'pending',
-        },
-        {
-            title: 'Lắp pin cũ vào slot',
-            description: 'Vui lòng lắp pin cũ vào slot được chỉ định',
-            status: 'pending',
-        },
-        {
-            title: 'Kiểm tra pin cũ',
-            description: 'Hệ thống đang kiểm tra tình trạng pin cũ',
-            status: 'pending',
-        },
-        {
-            title: 'Lấy pin mới',
-            description: 'Slot pin mới đã mở, vui lòng lấy pin',
-            status: 'pending',
-        },
-        {
-            title: 'Hoàn tất đổi pin',
-            description: 'Kiểm tra và hoàn tất quy trình đổi pin',
-            status: 'pending',
-        }
-    ]);
+    const [currentAction, setCurrentAction] = useState({
+        title: 'Xác thực booking',
+        description: 'Đang kiểm tra thông tin booking của bạn',
+        progress: 0,
+        status: 'in_progress',
+        showButton: false,
+        buttonText: '',
+        slotNumber: null
+    });
 
-    // Manual swap process - wait for user actions
+    // Single progress bar with different phases
     useEffect(() => {
-        const stepDurations = [3000, 2000, 0, 5000, 0, 2000]; // milliseconds for each step
-        const stepEstimatedTimes = ['10 giây', '5 giây', 'Chờ người dùng', '10 giây', 'Chờ người dùng', '5 giây'];
+        const phases = [
+            { title: 'Xác thực booking', description: 'Đang kiểm tra thông tin booking của bạn', duration: 3000, progress: 16 },
+            { title: 'Chuẩn bị slot pin', description: 'Hệ thống đang chuẩn bị slot pin cho bạn', duration: 2000, progress: 33 },
+            { title: 'Lắp pin cũ vào slot', description: 'Vui lòng lắp pin cũ vào slot được chỉ định', duration: 0, progress: 50, manual: true, slotNumber: 3, buttonText: 'Đã lắp pin cũ' },
+            { title: 'Kiểm tra pin cũ', description: 'Hệ thống đang kiểm tra tình trạng pin cũ', duration: 5000, progress: 66 },
+            { title: 'Lấy pin mới', description: 'Slot pin mới đã mở, vui lòng lấy pin', duration: 0, progress: 83, manual: true, slotNumber: 7, buttonText: 'Đã lấy pin mới' },
+            { title: 'Hoàn tất đổi pin', description: 'Kiểm tra và hoàn tất quy trình đổi pin', duration: 2000, progress: 100 }
+        ];
 
-        let currentStepIndex = 0;
+        let currentPhaseIndex = 0;
         let progressInterval;
 
-        const progressStep = () => {
-            if (currentStepIndex < steps.length) {
-                // Update progress for current step
-                let progress = 0;
-                const duration = stepDurations[currentStepIndex];
+        const processPhase = () => {
+            if (currentPhaseIndex < phases.length) {
+                const phase = phases[currentPhaseIndex];
 
-                if (duration > 0) {
-                    // Auto-progress steps
+                setCurrentAction({
+                    title: phase.title,
+                    description: phase.description,
+                    progress: phase.progress,
+                    status: 'in_progress',
+                    showButton: phase.manual || false,
+                    buttonText: phase.buttonText || '',
+                    slotNumber: phase.slotNumber || null
+                });
+
+                if (phase.duration > 0) {
+                    // Auto-progress phase
+                    let progress = 0;
                     progressInterval = setInterval(() => {
                         progress += 5;
                         if (progress <= 100) {
-                            setSteps(prev => prev.map((step, idx) => {
-                                if (idx === currentStepIndex) {
-                                    return {
-                                        ...step,
-                                        status: 'in_progress',
-                                        progress: progress,
-                                        estimatedTime: stepEstimatedTimes[idx]
-                                    };
-                                }
-                                return step;
+                            setCurrentAction(prev => ({
+                                ...prev,
+                                progress: Math.min(phase.progress, (progress / 100) * phase.progress)
                             }));
                         } else {
                             clearInterval(progressInterval);
+                            currentPhaseIndex++;
+                            setCurrentStep(currentPhaseIndex);
 
-                            // Mark current step as completed
-                            setSteps(prev => prev.map((step, idx) => {
-                                if (idx === currentStepIndex) {
-                                    return { ...step, status: 'completed', progress: 100 };
-                                }
-                                return step;
-                            }));
-
-                            currentStepIndex++;
-                            setCurrentStep(currentStepIndex);
-
-                            if (currentStepIndex < steps.length) {
-                                setTimeout(progressStep, 500);
+                            if (currentPhaseIndex < phases.length) {
+                                setTimeout(processPhase, 500);
                             } else {
-                                // All steps completed
+                                // All phases completed
                                 setTimeout(() => {
                                     setSwapComplete(true);
                                     navigate(`/kiosk/${stationId}/complete/${bookingId}`);
                                 }, 1000);
                             }
                         }
-                    }, duration / 20);
+                    }, phase.duration / 20);
                 } else {
-                    // Manual steps - wait for user action
-                    setSteps(prev => prev.map((step, idx) => {
-                        if (idx === currentStepIndex) {
-                            return {
-                                ...step,
-                                status: 'in_progress',
-                                progress: 0,
-                                estimatedTime: stepEstimatedTimes[idx]
-                            };
-                        }
-                        return step;
+                    // Manual phase - wait for user action
+                    setCurrentAction(prev => ({
+                        ...prev,
+                        progress: phase.progress,
+                        showButton: true
                     }));
                 }
             }
         };
 
-        const timer = setTimeout(progressStep, 1000);
+        const timer = setTimeout(processPhase, 1000);
 
         return () => {
             clearTimeout(timer);
@@ -179,43 +147,87 @@ const SwapStatus = () => {
         };
     }, [bookingId, stationId, navigate]);
 
-    // Handle manual step completion
-    const handleStepComplete = () => {
-        if (currentStep < steps.length) {
-            // Mark current step as completed
-            setSteps(prev => prev.map((step, idx) => {
-                if (idx === currentStep) {
-                    return { ...step, status: 'completed', progress: 100 };
-                }
-                return step;
-            }));
+    // Handle manual action completion
+    const handleActionComplete = () => {
+        setCurrentAction(prev => ({
+            ...prev,
+            showButton: false,
+            status: 'completed'
+        }));
 
+        // Move to next phase
+        setTimeout(() => {
             const nextStep = currentStep + 1;
             setCurrentStep(nextStep);
 
-            if (nextStep < steps.length) {
-                // Start next step
-                setTimeout(() => {
-                    setSteps(prev => prev.map((step, idx) => {
-                        if (idx === nextStep) {
-                            return {
-                                ...step,
-                                status: 'in_progress',
-                                progress: 0,
-                                estimatedTime: step.estimatedTime
-                            };
+            // Continue with next phase
+            const phases = [
+                { title: 'Xác thực booking', description: 'Đang kiểm tra thông tin booking của bạn', duration: 3000, progress: 16 },
+                { title: 'Chuẩn bị slot pin', description: 'Hệ thống đang chuẩn bị slot pin cho bạn', duration: 2000, progress: 33 },
+                { title: 'Lắp pin cũ vào slot', description: 'Vui lòng lắp pin cũ vào slot được chỉ định', duration: 0, progress: 50, manual: true, slotNumber: 3, buttonText: 'Đã lắp pin cũ' },
+                { title: 'Kiểm tra pin cũ', description: 'Hệ thống đang kiểm tra tình trạng pin cũ', duration: 5000, progress: 66 },
+                { title: 'Lấy pin mới', description: 'Slot pin mới đã mở, vui lòng lấy pin', duration: 0, progress: 83, manual: true, slotNumber: 7, buttonText: 'Đã lấy pin mới' },
+                { title: 'Hoàn tất đổi pin', description: 'Kiểm tra và hoàn tất quy trình đổi pin', duration: 2000, progress: 100 }
+            ];
+
+            if (nextStep < phases.length) {
+                const nextPhase = phases[nextStep];
+                setCurrentAction({
+                    title: nextPhase.title,
+                    description: nextPhase.description,
+                    progress: nextPhase.progress,
+                    status: 'in_progress',
+                    showButton: nextPhase.manual || false,
+                    buttonText: nextPhase.buttonText || '',
+                    slotNumber: nextPhase.slotNumber || null
+                });
+
+                if (nextPhase.duration > 0) {
+                    // Auto-progress next phase
+                    let progress = 0;
+                    const progressInterval = setInterval(() => {
+                        progress += 5;
+                        if (progress <= 100) {
+                            setCurrentAction(prev => ({
+                                ...prev,
+                                progress: Math.min(nextPhase.progress, (progress / 100) * nextPhase.progress)
+                            }));
+                        } else {
+                            clearInterval(progressInterval);
+                            const nextStep2 = nextStep + 1;
+                            setCurrentStep(nextStep2);
+
+                            if (nextStep2 < phases.length) {
+                                setTimeout(() => {
+                                    const nextPhase2 = phases[nextStep2];
+                                    setCurrentAction({
+                                        title: nextPhase2.title,
+                                        description: nextPhase2.description,
+                                        progress: nextPhase2.progress,
+                                        status: 'in_progress',
+                                        showButton: nextPhase2.manual || false,
+                                        buttonText: nextPhase2.buttonText || '',
+                                        slotNumber: nextPhase2.slotNumber || null
+                                    });
+                                }, 500);
+                            } else {
+                                // All phases completed
+                                setTimeout(() => {
+                                    setSwapComplete(true);
+                                    navigate(`/kiosk/${stationId}/complete/${bookingId}`);
+                                }, 1000);
+                            }
                         }
-                        return step;
-                    }));
-                }, 500);
+                    }, nextPhase.duration / 20);
+                }
             } else {
-                // All steps completed
+                // All phases completed
                 setTimeout(() => {
                     setSwapComplete(true);
                     navigate(`/kiosk/${stationId}/complete/${bookingId}`);
                 }, 1000);
             }
-        }
+        }, 500);
     };
 
     if (!bookingData) {
@@ -288,53 +300,54 @@ const SwapStatus = () => {
                     </CardContent>
                 </Card>
 
-                {/* Progress Section */}
+                {/* Single Progress Section */}
                 <div>
                     <h2 className="text-3xl font-bold mb-6">Tiến trình đổi pin</h2>
-                    <SwapProgress currentStep={currentStep} steps={steps} />
 
-                    {/* Manual Action Buttons */}
-                    {currentStep === 2 && steps[2]?.status === 'in_progress' && (
-                        <Card className="mt-6 bg-blue-50 border-blue-300">
-                            <CardContent className="p-8">
-                                <div className="text-center space-y-6">
-                                    <div className="text-6xl font-bold text-blue-600">Slot #3</div>
-                                    <h3 className="text-2xl font-bold">Lắp pin cũ vào slot</h3>
-                                    <p className="text-xl text-muted-foreground">
-                                        Vui lòng lắp pin cũ vào slot #3 được chỉ định
-                                    </p>
-                                    <Button
-                                        size="lg"
-                                        onClick={handleStepComplete}
-                                        className="text-2xl px-12 py-8 h-auto"
-                                    >
-                                        Đã lắp pin cũ
-                                    </Button>
+                    {/* Single Progress Card */}
+                    <Card className="border-4 shadow-xl">
+                        <CardContent className="p-8">
+                            <div className="space-y-6">
+                                {/* Current Action */}
+                                <div className="text-center">
+                                    <h3 className="text-4xl font-bold mb-4">{currentAction.title}</h3>
+                                    <p className="text-2xl text-muted-foreground">{currentAction.description}</p>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    )}
 
-                    {currentStep === 4 && steps[4]?.status === 'in_progress' && (
-                        <Card className="mt-6 bg-green-50 border-green-300">
-                            <CardContent className="p-8">
-                                <div className="text-center space-y-6">
-                                    <div className="text-6xl font-bold text-green-600">Slot #7</div>
-                                    <h3 className="text-2xl font-bold">Lấy pin mới</h3>
-                                    <p className="text-xl text-muted-foreground">
-                                        Slot pin mới đã mở, vui lòng lấy pin từ slot #7
-                                    </p>
-                                    <Button
-                                        size="lg"
-                                        onClick={handleStepComplete}
-                                        className="text-2xl px-12 py-8 h-auto"
-                                    >
-                                        Đã lấy pin mới
-                                    </Button>
+                                {/* Progress Bar */}
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xl font-semibold">Tiến độ</span>
+                                        <span className="text-xl font-bold">{Math.round(currentAction.progress)}%</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-8">
+                                        <div
+                                            className="bg-primary h-8 rounded-full transition-all duration-500"
+                                            style={{ width: `${currentAction.progress}%` }}
+                                        />
+                                    </div>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    )}
+
+                                {/* Manual Action Button */}
+                                {currentAction.showButton && (
+                                    <div className="text-center">
+                                        {currentAction.slotNumber && (
+                                            <div className="text-6xl font-bold text-primary mb-4">
+                                                Slot #{currentAction.slotNumber}
+                                            </div>
+                                        )}
+                                        <Button
+                                            size="lg"
+                                            onClick={handleActionComplete}
+                                            className="text-3xl px-16 py-10 h-auto"
+                                        >
+                                            {currentAction.buttonText}
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Safety Notice */}
