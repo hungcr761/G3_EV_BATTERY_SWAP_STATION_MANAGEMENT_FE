@@ -108,7 +108,7 @@ const Dashboard = () => {
 
         setIsCancelling(true);
         try {
-            await bookingAPI.delete(selectedBooking.id);
+            await bookingAPI.cancel(selectedBooking.id);
             // Refresh bookings list
             await refetchBookings();
             // Close the dialogs
@@ -549,8 +549,8 @@ const Dashboard = () => {
                                         ID đặt lịch: <span className="font-mono text-slate-800">{selectedBooking.id}</span>
                                     </div>
                                     <div className="flex space-x-3">
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             onClick={() => setSelectedBooking(null)}
                                             className="border-slate-300 hover:bg-slate-50"
                                         >
@@ -584,7 +584,7 @@ const Dashboard = () => {
                                 Xác nhận hủy lịch
                             </DialogTitle>
                             <DialogDescription className="text-center text-base text-slate-600">
-                                Bạn có chắc chắn muốn hủy lịch đặt trước này? 
+                                Bạn có chắc chắn muốn hủy lịch đặt trước này?
                                 <br />
                                 <span className="text-red-600 font-medium">Hành động này không thể hoàn tác.</span>
                             </DialogDescription>
@@ -653,8 +653,8 @@ const Dashboard = () => {
                             )}
                         </div>
                         <div className="flex justify-end">
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => setShowQRCode(false)}
                                 className="border-slate-300 hover:bg-slate-50"
                             >

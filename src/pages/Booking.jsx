@@ -223,8 +223,10 @@ const Stations = () => {
             results.forEach(({ stationId, data }) => {
                 availabilityData[stationId] = {
                     available: data.available,
-                    availableCount: data.availability_details?.available_batteries_count || 0,
+                    availableCount: data.availability_details?.available_now || 0,
                     totalSlots: data.availability_details?.total_slots || 0,
+                    totalBatteriesReady: data.availability_details?.total_batteries_ready || 0,
+                    reservedByPendingBookings: data.availability_details?.reserved_by_pending_bookings || 0,
                     stationStatus: data.availability_details?.station_status || 'unknown',
                     batteryType: data.battery_type,
                     station: data.station,
@@ -566,8 +568,13 @@ const Stations = () => {
                                                                     </span>
                                                                 </div>
                                                                 <p className="text-xs text-muted-foreground">
-                                                                    pin {selectedVehicle.batteryType} có sẵn
+                                                                    pin {stationAvailability[station.id].batteryType?.battery_type_code || selectedVehicle.batteryType} có sẵn
                                                                 </p>
+                                                                {stationAvailability[station.id].reservedByPendingBookings > 0 && (
+                                                                    <p className="text-xs text-orange-600">
+                                                                        {stationAvailability[station.id].reservedByPendingBookings} đang chờ
+                                                                    </p>
+                                                                )}
                                                             </div>
                                                         ) : selectedVehicle ? (
                                                             <div className="text-right">
@@ -609,15 +616,17 @@ const Stations = () => {
                                                         size="sm"
                                                         variant="outline"
                                                         className="flex-1"
-                                                        disabled={!selectedVehicle || (stationAvailability[station.id]?.availableCount || 0) === 0}
+                                                        disabled={!selectedVehicle || !stationAvailability[station.id]?.available || (stationAvailability[station.id]?.availableCount || 0) === 0}
                                                         onClick={() => handleBooking(station)}
                                                     >
                                                         <Calendar className="mr-1 h-3 w-3" />
                                                         {!selectedVehicle
                                                             ? 'Chọn xe trước'
-                                                            : (stationAvailability[station.id]?.availableCount || 0) === 0
-                                                                ? 'Hết pin'
-                                                                : 'Đặt lịch'
+                                                            : !stationAvailability[station.id]?.available
+                                                                ? 'Không khả dụng'
+                                                                : (stationAvailability[station.id]?.availableCount || 0) === 0
+                                                                    ? 'Hết pin'
+                                                                    : 'Đặt lịch'
                                                         }
                                                     </Button>
                                                 </div>

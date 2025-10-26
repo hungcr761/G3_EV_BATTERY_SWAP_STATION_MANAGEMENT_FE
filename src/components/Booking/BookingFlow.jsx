@@ -37,7 +37,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             // Booking is active immediately when created
             setIsBookingActive(true);
 
-            // Set timer to delete booking at selected time
+            // Set timer to cancel booking at selected time
             const now = new Date();
             const selectedDateTime = new Date(selectedTime.time);
             const timeDiff = selectedDateTime.getTime() - now.getTime();
@@ -210,10 +210,10 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     const handleAutoDeleteBooking = async () => {
         if (bookingId) {
             try {
-                await bookingAPI.delete(bookingId);
-                console.log('Booking automatically deleted after 15 minutes');
+                await bookingAPI.cancel(bookingId);
+                console.log('Booking automatically cancelled after scheduled time');
             } catch (error) {
-                console.error('Error auto-deleting booking:', error);
+                console.error('Error auto-cancelling booking:', error);
             }
         }
     };

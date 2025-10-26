@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Battery, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
-import { bookingAPI, stationAPI } from '../../lib/apiServices';
+import { swapAPI } from '../../lib/apiServices';
 
 const UserAvailabilityCheck = () => {
     const { stationId, userId } = useParams();
@@ -25,16 +25,35 @@ const UserAvailabilityCheck = () => {
                     return;
                 }
 
-                // Check availability for the selected vehicle and battery count
-                const response = await bookingAPI.checkAvailability(
+                // Get battery type ID from the selected vehicle
+                const batteryTypeId = selectedVehicle.model?.batteryType?.battery_type_id;
+                if (!batteryTypeId) {
+                    setError('Không tìm thấy thông tin loại pin');
+                    setLoading(false);
+                    return;
+                }
+
+                // Check availability using the new API
+                const response = await swapAPI.checkAvailableBatteries(
                     stationId,
-                    selectedVehicle.vehicle_id
+                    batteryTypeId,
+                    selectedBatteries.length
                 );
 
-                setAvailabilityData(response.data);
+                const availabilityData = {
+                    available: response.data.has_enough,
+                    message: response.data.message,
+                    station_id: response.data.station_id,
+                    battery_type_id: response.data.battery_type_id,
+                    requested_quantity: response.data.requested_quantity,
+                    available_quantity: response.data.available_quantity,
+                    available_batteries: response.data.available_batteries || []
+                };
 
-                if (!response.data.available) {
-                    setError('Trạm không có pin loại này hoặc đã hết chỗ');
+                setAvailabilityData(availabilityData);
+
+                if (!response.data.has_enough) {
+                    setError(response.data.message || 'Trạm không có đủ pin loại này');
                 }
             } catch (error) {
                 console.error('Error checking availability:', error);
@@ -119,12 +138,12 @@ const UserAvailabilityCheck = () => {
 
                 {/* Availability Status */}
                 <Card className={`border-4 shadow-2xl ${availabilityData?.available
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-red-500 bg-red-50'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-red-500 bg-red-50'
                     }`}>
                     <CardHeader className={`text-center ${availabilityData?.available
-                            ? 'bg-green-500 text-white'
-                            : 'bg-red-500 text-white'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-red-500 text-white'
                         }`}>
                         <CardTitle className="text-4xl">
                             {availabilityData?.available ? 'Có sẵn pin' : 'Không có pin'}
@@ -151,10 +170,10 @@ const UserAvailabilityCheck = () => {
                                 {availabilityData?.available && (
                                     <div className="space-y-2">
                                         <p className="text-2xl text-green-700">
-                                            Có {availabilityData.availability_details?.available_batteries_count || 0} pin {selectedVehicle.batteryType} khả dụng
+                                            {availabilityData.message}
                                         </p>
                                         <p className="text-xl text-green-600">
-                                            Tổng slot: {availabilityData.availability_details?.total_slots || 0}
+                                            Có {availabilityData.available_quantity} pin khả dụng / Yêu cầu {availabilityData.requested_quantity} pin
                                         </p>
                                     </div>
                                 )}
@@ -185,6 +204,45 @@ const UserAvailabilityCheck = () => {
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Available Batteries Details */}
+                {availabilityData?.available && availabilityData.available_batteries?.length > 0 && (
+                    <Card className="bg-blue-50 border-blue-200">
+                        <CardHeader>
+                            <CardTitle className="text-2xl text-blue-800">Pin khả dụng</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {availabilityData.available_batteries.map((battery, index) => (
+                                    <div key={battery.battery_id} className="bg-white p-4 rounded-lg border border-blue-200">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h4 className="text-lg font-semibold text-blue-800">
+                                                Pin #{index + 1}
+                                            </h4>
+                                            <Badge variant="outline" className="text-blue-600">
+                                                {battery.slot_number}
+                                            </Badge>
+                                        </div>
+                                        <div className="space-y-1 text-sm">
+                                            <p className="text-muted-foreground">
+                                                <span className="font-medium">Serial:</span> {battery.battery_serial}
+                                            </p>
+                                            <p className="text-muted-foreground">
+                                                <span className="font-medium">SOC:</span> {battery.current_soc}%
+                                            </p>
+                                            <p className="text-muted-foreground">
+                                                <span className="font-medium">SOH:</span> {battery.current_soh}%
+                                            </p>
+                                            <p className="text-muted-foreground">
+                                                <span className="font-medium">Cabinet:</span> {battery.cabinet.cabinet_id}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex justify-between">

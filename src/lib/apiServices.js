@@ -93,7 +93,7 @@ export const bookingAPI = {
     delete: (id) => api.delete(`/booking/${id}`),
     getByUserId: (userId) => api.get(`/booking/user/${userId}`),
     getMyBookings: () => api.get('/booking/my-bookings?status=pending'),
-    cancel: (id) => api.post(`/booking/${id}/cancel`),
+    cancel: (id) => api.patch(`/booking/${id}/cancel`),
 };
 
 // Invoice APIs
@@ -106,4 +106,8 @@ export const invoiceAPI = {
 export const paymentAPI = {
     create: (data) =>
         USE_MOCK_API ? mockApi.createPayment(data) : api.post('/payment/create', data),
+};
+
+export const swapAPI = {
+    checkAvailableBatteries: (stationId, batteryTypeId, requestedQuantity) => api.get(`/swap/check-available-batteries?station_id=${stationId}&battery_type_id=${batteryTypeId}&requested_quantity=${requestedQuantity}`),
 };
