@@ -39,9 +39,9 @@ const Header = () => {
     };
 
     const navigationItems = [
-        { label: 'Đặt lịch', href: '/booking' },
-        { label: 'Dịch vụ', href: '/services' },
-        { label: 'Hỗ trợ', href: '/support' },
+        { label: 'Booking', href: '/booking' },
+        { label: 'Services', href: '/services' },
+        { label: 'Support', href: '/support' },
     ];
 
     return (
@@ -90,7 +90,7 @@ const Header = () => {
                                                 <div className="flex flex-col items-start">
                                                     <span className="text-sm font-medium">{user?.fullname}</span>
                                                     <span className="text-xs text-muted-foreground">
-                                                        {user?.role === 'driver' ? 'Tài xế' : user?.role}
+                                                        {user?.role === 'driver' ? 'EV Driver' : user?.role}
                                                     </span>
                                                 </div>
                                                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -115,19 +115,19 @@ const Header = () => {
                                             <DropdownMenuItem asChild>
                                                 <Link to="/profile" className="cursor-pointer">
                                                     <User className="mr-2 h-4 w-4" />
-                                                    <span>Thông tin cá nhân</span>
+                                                    <span>Profile</span>
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem asChild>
                                                 <Link to="/settings" className="cursor-pointer">
                                                     <Settings className="mr-2 h-4 w-4" />
-                                                    <span>Cài đặt</span>
+                                                    <span>Settings</span>
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
                                                 <LogOut className="mr-2 h-4 w-4" />
-                                                <span>Đăng xuất</span>
+                                                <span>Log Out</span>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -136,10 +136,10 @@ const Header = () => {
                         ) : (
                             <div className="flex items-center space-x-2">
                                 <Button variant="outline" asChild>
-                                    <Link to="/login">Đăng nhập</Link>
+                                    <Link to="/login">Log In</Link>
                                 </Button>
                                 <Button asChild>
-                                    <Link to="/register">Đăng ký</Link>
+                                    <Link to="/register">Sign Up</Link>
                                 </Button>
                             </div>
                         )}
@@ -190,7 +190,7 @@ const Header = () => {
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
                                         <User className="h-4 w-4 mr-2" />
-                                        Thông tin cá nhân
+                                        Profile
                                     </Link>
                                     <Link
                                         to="/settings"
@@ -198,7 +198,7 @@ const Header = () => {
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
                                         <Settings className="h-4 w-4 mr-2" />
-                                        Cài đặt
+                                        Settings
                                     </Link>
                                     <button
                                         onClick={() => {
@@ -208,7 +208,7 @@ const Header = () => {
                                         className="flex items-center w-full px-3 py-2 text-sm font-medium rounded-md hover:bg-accent text-left text-red-600"
                                     >
                                         <LogOut className="h-4 w-4 mr-2" />
-                                        Đăng xuất
+                                        Log Out
                                     </button>
                                 </div>
                             ) : (
@@ -218,14 +218,14 @@ const Header = () => {
                                         className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
-                                        Đăng nhập
+                                        Log In
                                     </Link>
                                     <Link
                                         to="/register"
                                         className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
-                                        Đăng ký
+                                        Sign Up
                                     </Link>
                                 </div>
                             )}
