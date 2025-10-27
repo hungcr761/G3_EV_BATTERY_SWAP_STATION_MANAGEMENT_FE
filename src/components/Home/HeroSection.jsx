@@ -18,31 +18,31 @@ const HeroSection = () => {
     const features = [
         {
             icon: <Battery className="h-6 w-6" />,
-            title: "Đổi pin nhanh chóng",
-            description: "Chỉ mất 3-5 phút để đổi pin, tiết kiệm thời gian di chuyển"
+            title: "Fast Battery Swap",
+            description: "Only takes 3-5 minutes to swap batteries, saving travel time"
         },
         {
             icon: <MapPin className="h-6 w-6" />,
-            title: "Mạng lưới rộng khắp",
-            description: "Hơn 100 trạm đổi pin trên toàn thành phố"
+            title: "Wide Network Coverage",
+            description: "Over 100 battery swap stations across the city"
         },
         {
             icon: <Clock className="h-6 w-6" />,
-            title: "Hoạt động 24/7",
-            description: "Phục vụ mọi lúc, mọi nơi không ngừng nghỉ"
+            title: "24/7 Operation",
+            description: "Serving anytime, anywhere without interruption"
         },
         {
             icon: <Shield className="h-6 w-6" />,
-            title: "An toàn tuyệt đối",
-            description: "Pin được kiểm tra chất lượng và bảo dưỡng thường xuyên"
+            title: "Absolute Safety",
+            description: "Batteries are quality tested and regularly maintained"
         }
     ];
 
     const stats = [
-        { number: "10,000+", label: "Khách hàng tin tưởng" },
-        { number: "50,000+", label: "Lượt đổi pin/tháng" },
-        { number: "99.5%", label: "Tỷ lệ hài lòng" },
-        { number: "24/7", label: "Hỗ trợ khách hàng" }
+        { number: "10,000+", label: "Trusted Customers" },
+        { number: "50,000+", label: "Battery Swaps/Month" },
+        { number: "99.5%", label: "Satisfaction Rate" },
+        { number: "24/7", label: "Customer Support" }
     ];
 
     return (
@@ -58,18 +58,18 @@ const HeroSection = () => {
                             <div className="flex items-center space-x-2">
                                 <Battery className="h-8 w-8 text-primary" />
                                 <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                                    EVSwap - Tương lai xanh
+                                    EVSwap - Green Future
                                 </span>
                             </div>
 
                             <h1 className="text-4xl lg:text-6xl font-bold text-foreground leading-tight">
-                                Đổi pin xe điện
-                                <span className="text-primary block">nhanh chóng & tiện lợi</span>
+                                Electric Vehicle Battery Swap
+                                <span className="text-primary block">fast & convenient</span>
                             </h1>
 
                             <p className="text-xl text-muted-foreground leading-relaxed">
-                                Hệ thống quản lý trạm đổi pin xe máy điện hàng đầu Việt Nam.
-                                Giải pháp hoàn hảo cho nhu cầu di chuyển xanh và bền vững.
+                                Vietnam's leading electric motorcycle battery swap station management system.
+                                The perfect solution for green and sustainable mobility needs.
                             </p>
                         </div>
 
@@ -78,14 +78,14 @@ const HeroSection = () => {
                             <Button size="lg" asChild className="text-lg px-8 py-6">
                                 <Link to="/register">
                                     <Zap className="mr-2 h-5 w-5" />
-                                    Bắt đầu ngay
+                                    Get Started Now
                                     <ArrowRight className="ml-2 h-5 w-5" />
                                 </Link>
                             </Button>
                             <Button size="lg" variant="outline" asChild className="text-lg px-8 py-6">
                                 <Link to="/stations">
                                     <MapPin className="mr-2 h-5 w-5" />
-                                    Tìm trạm gần nhất
+                                    Find Nearest Station
                                 </Link>
                             </Button>
                         </div>
@@ -117,8 +117,8 @@ const HeroSection = () => {
                                                 <Motorbike className="h-6 w-6 text-primary" />
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold">Trạm ABC - Quận 1</h3>
-                                                <p className="text-sm text-muted-foreground">Cách bạn 2.3 km</p>
+                                                <h3 className="font-semibold">ABC Station - District 1</h3>
+                                                <p className="text-sm text-muted-foreground">2.3 km away</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -126,7 +126,7 @@ const HeroSection = () => {
                                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                                                 <span className="font-semibold">4.8</span>
                                             </div>
-                                            <p className="text-sm text-muted-foreground">(127 đánh giá)</p>
+                                            <p className="text-sm text-muted-foreground">(127 reviews)</p>
                                         </div>
                                     </div>
 
@@ -134,27 +134,27 @@ const HeroSection = () => {
                                         <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
                                             <div className="flex items-center space-x-2">
                                                 <Battery className="h-5 w-5 text-green-600" />
-                                                <span className="font-medium">Pin Type 1</span>
+                                                <span className="font-medium">Battery Type 1</span>
                                             </div>
                                             <div className="text-green-600 font-semibold">
-                                                15 pin sẵn sàng
+                                                15 batteries ready
                                             </div>
                                         </div>
 
                                         <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
                                             <div className="flex items-center space-x-2">
                                                 <Battery className="h-5 w-5 text-blue-600" />
-                                                <span className="font-medium">Pin Type 2</span>
+                                                <span className="font-medium">Battery Type 2</span>
                                             </div>
                                             <div className="text-blue-600 font-semibold">
-                                                8 pin sẵn sàng
+                                                8 batteries ready
                                             </div>
                                         </div>
                                     </div>
 
                                     <Button className="w-full" size="lg">
                                         <MapPin className="mr-2 h-4 w-4" />
-                                        Đặt lịch đổi pin
+                                        Schedule Battery Swap
                                     </Button>
                                 </div>
                             </CardContent>

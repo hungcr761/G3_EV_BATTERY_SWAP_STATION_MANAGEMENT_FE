@@ -56,7 +56,7 @@ const RegisterForm = () => {
             setShowOTP(true);
         } catch (err) {
             console.error('RegisterForm: Error in onSubmit:', err);
-            setError(err.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
+            setError(err.response?.data?.message || 'An error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -97,15 +97,15 @@ const RegisterForm = () => {
                             <div className="text-center">
                                 <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
                                 <h3 className="text-lg font-medium text-foreground mb-2">
-                                    Đăng ký thành công!
+                                    Registration successful!
                                 </h3>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    Tài khoản của bạn đã được tạo thành công.
-                                    Bạn sẽ được chuyển đến trang đăng nhập.
+                                    Your account has been created successfully.
+                                    You will be redirected to the login page.
                                 </p>
                                 <Link to="/login">
                                     <Button className="w-full">
-                                        Đi đến trang đăng nhập
+                                        Go to login page
                                     </Button>
                                 </Link>
                             </div>
@@ -121,9 +121,9 @@ const RegisterForm = () => {
             <div className="max-w-md w-full space-y-8">
                 <Card>
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl font-bold">Đăng ký tài khoản</CardTitle>
+                        <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
                         <CardDescription>
-                            Tạo tài khoản EVSwap mới để bắt đầu sử dụng dịch vụ
+                            Create a new EVSwap account to start using the service
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -136,11 +136,11 @@ const RegisterForm = () => {
                             )}
 
                             <div className="space-y-2">
-                                <Label htmlFor="fullname">Họ và tên *</Label>
+                                <Label htmlFor="fullname">Full Name *</Label>
                                 <Input
                                     id="fullname"
                                     type="text"
-                                    placeholder="Nhập họ tên"
+                                    placeholder="Enter full name"
                                     {...register('fullname')}
                                     className={errors.fullname ? 'border-red-500' : ''}
                                 />
@@ -164,7 +164,7 @@ const RegisterForm = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="phone_number">Số điện thoại *</Label>
+                                <Label htmlFor="phone_number">Phone Number *</Label>
                                 <Input
                                     id="phone_number"
                                     type="tel"
@@ -178,12 +178,12 @@ const RegisterForm = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password">Mật khẩu *</Label>
+                                <Label htmlFor="password">Password *</Label>
                                 <div className="relative">
                                     <Input
                                         id="password"
                                         type={showPassword ? 'text' : 'password'}
-                                        placeholder="Mật khẩu"
+                                        placeholder="Password"
                                         {...register('password')}
                                         className={errors.password ? 'border-red-500 pr-10' : 'pr-10'}
                                     />
@@ -205,12 +205,12 @@ const RegisterForm = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Xác nhận mật khẩu *</Label>
+                                <Label htmlFor="confirmPassword">Confirm Password *</Label>
                                 <div className="relative">
                                     <Input
                                         id="confirmPassword"
                                         type={showConfirmPassword ? 'text' : 'password'}
-                                        placeholder="Nhập lại mật khẩu"
+                                        placeholder="Re-enter password"
                                         {...register('confirmPassword')}
                                         className={errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
                                     />
@@ -240,13 +240,13 @@ const RegisterForm = () => {
                                     className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                                 />
                                 <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                                    Tôi đồng ý với{' '}
+                                    I agree to{' '}
                                     <Link to="/terms" className="text-primary hover:text-primary/80">
-                                        Điều khoản sử dụng
+                                        Terms of Service
                                     </Link>{' '}
-                                    và{' '}
+                                    and{' '}
                                     <Link to="/privacy" className="text-primary hover:text-primary/80">
-                                        Chính sách bảo mật
+                                        Privacy Policy
                                     </Link>
                                 </label>
                             </div>
@@ -259,22 +259,22 @@ const RegisterForm = () => {
                                 {isLoading ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Đang tạo tài khoản...
+                                        Creating account...
                                     </>
                                 ) : (
-                                    'Tạo tài khoản'
+                                    'Create Account'
                                 )}
                             </Button>
                         </form>
 
                         <div className="mt-6 text-center">
                             <p className="text-sm text-muted-foreground">
-                                Đã có tài khoản?{' '}
+                                Already have an account?{' '}
                                 <Link
                                     to="/login"
                                     className="font-medium text-primary hover:text-primary/80"
                                 >
-                                    Đăng nhập ngay
+                                    Sign in now
                                 </Link>
                             </p>
                         </div>

@@ -223,8 +223,10 @@ const Stations = () => {
             results.forEach(({ stationId, data }) => {
                 availabilityData[stationId] = {
                     available: data.available,
-                    availableCount: data.availability_details?.available_batteries_count || 0,
+                    availableCount: data.availability_details?.available_now || 0,
                     totalSlots: data.availability_details?.total_slots || 0,
+                    totalBatteriesReady: data.availability_details?.total_batteries_ready || 0,
+                    reservedByPendingBookings: data.availability_details?.reserved_by_pending_bookings || 0,
                     stationStatus: data.availability_details?.station_status || 'unknown',
                     batteryType: data.battery_type,
                     station: data.station,
@@ -326,17 +328,17 @@ const Stations = () => {
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h1 className="text-3xl font-bold text-foreground mb-2">
-                                Tìm trạm đổi pin
+                                Find Battery Swap Station
                             </h1>
                             <p className="text-muted-foreground">
-                                Tìm kiếm trạm đổi pin gần nhất với tình trạng pin sẵn có
+                                Search for the nearest battery swap station with available batteries
                             </p>
                         </div>
                         <div className="flex items-center space-x-4">
                             {vehiclesLoading ? (
                                 <div className="flex items-center space-x-2">
                                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-                                    <span className="text-sm text-muted-foreground">Đang tải xe...</span>
+                                    <span className="text-sm text-muted-foreground">Loading vehicles...</span>
                                 </div>
                             ) : selectedVehicle ? (
                                 <div className="flex items-center space-x-2">
@@ -352,16 +354,16 @@ const Stations = () => {
                                         size="sm"
                                         onClick={handleShowVehicleSelector}
                                     >
-                                        Đổi xe
+                                        Change Vehicle
                                     </Button>
                                 </div>
                             ) : userVehicles.length > 0 ? (
                                 <div className="flex items-center space-x-2">
                                     <Motorbike className="h-5 w-5 text-muted-foreground" />
                                     <div>
-                                        <p className="font-medium text-muted-foreground">Chưa chọn xe</p>
+                                        <p className="font-medium text-muted-foreground">No vehicle selected</p>
                                         <p className="text-sm text-muted-foreground">
-                                            Chọn xe để xem tình trạng pin tại các trạm
+                                            Select a vehicle to view battery status at stations
                                         </p>
                                     </div>
                                     <Button
@@ -369,16 +371,16 @@ const Stations = () => {
                                         size="sm"
                                         onClick={handleShowVehicleSelector}
                                     >
-                                        Chọn xe
+                                        Select Vehicle
                                     </Button>
                                 </div>
                             ) : (
                                 <div className="flex items-center space-x-2">
                                     <Motorbike className="h-5 w-5 text-muted-foreground" />
                                     <div>
-                                        <p className="font-medium text-muted-foreground">Chưa có xe</p>
+                                        <p className="font-medium text-muted-foreground">No vehicles</p>
                                         <p className="text-sm text-muted-foreground">
-                                            Thêm xe để sử dụng dịch vụ
+                                            Add a vehicle to use the service
                                         </p>
                                     </div>
                                     <Button
@@ -386,7 +388,7 @@ const Stations = () => {
                                         size="sm"
                                         onClick={() => navigate('/dashboard')}
                                     >
-                                        Thêm xe
+                                        Add Vehicle
                                     </Button>
                                 </div>
                             )}
@@ -398,10 +400,10 @@ const Stations = () => {
                         <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                             <div className="flex items-center space-x-2">
                                 <Motorbike className="h-5 w-5 text-blue-600" />
-                                <span className="font-semibold text-blue-800">Chọn xe để tiếp tục</span>
+                                <span className="font-semibold text-blue-800">Select vehicle to continue</span>
                             </div>
                             <p className="text-blue-700 mt-1">
-                                Bạn có {userVehicles.length} xe. Vui lòng chọn xe để xem tình trạng pin tại các trạm.
+                                You have {userVehicles.length} vehicles. Please select a vehicle to view battery status at stations.
                             </p>
                             <Button
                                 variant="default"
@@ -409,7 +411,7 @@ const Stations = () => {
                                 className="mt-2"
                                 onClick={handleShowVehicleSelector}
                             >
-                                Chọn xe ngay
+                                Select Vehicle Now
                             </Button>
                         </div>
                     )}
@@ -419,7 +421,7 @@ const Stations = () => {
                         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                             <div className="flex items-center space-x-2">
                                 <MapPin className="h-5 w-5 text-green-600" />
-                                <span className="font-semibold text-green-800">Trạm gần nhất</span>
+                                <span className="font-semibold text-green-800">Nearest Station</span>
                             </div>
                             <p className="text-green-700 mt-1">
                                 {nearestStation.name} - {nearestStation.distance} km
@@ -437,7 +439,7 @@ const Stations = () => {
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Nhập địa chỉ hoặc tên trạm..."
+                                        placeholder="Enter address or station name..."
                                         className="pl-10"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -450,15 +452,15 @@ const Stations = () => {
                                     value={batteryType}
                                     onChange={(e) => setBatteryType(e.target.value)}
                                 >
-                                    <option value="">Trạng thái</option>
-                                    <option value="available">Sẵn sàng</option>
-                                    <option value="limited">Hạn chế</option>
+                                    <option value="">Status</option>
+                                    <option value="available">Available</option>
+                                    <option value="limited">Limited</option>
                                 </select>
                             </div>
                             <div>
                                 <Button className="w-full">
                                     <Filter className="mr-2 h-4 w-4" />
-                                    Lọc
+                                    Filter
                                 </Button>
                             </div>
                         </div>
@@ -470,7 +472,7 @@ const Stations = () => {
                     <div className="flex items-center justify-center py-12">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                            <p className="text-muted-foreground">Đang tải dữ liệu trạm...</p>
+                            <p className="text-muted-foreground">Loading station data...</p>
                         </div>
                     </div>
                 )}
@@ -479,9 +481,9 @@ const Stations = () => {
                 {stationsError && (
                     <div className="flex items-center justify-center py-12">
                         <div className="text-center">
-                            <p className="text-red-500 mb-2">Lỗi tải dữ liệu trạm</p>
+                            <p className="text-red-500 mb-2">Station data loading error</p>
                             <p className="text-sm text-muted-foreground">
-                                {stationsError.message || 'Không thể kết nối đến server'}
+                                {stationsError.message || 'Unable to connect to server'}
                             </p>
                         </div>
                     </div>
@@ -493,7 +495,7 @@ const Stations = () => {
                         <div className="lg:col-span-2 space-y-6 max-h-screen overflow-y-auto pr-2 scroll-smooth">
                             {filteredStations.length === 0 ? (
                                 <div className="text-center py-12">
-                                    <p className="text-muted-foreground">Không tìm thấy trạm nào</p>
+                                    <p className="text-muted-foreground">No stations found</p>
                                 </div>
                             ) : (
                                 filteredStations.map((station) => (
@@ -513,20 +515,20 @@ const Stations = () => {
                                                         <div className="flex items-center space-x-2">
                                                             <h3 className="text-base font-semibold">{station.name}</h3>
                                                             {station.status === 'available' ? (
-                                                                <Badge variant="default">Sẵn sàng</Badge>
+                                                                <Badge variant="default">Available</Badge>
                                                             ) : (
-                                                                <Badge variant="secondary">Hạn chế</Badge>
+                                                                <Badge variant="secondary">Limited</Badge>
                                                             )}
                                                             {nearestStation?.id === station.id && (
                                                                 <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-                                                                    Gần nhất
+                                                                    Nearest
                                                                 </Badge>
                                                             )}
                                                         </div>
                                                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                                             <div className="flex items-center space-x-1">
                                                                 <MapPin className="h-4 w-4" />
-                                                                <span>Trạm đổi pin</span>
+                                                                <span>Battery Swap Station</span>
                                                             </div>
                                                             <div className="flex items-center space-x-1">
                                                                 <Clock className="h-4 w-4" />
@@ -553,7 +555,7 @@ const Stations = () => {
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center space-x-2">
                                                             <Battery className="h-4 w-4 text-blue-600" />
-                                                            <span className="font-medium text-sm">Trạm đổi pin EV</span>
+                                                            <span className="font-medium text-sm">EV Battery Swap Station</span>
                                                         </div>
                                                         {selectedVehicle && stationAvailability[station.id] ? (
                                                             <div className="text-right">
@@ -566,31 +568,36 @@ const Stations = () => {
                                                                     </span>
                                                                 </div>
                                                                 <p className="text-xs text-muted-foreground">
-                                                                    pin {selectedVehicle.batteryType} có sẵn
+                                                                    {stationAvailability[station.id].batteryType?.battery_type_code || selectedVehicle.batteryType} batteries available
                                                                 </p>
+                                                                {stationAvailability[station.id].reservedByPendingBookings > 0 && (
+                                                                    <p className="text-xs text-orange-600">
+                                                                        {stationAvailability[station.id].reservedByPendingBookings} pending
+                                                                    </p>
+                                                                )}
                                                             </div>
                                                         ) : selectedVehicle ? (
                                                             <div className="text-right">
                                                                 <div className="flex items-center space-x-1">
                                                                     <div className="animate-spin rounded-full h-3 w-3 border-b border-primary"></div>
-                                                                    <span className="text-xs text-muted-foreground">Đang kiểm tra...</span>
+                                                                    <span className="text-xs text-muted-foreground">Checking...</span>
                                                                 </div>
                                                             </div>
                                                         ) : (
                                                             <div className="text-right">
                                                                 <p className="text-xs text-muted-foreground">
-                                                                    Chọn xe để xem số pin
+                                                                    Select vehicle to view battery count
                                                                 </p>
                                                             </div>
                                                         )}
                                                     </div>
                                                     <p className="text-xs text-muted-foreground">
-                                                        Dịch vụ đổi pin cho xe điện 24/7
+                                                        24/7 electric vehicle battery swap service
                                                     </p>
                                                     {loadingAvailability && (
                                                         <div className="mt-2 flex items-center space-x-1">
                                                             <div className="animate-spin rounded-full h-3 w-3 border-b border-primary"></div>
-                                                            <span className="text-xs text-muted-foreground">Đang kiểm tra...</span>
+                                                            <span className="text-xs text-muted-foreground">Checking...</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -603,21 +610,23 @@ const Stations = () => {
                                                         onClick={() => handleNavigation(station)}
                                                     >
                                                         <Navigation className="mr-1 h-3 w-3" />
-                                                        Chỉ đường
+                                                        Get Directions
                                                     </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
                                                         className="flex-1"
-                                                        disabled={!selectedVehicle || (stationAvailability[station.id]?.availableCount || 0) === 0}
+                                                        disabled={!selectedVehicle || !stationAvailability[station.id]?.available || (stationAvailability[station.id]?.availableCount || 0) === 0}
                                                         onClick={() => handleBooking(station)}
                                                     >
                                                         <Calendar className="mr-1 h-3 w-3" />
                                                         {!selectedVehicle
-                                                            ? 'Chọn xe trước'
-                                                            : (stationAvailability[station.id]?.availableCount || 0) === 0
-                                                                ? 'Hết pin'
-                                                                : 'Đặt lịch'
+                                                            ? 'Select Vehicle First'
+                                                            : !stationAvailability[station.id]?.available
+                                                                ? 'Not Available'
+                                                                : (stationAvailability[station.id]?.availableCount || 0) === 0
+                                                                    ? 'Out of Batteries'
+                                                                    : 'Book Appointment'
                                                         }
                                                     </Button>
                                                 </div>
@@ -632,9 +641,9 @@ const Stations = () => {
                         <div className="lg:col-span-1">
                             <Card className="sticky top-4">
                                 <CardHeader>
-                                    <CardTitle>Bản đồ</CardTitle>
+                                    <CardTitle>Map</CardTitle>
                                     <CardDescription>
-                                        Vị trí các trạm đổi pin
+                                        Location of battery swap stations
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -658,9 +667,9 @@ const Stations = () => {
                             <Card>
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h2 className="text-xl font-bold">Chọn xe</h2>
+                                        <h2 className="text-xl font-bold">Select Vehicle</h2>
                                         <Button variant="outline" onClick={handleCloseVehicleSelector}>
-                                            Đóng
+                                            Close
                                         </Button>
                                     </div>
                                     <VehicleSelector

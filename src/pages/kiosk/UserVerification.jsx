@@ -14,6 +14,8 @@ const UserVerification = () => {
     const [userVehicles, setUserVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [autoNavigate, setAutoNavigate] = useState(false);
+    const [countdown, setCountdown] = useState(3);
 
     // Get user data from location state or fetch from API
     useEffect(() => {
@@ -36,6 +38,9 @@ const UserVerification = () => {
                 if (vehiclesResponse.data && vehiclesResponse.data.vehicles) {
                     setUserVehicles(vehiclesResponse.data.vehicles);
                 }
+
+                // Start auto-navigation countdown after successful data load
+                setAutoNavigate(true);
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 setError('Không thể tải thông tin người dùng');
@@ -47,11 +52,31 @@ const UserVerification = () => {
         fetchUserData();
     }, [userId, location.state]);
 
+    // Auto-navigation countdown
+    useEffect(() => {
+        if (autoNavigate && userVehicles.length > 0) {
+            const timer = setInterval(() => {
+                setCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        navigate(`/kiosk/${stationId}/user/${userId}/vehicle`);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+
+            return () => clearInterval(timer);
+        }
+    }, [autoNavigate, userVehicles.length, navigate, stationId, userId]);
+
     const handleContinue = () => {
         if (userVehicles.length === 0) {
             setError('Bạn chưa có xe nào. Vui lòng thêm xe trong ứng dụng trước khi sử dụng dịch vụ.');
             return;
         }
+        // Stop auto-navigation and proceed immediately
+        setAutoNavigate(false);
         navigate(`/kiosk/${stationId}/user/${userId}/vehicle`);
     };
 
@@ -137,28 +162,13 @@ const UserVerification = () => {
                     </CardContent>
                 </Card>
 
-                {/* Vehicle Count Info */}
-                <Card>
-                    <CardContent className="p-8">
-                        <div className="text-center space-y-4">
-                            <h3 className="text-3xl font-bold">Xe của bạn</h3>
-                            <div className="text-6xl font-bold text-primary">
-                                {userVehicles.length}
-                            </div>
-                            <p className="text-2xl text-muted-foreground">
-                                {userVehicles.length === 0
-                                    ? 'Chưa có xe nào'
-                                    : userVehicles.length === 1
-                                        ? 'xe đã đăng ký'
-                                        : 'xe đã đăng ký'
-                                }
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
-
                 {/* Continue Button */}
-                <div className="text-center">
+                <div className="text-center space-y-4">
+                    {autoNavigate && userVehicles.length > 0 && (
+                        <div className="text-2xl text-muted-foreground mb-4">
+                            Tự động chuyển trang sau <span className="font-bold text-primary">{countdown}</span> giây
+                        </div>
+                    )}
                     <Button
                         size="lg"
                         onClick={handleContinue}
@@ -166,7 +176,7 @@ const UserVerification = () => {
                         className="text-3xl px-16 py-12 h-auto"
                     >
                         <ArrowRight className="mr-4 h-8 w-8" />
-                        Tiếp tục chọn xe
+                        {autoNavigate && userVehicles.length > 0 ? 'Tiếp tục ngay' : 'Tiếp tục chọn xe'}
                     </Button>
                 </div>
 

@@ -17,41 +17,41 @@ import {
 const Support = () => {
     const faqs = [
         {
-            question: 'Làm thế nào để đổi pin tại trạm?',
-            answer: 'Quét QR code tại trạm, hệ thống sẽ tự động đổi pin trong 3-5 phút.'
+            question: 'How do I swap batteries at the station?',
+            answer: 'Scan the QR code at the station, the system will automatically swap batteries in 3-5 minutes.'
         },
         {
-            question: 'Tôi có thể hủy lịch đã đặt không?',
-            answer: 'Có, bạn có thể hủy lịch trước 2 giờ mà không bị tính phí.'
+            question: 'Can I cancel my scheduled appointment?',
+            answer: 'Yes, you can cancel your appointment up to 2 hours in advance without any charges.'
         },
         {
-            question: 'Làm sao để theo dõi chi phí sử dụng?',
-            answer: 'Vào Dashboard > Lịch sử giao dịch để xem chi tiết chi phí.'
+            question: 'How do I track my usage costs?',
+            answer: 'Go to Dashboard > Transaction History to view detailed costs.'
         },
         {
-            question: 'Pin có được bảo hiểm không?',
-            answer: 'Tất cả pin đều được bảo hiểm toàn diện, bao gồm hỏng hóc và mất mát.'
+            question: 'Are batteries insured?',
+            answer: 'All batteries are fully insured, including damage and loss coverage.'
         }
     ];
 
     const contactMethods = [
         {
             icon: <Phone className="h-6 w-6" />,
-            title: 'Hotline 24/7',
-            description: '1900 1234',
-            action: 'Gọi ngay'
+            title: '24/7 Hotline',
+            description: '',
+            action: 'Call Now'
         },
         {
             icon: <Mail className="h-6 w-6" />,
-            title: 'Email hỗ trợ',
-            description: 'support@evswap.vn',
-            action: 'Gửi email'
+            title: 'Support Email',
+            description: '',
+            action: 'Send Email'
         },
         {
             icon: <MessageCircle className="h-6 w-6" />,
-            title: 'Chat trực tuyến',
-            description: 'Hỗ trợ ngay lập tức',
-            action: 'Bắt đầu chat'
+            title: 'Live Chat',
+            description: 'Instant support',
+            action: 'Start Chat'
         }
     ];
 
@@ -62,10 +62,10 @@ const Support = () => {
                     {/* Header */}
                     <div className="text-center mb-12">
                         <h1 className="text-3xl font-bold text-foreground mb-4">
-                            Hỗ trợ khách hàng
+                            Customer Support
                         </h1>
                         <p className="text-xl text-muted-foreground">
-                            Chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7
+                            We are always ready to support you 24/7
                         </p>
                     </div>
 
@@ -74,9 +74,9 @@ const Support = () => {
                         <div className="lg:col-span-1 space-y-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Liên hệ trực tiếp</CardTitle>
+                                    <CardTitle>Direct Contact</CardTitle>
                                     <CardDescription>
-                                        Chọn cách liên hệ phù hợp với bạn
+                                        Choose the contact method that works best for you
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -103,24 +103,24 @@ const Support = () => {
 
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Thông tin liên hệ</CardTitle>
+                                    <CardTitle>Contact Information</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="flex items-center space-x-3">
                                         <MapPin className="h-5 w-5 text-primary" />
                                         <div>
-                                            <p className="font-medium">Địa chỉ</p>
+                                            <p className="font-medium">Address</p>
                                             <p className="text-sm text-muted-foreground">
-                                                123 Đường ABC, Quận XYZ, TP.HCM
+                                                123 ABC Street, XYZ District, HCMC
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-3">
                                         <Clock className="h-5 w-5 text-primary" />
                                         <div>
-                                            <p className="font-medium">Giờ làm việc</p>
+                                            <p className="font-medium">Working Hours</p>
                                             <p className="text-sm text-muted-foreground">
-                                                24/7 - Hỗ trợ không ngừng nghỉ
+                                                24/7 - Non-stop support
                                             </p>
                                         </div>
                                     </div>
@@ -135,10 +135,10 @@ const Support = () => {
                                 <CardHeader>
                                     <CardTitle className="flex items-center">
                                         <HelpCircle className="mr-2 h-5 w-5" />
-                                        Câu hỏi thường gặp
+                                        Frequently Asked Questions
                                     </CardTitle>
                                     <CardDescription>
-                                        Tìm câu trả lời cho các thắc mắc phổ biến
+                                        Find answers to common questions
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -158,10 +158,10 @@ const Support = () => {
                                 <CardHeader>
                                     <CardTitle className="flex items-center">
                                         <FileText className="mr-2 h-5 w-5" />
-                                        Gửi yêu cầu hỗ trợ
+                                        Submit Support Request
                                     </CardTitle>
                                     <CardDescription>
-                                        Mô tả chi tiết vấn đề bạn gặp phải
+                                        Describe the issue you're experiencing in detail
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -169,49 +169,41 @@ const Support = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium mb-2">
-                                                    Loại vấn đề
+                                                    Issue Type
                                                 </label>
                                                 <select className="w-full h-10 px-3 rounded-md border border-input bg-background">
-                                                    <option value="">Chọn loại vấn đề</option>
-                                                    <option value="technical">Sự cố kỹ thuật</option>
-                                                    <option value="billing">Vấn đề thanh toán</option>
-                                                    <option value="booking">Vấn đề đặt lịch</option>
-                                                    <option value="other">Khác</option>
+                                                    <option value="">Select issue type</option>
+                                                    <option value="technical">Technical Issue</option>
+                                                    <option value="billing">Billing Issue</option>
+                                                    <option value="booking">Booking Issue</option>
+                                                    <option value="other">Other</option>
                                                 </select>
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-2">
-                                                    Mức độ ưu tiên
+                                                    Priority Level
                                                 </label>
                                                 <select className="w-full h-10 px-3 rounded-md border border-input bg-background">
-                                                    <option value="low">Thấp</option>
-                                                    <option value="medium">Trung bình</option>
-                                                    <option value="high">Cao</option>
-                                                    <option value="urgent">Khẩn cấp</option>
+                                                    <option value="low">Low</option>
+                                                    <option value="medium">Medium</option>
+                                                    <option value="high">High</option>
                                                 </select>
                                             </div>
                                         </div>
 
                                         <div>
                                             <label className="block text-sm font-medium mb-2">
-                                                Mô tả chi tiết
+                                                Detailed Description
                                             </label>
                                             <textarea
                                                 className="w-full h-32 px-3 py-2 rounded-md border border-input bg-background"
-                                                placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."
+                                                placeholder="Describe the issue you're experiencing in detail..."
                                             />
-                                        </div>
-
-                                        <div className="flex items-center space-x-2">
-                                            <input type="checkbox" id="urgent" className="rounded" />
-                                            <label htmlFor="urgent" className="text-sm">
-                                                Đánh dấu là vấn đề khẩn cấp
-                                            </label>
                                         </div>
 
                                         <Button className="w-full">
                                             <AlertTriangle className="mr-2 h-4 w-4" />
-                                            Gửi yêu cầu hỗ trợ
+                                            Submit Support Request
                                         </Button>
                                     </form>
                                 </CardContent>

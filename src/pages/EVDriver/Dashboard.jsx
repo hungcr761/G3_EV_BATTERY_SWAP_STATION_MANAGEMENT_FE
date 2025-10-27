@@ -106,7 +106,7 @@ const Dashboard = () => {
 
         setIsCancelling(true);
         try {
-            await bookingAPI.delete(selectedBooking.id);
+            await bookingAPI.cancel(selectedBooking.id);
             // Refresh bookings list
             await refetchBookings();
             // Close the dialogs
@@ -342,17 +342,14 @@ const Dashboard = () => {
                                                         </Badge>
                                                         {booking.status && (
                                                             <Badge variant={
-                                                                booking.status === 'confirmed' ? 'default' :
-                                                                    booking.status === 'pending' ? 'secondary' :
-                                                                        'outline'
+                                                                booking.status === 'pending' ? 'secondary' :
+                                                                    'outline'
                                                             } className={
-                                                                booking.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                                                                    booking.status === 'pending' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                                                                        ''
+                                                                booking.status === 'pending' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                                                                    ''
                                                             }>
-                                                                {booking.status === 'confirmed' ? 'Đã xác nhận' :
-                                                                    booking.status === 'pending' ? 'Chờ xác nhận' :
-                                                                        booking.status}
+                                                                {booking.status === 'pending' ? 'Pending' :
+                                                                    booking.status}
                                                             </Badge>
                                                         )}
                                                     </div>
@@ -398,9 +395,9 @@ const Dashboard = () => {
                                     <Motorbike className="mr-2 h-4 w-4" />
                                     Vehicle Management
                                 </Button>
-                                <Button className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 hover:border-amber-400 hover:text-amber-700 transition-all duration-200" 
-                                variant="outline"
-                                onClick={() => navigate('/subscriptionManagement')}>
+                                <Button className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 hover:border-amber-400 hover:text-amber-700 transition-all duration-200"
+                                    variant="outline"
+                                    onClick={() => navigate('/subscriptionManagement')}>
                                     <CreditCard className="mr-2 h-4 w-4" />
                                     Subscriptions Management
                                 </Button>
@@ -494,7 +491,7 @@ const Dashboard = () => {
                                                 <div>
                                                     <p className="font-semibold text-base text-purple-900">{selectedBooking.date}</p>
                                                     <p className="text-sm text-purple-700">
-                                                        {selectedBooking.time} - {selectedBooking.endTime}
+                                                        {new Date(selectedBooking.createTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} - {selectedBooking.time}
                                                     </p>
                                                 </div>
                                                 <div className="pt-2 border-t border-purple-200">
@@ -549,8 +546,8 @@ const Dashboard = () => {
                                         Booking ID: <span className="font-mono text-slate-800">{selectedBooking.id}</span>
                                     </div>
                                     <div className="flex space-x-3">
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             onClick={() => setSelectedBooking(null)}
                                             className="border-slate-300 hover:bg-slate-50"
                                         >
@@ -584,7 +581,7 @@ const Dashboard = () => {
                                 Confirm Cancel Booking
                             </DialogTitle>
                             <DialogDescription className="text-center text-base text-slate-600">
-                                Are you sure you want to cancel this booking? 
+                                Are you sure you want to cancel this booking?
                                 <br />
                                 <span className="text-red-600 font-medium">This action cannot be undone.</span>
                             </DialogDescription>
@@ -653,8 +650,8 @@ const Dashboard = () => {
                             )}
                         </div>
                         <div className="flex justify-end">
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => setShowQRCode(false)}
                                 className="border-slate-300 hover:bg-slate-50"
                             >

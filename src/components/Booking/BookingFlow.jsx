@@ -37,7 +37,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             // Booking is active immediately when created
             setIsBookingActive(true);
 
-            // Set timer to delete booking at selected time
+            // Set timer to cancel booking at selected time
             const now = new Date();
             const selectedDateTime = new Date(selectedTime.time);
             const timeDiff = selectedDateTime.getTime() - now.getTime();
@@ -69,7 +69,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     stationId: selectedStation?.id,
                     vehicleId: selectedVehicle?.vehicle_id
                 });
-                setError('Thiếu thông tin trạm hoặc xe');
+                setError('Missing station or vehicle information');
                 return;
             }
 
@@ -81,11 +81,11 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             setAvailabilityData(response.data);
 
             if (!response.data.available) {
-                setError('Trạm không có pin loại này hoặc đã hết chỗ');
+                setError('Station does not have this battery type or is out of space');
             }
         } catch (error) {
             console.error('Error checking availability:', error);
-            setError('Không thể kiểm tra tình trạng pin tại trạm');
+            setError('Unable to check battery status at station');
         }
     };
 
@@ -144,7 +144,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
     const handleConfirmBooking = async () => {
         if (!selectedVehicle || !selectedTime || !selectedStation) {
-            setError('Thiếu thông tin cần thiết để đặt lịch');
+            setError('Missing required information to make a booking');
             return;
         }
 
@@ -191,17 +191,16 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     driver: bookingResponse.driver,
                     batteries: bookingResponse.batteries,
                     create_time: bookingResponse.create_time,
-                    scheduled_time: bookingResponse.scheduled_time,
                     scheduled_end_time: bookingResponse.scheduled_end_time
                 });
                 setCurrentStep(4); // Success step
                 onBookingSuccess?.(response.data);
             } else {
-                setError(response.data?.message || 'Không thể tạo lệnh đặt lịch');
+                setError(response.data?.message || 'Unable to create booking');
             }
         } catch (error) {
             console.error('Error creating booking:', error);
-            setError(error.response?.data?.message || 'Lỗi khi tạo lệnh đặt lịch');
+            setError(error.response?.data?.message || 'Error creating booking');
         } finally {
             setIsSubmitting(false);
         }
@@ -210,10 +209,10 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     const handleAutoDeleteBooking = async () => {
         if (bookingId) {
             try {
-                await bookingAPI.delete(bookingId);
-                console.log('Booking automatically deleted after 15 minutes');
+                await bookingAPI.cancel(bookingId);
+                console.log('Booking automatically cancelled after scheduled time');
             } catch (error) {
-                console.error('Error auto-deleting booking:', error);
+                console.error('Error auto-cancelling booking:', error);
             }
         }
     };
@@ -271,10 +270,10 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
     const getStepTitle = () => {
         switch (currentStep) {
-            case 1: return 'Chọn thời gian';
-            case 2: return 'Chọn số lượng pin';
-            case 3: return 'Xác nhận đặt lịch';
-            case 4: return 'Hoàn thành';
+            case 1: return 'Select Time';
+            case 2: return 'Select Battery Quantity';
+            case 3: return 'Confirm Booking';
+            case 4: return 'Complete';
             default: return '';
         }
     };
@@ -291,10 +290,10 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     <div className="mb-6">
                         <div className="flex items-center justify-between mb-4">
                             <h1 className="text-2xl font-bold text-foreground">
-                                Đặt lịch đổi pin
+                                Schedule Battery Swap
                             </h1>
                             <Button variant="outline" onClick={handleClose}>
-                                Đóng
+                                Close
                             </Button>
                         </div>
 
@@ -322,7 +321,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
                         <div className="mt-2">
                             <p className="text-sm text-muted-foreground">
-                                Bước {currentStep}/{getTotalSteps()}: {getStepTitle()}
+                                Step {currentStep}/{getTotalSteps()}: {getStepTitle()}
                             </p>
                         </div>
                     </div>
