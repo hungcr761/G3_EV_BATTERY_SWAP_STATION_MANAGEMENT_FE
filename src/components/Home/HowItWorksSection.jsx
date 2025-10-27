@@ -18,65 +18,65 @@ const HowItWorksSection = () => {
         {
             step: "01",
             icon: <UserPlus className="h-8 w-8" />,
-            title: "Đăng ký tài khoản",
-            description: "Tạo tài khoản và liên kết phương tiện của bạn với VIN",
+            title: "Create Account",
+            description: "Create an account and link your vehicle with VIN",
             details: [
-                "Đăng ký thông tin cá nhân",
-                "Liên kết VIN xe với tài khoản",
-                "Chọn gói dịch vụ phù hợp",
-                "Xác thực tài khoản"
+                "Register personal information",
+                "Link vehicle VIN to account",
+                "Choose suitable service package",
+                "Verify account"
             ],
             color: "from-blue-500 to-blue-600"
         },
         {
             step: "02",
             icon: <MapPin className="h-8 w-8" />,
-            title: "Tìm trạm đổi pin",
-            description: "Tìm kiếm trạm đổi pin gần nhất với tình trạng pin sẵn có",
+            title: "Find Swap Station",
+            description: "Search for the nearest battery swap station with available batteries",
             details: [
-                "Sử dụng Google Maps API",
-                "Xem tình trạng pin real-time",
-                "Đọc đánh giá từ người dùng",
-                "Tính toán thời gian di chuyển"
+                "Use Google Maps API",
+                "View real-time battery status",
+                "Read user reviews",
+                "Calculate travel time"
             ],
             color: "from-green-500 to-green-600"
         },
         {
             step: "03",
             icon: <Calendar className="h-8 w-8" />,
-            title: "Đặt lịch đổi pin",
-            description: "Đặt lịch trước để đảm bảo có pin đầy khi đến",
+            title: "Schedule Battery Swap",
+            description: "Schedule in advance to ensure full batteries when you arrive",
             details: [
-                "Chọn thời gian phù hợp",
-                "Xác nhận loại pin cần đổi",
-                "Nhận thông báo nhắc nhở",
-                "Có thể hủy/đổi lịch"
+                "Choose suitable time",
+                "Confirm battery type needed",
+                "Receive reminder notifications",
+                "Can cancel/reschedule"
             ],
             color: "from-purple-500 to-purple-600"
         },
         {
             step: "04",
             icon: <Battery className="h-8 w-8" />,
-            title: "Đổi pin tại trạm",
-            description: "Đến trạm và thực hiện đổi pin nhanh chóng",
+            title: "Swap at Station",
+            description: "Go to station and perform quick battery swap",
             details: [
-                "Quét QR code để xác thực",
-                "Tự động đổi pin trong 3-5 phút",
-                "Kiểm tra tình trạng pin mới",
-                "Nhận biên lai điện tử"
+                "Scan QR code to authenticate",
+                "Automatic battery swap in 3-5 minutes",
+                "Check new battery status",
+                "Receive electronic receipt"
             ],
             color: "from-orange-500 to-orange-600"
         },
         {
             step: "05",
             icon: <CreditCard className="h-8 w-8" />,
-            title: "Thanh toán tự động",
-            description: "Hệ thống tự động tính toán và thanh toán theo gói",
+            title: "Automatic Payment",
+            description: "System automatically calculates and charges according to package",
             details: [
-                "Tính phí theo delta SoH",
-                "Trừ vào free allowance",
-                "Thanh toán tự động cuối tháng",
-                "Nhận hóa đơn chi tiết"
+                "Calculate fees by delta SoH",
+                "Deduct from free allowance",
+                "Automatic payment at month end",
+                "Receive detailed invoice"
             ],
             color: "from-red-500 to-red-600"
         }
@@ -85,23 +85,23 @@ const HowItWorksSection = () => {
     const benefits = [
         {
             icon: <CheckCircle className="h-6 w-6" />,
-            title: "Tiết kiệm thời gian",
-            description: "Chỉ mất 3-5 phút để đổi pin thay vì 2-4 giờ sạc"
+            title: "Save Time",
+            description: "Only takes 3-5 minutes to swap batteries instead of 2-4 hours charging"
         },
         {
             icon: <Star className="h-6 w-6" />,
-            title: "Tiết kiệm chi phí",
-            description: "Chi phí hợp lý với các gói dịch vụ linh hoạt"
+            title: "Save Money",
+            description: "Reasonable costs with flexible service packages"
         },
         {
             icon: <MapPin className="h-6 w-6" />,
-            title: "Tiện lợi mọi lúc",
-            description: "Mạng lưới rộng khắp, hoạt động 24/7"
+            title: "Convenient Anytime",
+            description: "Wide network coverage, operating 24/7"
         },
         {
             icon: <Battery className="h-6 w-6" />,
-            title: "An toàn tuyệt đối",
-            description: "Pin được kiểm tra chất lượng và bảo dưỡng thường xuyên"
+            title: "Absolute Safety",
+            description: "Batteries are quality tested and regularly maintained"
         }
     ];
 
@@ -111,12 +111,12 @@ const HowItWorksSection = () => {
                 {/* Section Header */}
                 <div className="text-center mb-16">
                     <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
-                        Cách thức hoạt động
-                        <span className="text-primary block">đơn giản & hiệu quả</span>
+                        How it works
+                        <span className="text-primary block">simple & efficient</span>
                     </h2>
                     <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                        Chỉ với 5 bước đơn giản, bạn có thể bắt đầu sử dụng dịch vụ đổi pin
-                        và trải nghiệm tương lai di chuyển xanh.
+                        With just 5 simple steps, you can start using the battery swap service
+                        and experience the future of green mobility.
                     </p>
                 </div>
 
@@ -166,7 +166,7 @@ const HowItWorksSection = () => {
                                                 <div className="pt-4">
                                                     <Button size="lg" asChild>
                                                         <Link to="/register">
-                                                            Bắt đầu ngay
+                                                            Get Started Now
                                                             <ArrowRight className="ml-2 h-4 w-4" />
                                                         </Link>
                                                     </Button>
@@ -199,11 +199,11 @@ const HowItWorksSection = () => {
                 <div className="bg-card rounded-3xl p-8 lg:p-12 shadow-xl">
                     <div className="text-center mb-12">
                         <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
-                            Lợi ích khi sử dụng EVSwap
+                            Benefits of using EVSwap
                         </h3>
                         <p className="text-muted-foreground max-w-2xl mx-auto">
-                            Không chỉ đơn giản là đổi pin, EVSwap mang đến cho bạn
-                            một trải nghiệm di chuyển hoàn toàn mới.
+                            More than just battery swapping, EVSwap brings you
+                            a completely new mobility experience.
                         </p>
                     </div>
 

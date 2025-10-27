@@ -110,5 +110,5 @@ export const paymentAPI = {
 };
 
 export const swapAPI = {
-    checkAvailableBatteries: (stationId, batteryTypeId, requestedQuantity) => api.get(`/swap/check-available-batteries?station_id=${stationId}&battery_type_id=${batteryTypeId}&requested_quantity=${requestedQuantity}`),
+    checkAvailableBatteries: (stationId, batteryTypeId, Quantity) => api.get(`/swap/available-batteries?station_id=${stationId}&battery_type_id=${batteryTypeId}&quantity=${Quantity}`),
 };

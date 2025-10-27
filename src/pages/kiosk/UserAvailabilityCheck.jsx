@@ -20,7 +20,7 @@ const UserAvailabilityCheck = () => {
         const checkAvailability = async () => {
             try {
                 if (!selectedVehicle || !selectedBatteries) {
-                    setError('Thiếu thông tin xe hoặc pin');
+                    setError('Missing vehicle or battery information');
                     setLoading(false);
                     return;
                 }
@@ -28,7 +28,7 @@ const UserAvailabilityCheck = () => {
                 // Get battery type ID from the selected vehicle
                 const batteryTypeId = selectedVehicle.model?.batteryType?.battery_type_id;
                 if (!batteryTypeId) {
-                    setError('Không tìm thấy thông tin loại pin');
+                    setError('Battery type information not found');
                     setLoading(false);
                     return;
                 }
@@ -40,24 +40,26 @@ const UserAvailabilityCheck = () => {
                     selectedBatteries.length
                 );
 
+                // Handle the new response structure with success field and nested data
+                const responseData = response.data.data;
                 const availabilityData = {
-                    available: response.data.has_enough,
+                    available: responseData.has_enough,
                     message: response.data.message,
-                    station_id: response.data.station_id,
-                    battery_type_id: response.data.battery_type_id,
-                    requested_quantity: response.data.requested_quantity,
-                    available_quantity: response.data.available_quantity,
-                    available_batteries: response.data.available_batteries || []
+                    station_id: responseData.station_id,
+                    battery_type_id: responseData.battery_type_id,
+                    requested_quantity: responseData.requested_quantity,
+                    available_quantity: responseData.available_quantity,
+                    available_batteries: responseData.available_batteries || []
                 };
 
                 setAvailabilityData(availabilityData);
 
-                if (!response.data.has_enough) {
-                    setError(response.data.message || 'Trạm không có đủ pin loại này');
+                if (!responseData.has_enough) {
+                    setError(response.data.message || 'Station does not have enough batteries of this type');
                 }
             } catch (error) {
                 console.error('Error checking availability:', error);
-                setError('Không thể kiểm tra tình trạng pin tại trạm');
+                setError('Unable to check battery status at station');
             } finally {
                 setLoading(false);
             }
@@ -91,7 +93,7 @@ const UserAvailabilityCheck = () => {
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-24 w-24 border-b-4 border-primary mx-auto mb-6"></div>
-                        <p className="text-2xl text-muted-foreground">Đang kiểm tra tình trạng pin...</p>
+                        <p className="text-2xl text-muted-foreground">Checking battery status...</p>
                     </div>
                 </div>
             </div>
@@ -107,14 +109,14 @@ const UserAvailabilityCheck = () => {
                             <div className="flex items-start space-x-4">
                                 <AlertCircle className="h-12 w-12 text-red-600 flex-shrink-0" />
                                 <div>
-                                    <h3 className="text-2xl font-bold text-red-800 mb-2">Không thể đổi pin</h3>
+                                    <h3 className="text-2xl font-bold text-red-800 mb-2">Cannot Swap Battery</h3>
                                     <p className="text-xl text-red-600 mb-4">{error}</p>
                                     <Button
                                         variant="outline"
                                         onClick={handleBack}
                                         className="text-xl px-8 py-4"
                                     >
-                                        Thử lại
+                                        Try Again
                                     </Button>
                                 </div>
                             </div>
@@ -130,9 +132,9 @@ const UserAvailabilityCheck = () => {
             <div className="max-w-6xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="text-center space-y-4">
-                    <h1 className="text-5xl font-bold text-primary">Tình trạng pin</h1>
+                    <h1 className="text-5xl font-bold text-primary">Battery Status</h1>
                     <p className="text-2xl text-muted-foreground">
-                        Kiểm tra tình trạng pin tại trạm
+                        Check battery status at station
                     </p>
                 </div>
 
@@ -146,7 +148,7 @@ const UserAvailabilityCheck = () => {
                         : 'bg-red-500 text-white'
                         }`}>
                         <CardTitle className="text-4xl">
-                            {availabilityData?.available ? 'Có sẵn pin' : 'Không có pin'}
+                            {availabilityData?.available ? 'Batteries Available' : 'No Batteries'}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-8">
@@ -162,8 +164,8 @@ const UserAvailabilityCheck = () => {
                             <div className="space-y-4">
                                 <h3 className="text-3xl font-bold">
                                     {availabilityData?.available
-                                        ? 'Có thể đổi pin ngay'
-                                        : 'Không thể đổi pin'
+                                        ? 'Ready to swap batteries'
+                                        : 'Cannot swap batteries'
                                     }
                                 </h3>
 
@@ -173,7 +175,7 @@ const UserAvailabilityCheck = () => {
                                             {availabilityData.message}
                                         </p>
                                         <p className="text-xl text-green-600">
-                                            Có {availabilityData.available_quantity} pin khả dụng / Yêu cầu {availabilityData.requested_quantity} pin
+                                            {availabilityData.available_quantity} batteries available / {availabilityData.requested_quantity} batteries requested
                                         </p>
                                     </div>
                                 )}
@@ -188,16 +190,16 @@ const UserAvailabilityCheck = () => {
                         <div className="flex items-center space-x-6">
                             <Battery className="h-16 w-16 text-primary" />
                             <div className="flex-1">
-                                <h3 className="text-2xl font-bold mb-2">Thông tin đổi pin</h3>
+                                <h3 className="text-2xl font-bold mb-2">Battery Swap Information</h3>
                                 <div className="grid grid-cols-2 gap-4 text-xl">
                                     <div>
-                                        <p className="text-muted-foreground">Xe:</p>
+                                        <p className="text-muted-foreground">Vehicle:</p>
                                         <p className="font-semibold">{selectedVehicle.modelName}</p>
                                         <p className="text-lg text-muted-foreground">{selectedVehicle.license_plate}</p>
                                     </div>
                                     <div>
-                                        <p className="text-muted-foreground">Pin:</p>
-                                        <p className="font-semibold">{selectedBatteries.length} pin {selectedVehicle.batteryType}</p>
+                                        <p className="text-muted-foreground">Batteries:</p>
+                                        <p className="font-semibold">{selectedBatteries.length} batteries {selectedVehicle.batteryType}</p>
                                     </div>
                                 </div>
                             </div>
@@ -209,7 +211,7 @@ const UserAvailabilityCheck = () => {
                 {availabilityData?.available && availabilityData.available_batteries?.length > 0 && (
                     <Card className="bg-blue-50 border-blue-200">
                         <CardHeader>
-                            <CardTitle className="text-2xl text-blue-800">Pin khả dụng</CardTitle>
+                            <CardTitle className="text-2xl text-blue-800">Available Batteries</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -217,7 +219,7 @@ const UserAvailabilityCheck = () => {
                                     <div key={battery.battery_id} className="bg-white p-4 rounded-lg border border-blue-200">
                                         <div className="flex items-center justify-between mb-2">
                                             <h4 className="text-lg font-semibold text-blue-800">
-                                                Pin #{index + 1}
+                                                Battery #{index + 1}
                                             </h4>
                                             <Badge variant="outline" className="text-blue-600">
                                                 {battery.slot_number}
@@ -253,7 +255,7 @@ const UserAvailabilityCheck = () => {
                         className="text-2xl px-12 py-8 h-auto"
                     >
                         <ArrowLeft className="mr-3 h-6 w-6" />
-                        Quay lại
+                        Go Back
                     </Button>
 
                     {availabilityData?.available && (
@@ -262,7 +264,7 @@ const UserAvailabilityCheck = () => {
                             onClick={handleStartSwap}
                             className="text-2xl px-12 py-8 h-auto"
                         >
-                            Bắt đầu đổi pin
+                            Start Battery Swap
                             <ArrowRight className="ml-3 h-6 w-6" />
                         </Button>
                     )}
@@ -276,11 +278,11 @@ const UserAvailabilityCheck = () => {
                                 <AlertCircle className="h-8 w-8 text-yellow-600 flex-shrink-0" />
                                 <div>
                                     <h3 className="text-xl font-bold text-yellow-800 mb-2">
-                                        Không thể đổi pin
+                                        Cannot Swap Battery
                                     </h3>
                                     <p className="text-lg text-yellow-700">
-                                        Trạm hiện tại không có pin loại {selectedVehicle.batteryType} hoặc đã hết chỗ.
-                                        Vui lòng thử trạm khác hoặc quay lại sau.
+                                        Current station does not have {selectedVehicle.batteryType} batteries or is out of space.
+                                        Please try another station or come back later.
                                     </p>
                                 </div>
                             </div>
