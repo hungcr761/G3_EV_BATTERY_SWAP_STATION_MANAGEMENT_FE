@@ -55,6 +55,9 @@ export default function SubscriptionCard({
                             <p className="text-sm text-slate-600">
                                 {subscription.vehicle?.license_plate || 'N/A'}
                             </p>
+                            <p className="text-sm text-slate-600">
+                                VIN: {subscription.vehicle?.vin || 'N/A'}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -78,10 +81,27 @@ export default function SubscriptionCard({
                         </div>
                         <p className="text-sm font-semibold text-slate-800">
                             {new Date(subscription.end_date).toLocaleDateString()}
-                        </p>
+                        </p>   
                     </div>
                 </div>
 
+                {/* Price info */}
+                <div className="bg-gradient-to-r from-emerald-50 to-green-50 p-4 rounded-lg border border-emerald-200">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                            <TrendingUp className="h-5 w-5 text-emerald-600" />
+                            <p className="text-sm text-slate-600">Subscription Fee</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                                {subscription.plan?.fee?.toLocaleString() || '0'}₫
+                            </p>
+                            <p className="text-xs text-slate-500">
+                                /{subscription.plan?.duration_months || 1} month{subscription.plan?.duration_months > 1 ? 's' : ''}
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Days Remaining */}
                 {isActive && (

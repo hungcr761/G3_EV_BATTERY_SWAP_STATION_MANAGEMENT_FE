@@ -107,4 +107,6 @@ export const invoiceAPI = {
 export const paymentAPI = {
     create: (data) =>
         USE_MOCK_API ? mockApi.createPayment(data) : api.post('/payment/create', data),
+    getByDriverId: (driverId) =>
+        USE_MOCK_API ? mockApi.getPaymentHistory(driverId) : api.get(`/payment/driver/${driverId}`),
 };
