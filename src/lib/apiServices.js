@@ -111,4 +111,16 @@ export const paymentAPI = {
 
 export const swapAPI = {
     checkAvailableBatteries: (stationId, batteryTypeId, Quantity) => api.get(`/swap/available-batteries?station_id=${stationId}&battery_type_id=${batteryTypeId}&quantity=${Quantity}`),
+    getEmptySlots: (stationId) => api.get(`/swap/empty-slots?station_id=${stationId}`),
+    validateAndPrepare: (data) => api.post('/swap/validate-and-prepare', data),
+    firstTimePickup: (driverId, vehicleId, stationId) => api.post('/swap/first-time-pickup', { driver_id: driverId, vehicle_id: vehicleId, station_id: stationId }),
+    validateWithBooking: (bookingId, driverId, vehicleId, stationId, batteryTypeId) => api.post('/swap/validate-with-booking', {
+        booking_id: bookingId,
+        driver_id: driverId,
+        vehicle_id: vehicleId,
+        station_id: stationId,
+        battery_type_id: batteryTypeId
+    }),
+    executeFirstTimeWithBooking: (data) => api.post('/swap/execute-first-time-with-booking', data),
+    checkFirstTimePickup: (vehicleId) => api.get(`/swap/check-first-time-pickup?vehicle_id=${vehicleId}`),
 };

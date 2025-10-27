@@ -329,7 +329,7 @@ const Dashboard = () => {
                                                         <p className="text-xs text-slate-600 mt-1">{booking.address}</p>
                                                         <p className="text-xs text-slate-600 mt-1 flex items-center">
                                                             <Calendar className="h-3 w-3 mr-1" />
-                                                            {booking.date} từ {booking.time} - {booking.endTime}
+                                                            {booking.date} from {new Date(booking.createTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} - {booking.time}
                                                         </p>
                                                         <p className="text-xs text-slate-600 flex items-center mt-1">
                                                             <Motorbike className="h-3 w-3 mr-1" />
@@ -542,9 +542,6 @@ const Dashboard = () => {
 
                                 {/* Actions */}
                                 <div className="flex justify-between items-center pt-6 px-2 border-t border-slate-200">
-                                    <div className="text-sm text-slate-600 font-medium">
-                                        Booking ID: <span className="font-mono text-slate-800">{selectedBooking.id}</span>
-                                    </div>
                                     <div className="flex space-x-3">
                                         <Button
                                             variant="outline"

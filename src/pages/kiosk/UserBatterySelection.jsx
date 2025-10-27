@@ -40,14 +40,14 @@ const UserBatterySelection = () => {
                     <Card className="border-red-300 bg-red-50">
                         <CardContent className="p-8">
                             <div className="text-center">
-                                <h3 className="text-2xl font-bold text-red-800 mb-2">Lỗi</h3>
-                                <p className="text-xl text-red-600">Không tìm thấy thông tin xe</p>
+                                <h3 className="text-2xl font-bold text-red-800 mb-2">Error</h3>
+                                <p className="text-xl text-red-600">Vehicle information not found</p>
                                 <Button
                                     variant="outline"
                                     onClick={handleBack}
                                     className="mt-4"
                                 >
-                                    Quay lại
+                                    Go Back
                                 </Button>
                             </div>
                         </CardContent>
@@ -62,9 +62,9 @@ const UserBatterySelection = () => {
             <div className="max-w-6xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="text-center space-y-4">
-                    <h1 className="text-5xl font-bold text-primary">Chọn số lượng pin</h1>
+                    <h1 className="text-5xl font-bold text-primary">Select Battery Quantity</h1>
                     <p className="text-2xl text-muted-foreground">
-                        Chọn số lượng pin bạn muốn đổi
+                        Choose the number of batteries you want to swap
                     </p>
                 </div>
 
@@ -79,7 +79,7 @@ const UserBatterySelection = () => {
                                     {selectedVehicle.license_plate} • {selectedVehicle.batteryType}
                                 </p>
                                 <p className="text-lg text-muted-foreground">
-                                    Tối đa {maxBatteries} pin
+                                    Maximum {maxBatteries} batteries
                                 </p>
                             </div>
                         </div>
@@ -92,8 +92,8 @@ const UserBatterySelection = () => {
                         <Card
                             key={count}
                             className={`cursor-pointer transition-all ${selectedBatteries.length === count
-                                    ? 'border-4 border-primary shadow-xl scale-105'
-                                    : 'border-2 border-gray-200 hover:border-primary hover:shadow-lg'
+                                ? 'border-4 border-primary shadow-xl scale-105'
+                                : 'border-2 border-gray-200 hover:border-primary hover:shadow-lg'
                                 }`}
                             onClick={() => handleBatterySelect(count)}
                         >
@@ -103,12 +103,12 @@ const UserBatterySelection = () => {
                                         {count}
                                     </div>
                                     <div className="text-2xl font-semibold">
-                                        {count === 1 ? 'Pin' : 'Pin'}
+                                        {count === 1 ? 'Battery' : 'Batteries'}
                                     </div>
                                     {selectedBatteries.length === count && (
                                         <Badge variant="default" className="text-lg px-3 py-1">
                                             <CheckCircle2 className="h-4 w-4 mr-1" />
-                                            Đã chọn
+                                            Selected
                                         </Badge>
                                     )}
                                 </div>
@@ -123,10 +123,10 @@ const UserBatterySelection = () => {
                         <CardContent className="p-6">
                             <div className="text-center">
                                 <h3 className="text-2xl font-bold text-blue-800 mb-2">
-                                    Đã chọn {selectedBatteries.length} pin
+                                    Selected {selectedBatteries.length} batteries
                                 </h3>
                                 <p className="text-xl text-blue-600">
-                                    Loại pin: {selectedVehicle.batteryType}
+                                    Battery Type: {selectedVehicle.batteryType}
                                 </p>
                             </div>
                         </CardContent>
@@ -142,7 +142,7 @@ const UserBatterySelection = () => {
                         className="text-2xl px-12 py-8 h-auto"
                     >
                         <ArrowLeft className="mr-3 h-6 w-6" />
-                        Quay lại
+                        Go Back
                     </Button>
 
                     <Button
@@ -151,7 +151,7 @@ const UserBatterySelection = () => {
                         disabled={selectedBatteries.length === 0}
                         className="text-2xl px-12 py-8 h-auto"
                     >
-                        Kiểm tra tình trạng
+                        Check Status
                         <ArrowRight className="ml-3 h-6 w-6" />
                     </Button>
                 </div>

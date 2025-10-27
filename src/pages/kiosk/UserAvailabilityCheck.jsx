@@ -235,9 +235,6 @@ const UserAvailabilityCheck = () => {
                                             <p className="text-muted-foreground">
                                                 <span className="font-medium">SOH:</span> {battery.current_soh}%
                                             </p>
-                                            <p className="text-muted-foreground">
-                                                <span className="font-medium">Cabinet:</span> {battery.cabinet.cabinet_id}
-                                            </p>
                                         </div>
                                     </div>
                                 ))}

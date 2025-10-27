@@ -59,14 +59,14 @@ const KioskHome = () => {
                     try {
                         await validateUser(qrCode);
                     } catch (userError) {
-                        setError('Mã QR không hợp lệ. Vui lòng kiểm tra lại mã booking hoặc mã tài khoản.');
+                        setError('Invalid QR code. Please check your booking code or account code.');
                         setValidating(false);
                     }
                 }
             }
         } catch (error) {
             console.error('Error processing QR code:', error);
-            setError('Không thể xử lý mã QR. Vui lòng thử lại.');
+            setError('Unable to process QR code. Please try again.');
             setValidating(false);
         }
     };
@@ -86,12 +86,12 @@ const KioskHome = () => {
 
             // VALIDATION 1: Check if booking is for this station
             if (booking.station_id !== parseInt(stationId)) {
-                const wrongStationName = booking.station?.station_name || `Trạm #${booking.station_id}`;
+                const wrongStationName = booking.station?.station_name || `Station #${booking.station_id}`;
                 setError(
-                    `❌ Sai trạm!\n\n` +
-                    `Booking này dành cho: ${wrongStationName}\n` +
-                    `Bạn đang ở: ${stationInfo?.name || `Trạm #${stationId}`}\n\n` +
-                    `Vui lòng đến đúng trạm đã đặt hoặc hủy và đặt lại booking mới.`
+                    `❌ Wrong Station!\n\n` +
+                    `This booking is for: ${wrongStationName}\n` +
+                    `You are at: ${stationInfo?.name || `Station #${stationId}`}\n\n` +
+                    `Please go to the correct station or cancel and create a new booking.`
                 );
                 setValidating(false);
                 return;
@@ -103,10 +103,10 @@ const KioskHome = () => {
                 const now = new Date();
                 if (now > bookingEndTime) {
                     setError(
-                        `❌ Booking đã hết hạn!\n\n` +
-                        `Thời gian hết hạn: ${bookingEndTime.toLocaleString('vi-VN')}\n` +
-                        `Hiện tại: ${now.toLocaleString('vi-VN')}\n\n` +
-                        `Vui lòng đặt booking mới qua app hoặc website.`
+                        `❌ Booking Expired!\n\n` +
+                        `Expiration time: ${bookingEndTime.toLocaleString('en-US')}\n` +
+                        `Current time: ${now.toLocaleString('en-US')}\n\n` +
+                        `Please create a new booking through the app or website.`
                     );
                     setValidating(false);
                     return;
@@ -116,9 +116,9 @@ const KioskHome = () => {
             // VALIDATION 3: Check booking status
             if (booking.status === 'completed') {
                 setError(
-                    `❌ Booking đã được sử dụng!\n\n` +
-                    `Booking này đã được hoàn thành.\n` +
-                    `Nếu cần đổi pin lại, vui lòng tạo booking mới.`
+                    `❌ Booking Already Used!\n\n` +
+                    `This booking has been completed.\n` +
+                    `If you need to swap batteries again, please create a new booking.`
                 );
                 setValidating(false);
                 return;
@@ -126,8 +126,8 @@ const KioskHome = () => {
 
             if (booking.status === 'cancelled') {
                 setError(
-                    `❌ Booking đã bị hủy!\n\n` +
-                    `Vui lòng tạo booking mới để sử dụng dịch vụ.`
+                    `❌ Booking Cancelled!\n\n` +
+                    `Please create a new booking to use the service.`
                 );
                 setValidating(false);
                 return;
@@ -203,7 +203,7 @@ const KioskHome = () => {
                                     </div>
                                     <Badge variant="secondary" className="text-xl px-6 py-3 bg-white text-primary">
                                         <Clock className="h-5 w-5 mr-2" />
-                                        Hoạt động 24/7
+                                        Operating 24/7
                                     </Badge>
                                 </div>
                             </CardContent>
@@ -214,19 +214,19 @@ const KioskHome = () => {
                     <div className="text-center space-y-6">
                         <Battery className="h-32 w-32 text-primary mx-auto" />
                         <h1 className="text-6xl font-bold text-primary">
-                            Chào mừng đến trạm đổi pin G3
+                            Welcome to G3 Battery Swap Station
                         </h1>
                         <p className="text-3xl text-muted-foreground max-w-3xl mx-auto">
-                            Đổi pin nhanh chóng, an toàn và tiện lợi trong vài phút
+                            Fast, safe and convenient battery swapping in minutes
                         </p>
                     </div>
 
                     {/* Main Action Card */}
                     <Card className="border-4 shadow-2xl">
                         <CardHeader className="text-center space-y-4 pb-6">
-                            <CardTitle className="text-4xl">Bắt đầu đổi pin</CardTitle>
+                            <CardTitle className="text-4xl">Start Battery Swap</CardTitle>
                             <CardDescription className="text-2xl">
-                                Chọn loại mã QR bạn muốn quét
+                                Choose the type of QR code you want to scan
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="pb-12 space-y-6">
@@ -240,7 +240,7 @@ const KioskHome = () => {
                                 className="w-full text-3xl py-12 h-auto"
                             >
                                 <QrCode className="mr-4 h-10 w-10" />
-                                Quét mã QR booking
+                                Scan Booking QR Code
                             </Button>
 
                             {/* Account QR Button */}
@@ -254,7 +254,7 @@ const KioskHome = () => {
                                 className="w-full text-3xl py-12 h-auto"
                             >
                                 <QrCode className="mr-4 h-10 w-10" />
-                                Quét mã QR tài khoản
+                                Scan Account QR Code
                             </Button>
                         </CardContent>
                     </Card>
@@ -262,7 +262,7 @@ const KioskHome = () => {
                     {/* Instructions */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-3xl">Hướng dẫn sử dụng</CardTitle>
+                            <CardTitle className="text-3xl">Usage Instructions</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <ol className="space-y-6 text-2xl">
@@ -271,9 +271,9 @@ const KioskHome = () => {
                                         1
                                     </span>
                                     <div>
-                                        <p className="font-semibold">Chọn loại QR code</p>
+                                        <p className="font-semibold">Choose QR code type</p>
                                         <p className="text-xl text-muted-foreground">
-                                            Booking QR (đã đặt trước) hoặc Account QR (chưa đặt)
+                                            Booking QR (pre-booked) or Account QR (walk-in)
                                         </p>
                                     </div>
                                 </li>
@@ -282,9 +282,9 @@ const KioskHome = () => {
                                         2
                                     </span>
                                     <div>
-                                        <p className="font-semibold">Quét mã QR</p>
+                                        <p className="font-semibold">Scan QR code</p>
                                         <p className="text-xl text-muted-foreground">
-                                            Sử dụng mã QR từ email, app hoặc tài khoản
+                                            Use QR code from email, app or account
                                         </p>
                                     </div>
                                 </li>
@@ -293,9 +293,9 @@ const KioskHome = () => {
                                         3
                                     </span>
                                     <div>
-                                        <p className="font-semibold">Đỗ xe vào vị trí</p>
+                                        <p className="font-semibold">Park in position</p>
                                         <p className="text-xl text-muted-foreground">
-                                            Làm theo hướng dẫn trên màn hình
+                                            Follow the instructions on screen
                                         </p>
                                     </div>
                                 </li>
@@ -304,9 +304,9 @@ const KioskHome = () => {
                                         4
                                     </span>
                                     <div>
-                                        <p className="font-semibold">Làm theo hướng dẫn đổi pin</p>
+                                        <p className="font-semibold">Follow battery swap instructions</p>
                                         <p className="text-xl text-muted-foreground">
-                                            Thời gian đổi pin: 3-5 phút
+                                            Battery swap time: 3-5 minutes
                                         </p>
                                     </div>
                                 </li>
@@ -315,9 +315,9 @@ const KioskHome = () => {
                                         5
                                     </span>
                                     <div>
-                                        <p className="font-semibold">Hoàn tất và khởi hành</p>
+                                        <p className="font-semibold">Complete and depart</p>
                                         <p className="text-xl text-muted-foreground">
-                                            Nhận thông báo hoàn thành và tiếp tục hành trình
+                                            Receive completion notification and continue your journey
                                         </p>
                                     </div>
                                 </li>
@@ -332,13 +332,13 @@ const KioskHome = () => {
                                 <AlertCircle className="h-12 w-12 text-yellow-600 flex-shrink-0" />
                                 <div>
                                     <h3 className="text-2xl font-bold text-yellow-800 mb-2">
-                                        Cần trợ giúp?
+                                        Need Help?
                                     </h3>
                                     <p className="text-xl text-yellow-700 mb-4">
-                                        Vui lòng liên hệ số hotline: <strong>1900-XXXX</strong>
+                                        Please contact hotline: <strong>1900-XXXX</strong>
                                     </p>
                                     <p className="text-lg text-yellow-600">
-                                        Hoặc nhấn nút "Trợ giúp" trên màn hình khi cần hỗ trợ khẩn cấp
+                                        Or press the "Help" button on screen for emergency support
                                     </p>
                                 </div>
                             </div>
@@ -359,7 +359,7 @@ const KioskHome = () => {
                             }}
                             className="text-xl px-8 py-6 h-auto"
                         >
-                            ← Quay lại
+                            ← Go Back
                         </Button>
                     </div>
 
@@ -369,7 +369,7 @@ const KioskHome = () => {
                                 <div className="flex items-start space-x-4">
                                     <AlertCircle className="h-12 w-12 text-red-600 flex-shrink-0" />
                                     <div>
-                                        <p className="text-2xl font-bold text-red-800 mb-2">Lỗi xác thực</p>
+                                        <p className="text-2xl font-bold text-red-800 mb-2">Authentication Error</p>
                                         <p className="text-xl text-red-700 whitespace-pre-line">{error}</p>
                                     </div>
                                 </div>
@@ -383,8 +383,8 @@ const KioskHome = () => {
                                 <div className="flex items-center space-x-4">
                                     <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary"></div>
                                     <div>
-                                        <p className="text-2xl font-bold text-blue-800">Đang xác thực booking...</p>
-                                        <p className="text-xl text-blue-600">Vui lòng đợi trong giây lát</p>
+                                        <p className="text-2xl font-bold text-blue-800">Validating booking...</p>
+                                        <p className="text-xl text-blue-600">Please wait a moment</p>
                                     </div>
                                 </div>
                             </CardContent>

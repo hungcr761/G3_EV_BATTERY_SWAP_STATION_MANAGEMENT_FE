@@ -21,16 +21,16 @@ const SwapComplete = () => {
 
                 setSwapData({
                     bookingId: booking.booking_id,
-                    userName: booking.driver?.fullname || 'Khách hàng',
+                    userName: booking.driver?.fullname || 'Customer',
                     vehicleModel: booking.vehicle?.model?.name || 'Unknown Model',
                     vehiclePlate: booking.vehicle?.license_plate || 'N/A',
                     oldBatteryLevel: '15%', // Would come from battery data
                     newBatteryLevel: '100%',
                     swapDuration: '4 phút 32 giây', // Would be calculated
-                    completedTime: new Date().toLocaleString('vi-VN'),
-                    stationName: booking.station?.station_name || `Trạm #${stationId}`,
+                    completedTime: new Date().toLocaleString('en-US'),
+                    stationName: booking.station?.station_name || `Station #${stationId}`,
                     cost: '50,000 VNĐ', // Would come from pricing
-                    nextServiceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('vi-VN')
+                    nextServiceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US')
                 });
             } catch (error) {
                 console.error('Error fetching swap data:', error);
@@ -43,10 +43,10 @@ const SwapComplete = () => {
                     oldBatteryLevel: '15%',
                     newBatteryLevel: '100%',
                     swapDuration: '4 phút 32 giây',
-                    completedTime: new Date().toLocaleString('vi-VN'),
+                    completedTime: new Date().toLocaleString('en-US'),
                     stationName: `Trạm #${stationId}`,
                     cost: '50,000 VNĐ',
-                    nextServiceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('vi-VN')
+                    nextServiceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US')
                 });
             }
         };
@@ -80,7 +80,7 @@ const SwapComplete = () => {
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-24 w-24 border-b-4 border-primary mx-auto mb-6"></div>
-                        <p className="text-2xl text-muted-foreground">Đang tải thông tin...</p>
+                        <p className="text-2xl text-muted-foreground">Loading information...</p>
                     </div>
                 </div>
             </div>
@@ -96,37 +96,37 @@ const SwapComplete = () => {
                         <CheckCircle2 className="h-20 w-20 text-green-600" />
                     </div>
                     <h1 className="text-6xl font-bold text-green-600">
-                        Đổi pin thành công!
+                        Battery Swap Successful!
                     </h1>
                     <p className="text-3xl text-muted-foreground">
-                        Xe của bạn đã sẵn sàng để tiếp tục hành trình
+                        Your vehicle is ready to continue your journey
                     </p>
                 </div>
 
                 {/* Swap Summary Card */}
                 <Card className="border-4 border-green-500 shadow-2xl">
                     <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-                        <CardTitle className="text-4xl">Thông tin đổi pin</CardTitle>
+                        <CardTitle className="text-4xl">Battery Swap Information</CardTitle>
                     </CardHeader>
                     <CardContent className="p-8">
                         <div className="grid grid-cols-2 gap-8">
                             {/* Left Column */}
                             <div className="space-y-6 text-xl">
                                 <div>
-                                    <p className="text-muted-foreground mb-1">Mã booking</p>
+                                    <p className="text-muted-foreground mb-1">Booking ID</p>
                                     <p className="font-bold text-2xl">{swapData.bookingId}</p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground mb-1">Khách hàng</p>
+                                    <p className="text-muted-foreground mb-1">Customer</p>
                                     <p className="font-semibold text-2xl">{swapData.userName}</p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground mb-1">Xe</p>
+                                    <p className="text-muted-foreground mb-1">Vehicle</p>
                                     <p className="font-semibold text-2xl">{swapData.vehicleModel}</p>
                                     <p className="text-lg text-muted-foreground">{swapData.vehiclePlate}</p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground mb-1">Trạm đổi pin</p>
+                                    <p className="text-muted-foreground mb-1">Battery Swap Station</p>
                                     <p className="font-semibold text-2xl">{swapData.stationName}</p>
                                 </div>
                             </div>
@@ -134,17 +134,17 @@ const SwapComplete = () => {
                             {/* Right Column */}
                             <div className="space-y-6 text-xl">
                                 <div>
-                                    <p className="text-muted-foreground mb-1">Thời gian hoàn thành</p>
+                                    <p className="text-muted-foreground mb-1">Completion Time</p>
                                     <p className="font-semibold text-2xl">{swapData.completedTime}</p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground mb-1">Thời gian đổi pin</p>
+                                    <p className="text-muted-foreground mb-1">Swap Duration</p>
                                     <p className="font-semibold text-2xl text-green-600">
                                         {swapData.swapDuration}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground mb-1">Mức pin</p>
+                                    <p className="text-muted-foreground mb-1">Battery Level</p>
                                     <div className="flex items-center space-x-3">
                                         <Badge variant="outline" className="text-lg px-3 py-1">
                                             {swapData.oldBatteryLevel}
@@ -156,7 +156,7 @@ const SwapComplete = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="text-muted-foreground mb-1">Chi phí</p>
+                                    <p className="text-muted-foreground mb-1">Cost</p>
                                     <p className="font-bold text-3xl text-green-600">{swapData.cost}</p>
                                 </div>
                             </div>
@@ -170,10 +170,10 @@ const SwapComplete = () => {
                         <div className="flex items-center space-x-6">
                             <Battery className="h-16 w-16 text-green-600" />
                             <div className="flex-1">
-                                <h3 className="text-2xl font-bold mb-2">Pin mới đã được lắp đặt</h3>
+                                <h3 className="text-2xl font-bold mb-2">New Batteries Installed</h3>
                                 <p className="text-xl text-muted-foreground">
-                                    Pin của bạn hiện ở mức <strong className="text-green-600">100%</strong> và sẵn sàng
-                                    cho quãng đường <strong>khoảng 200km</strong>
+                                    Your batteries are now at <strong className="text-green-600">100%</strong> and ready
+                                    for approximately <strong>200km</strong> of travel
                                 </p>
                             </div>
                         </div>
@@ -187,10 +187,10 @@ const SwapComplete = () => {
                             <Clock className="h-12 w-12 text-blue-600" />
                             <div>
                                 <h3 className="text-2xl font-bold text-blue-800 mb-2">
-                                    Lịch bảo dưỡng tiếp theo
+                                    Next Maintenance Schedule
                                 </h3>
                                 <p className="text-xl text-blue-700">
-                                    Khuyến nghị bảo dưỡng xe vào: <strong>{swapData.nextServiceDate}</strong>
+                                    Recommended vehicle maintenance on: <strong>{swapData.nextServiceDate}</strong>
                                 </p>
                             </div>
                         </div>
@@ -205,7 +205,7 @@ const SwapComplete = () => {
                         className="w-full text-3xl py-10 h-auto"
                     >
                         <CheckCircle2 className="mr-3 h-8 w-8" />
-                        Hoàn tất ({countdown}s)
+                        Complete ({countdown}s)
                     </Button>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -213,19 +213,19 @@ const SwapComplete = () => {
                             variant="outline"
                             size="lg"
                             className="text-xl py-6 h-auto"
-                            onClick={() => alert('Chức năng gửi email sẽ sớm được triển khai')}
+                            onClick={() => alert('Email functionality will be implemented soon')}
                         >
                             <Mail className="mr-2 h-6 w-6" />
-                            Gửi hóa đơn qua email
+                            Send Invoice via Email
                         </Button>
                         <Button
                             variant="outline"
                             size="lg"
                             className="text-xl py-6 h-auto"
-                            onClick={() => alert('Chức năng in hóa đơn sẽ sớm được triển khai')}
+                            onClick={() => alert('Print invoice functionality will be implemented soon')}
                         >
                             <Download className="mr-2 h-6 w-6" />
-                            In hóa đơn
+                            Print Invoice
                         </Button>
                     </div>
                 </div>
@@ -233,11 +233,11 @@ const SwapComplete = () => {
                 {/* Rating Section */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-3xl">Đánh giá dịch vụ</CardTitle>
+                        <CardTitle className="text-3xl">Service Rating</CardTitle>
                     </CardHeader>
                     <CardContent className="p-8">
                         <p className="text-xl text-muted-foreground mb-6">
-                            Vui lòng đánh giá trải nghiệm của bạn
+                            Please rate your experience
                         </p>
                         <div className="flex justify-center space-x-4">
                             {[1, 2, 3, 4, 5].map((star) => (
@@ -245,7 +245,7 @@ const SwapComplete = () => {
                                     key={star}
                                     className="hover:scale-110 transition-transform"
                                     onClick={() => {
-                                        alert(`Cảm ơn bạn đã đánh giá ${star} sao!`);
+                                        alert(`Thank you for rating ${star} stars!`);
                                     }}
                                 >
                                     <Star className="h-16 w-16 text-yellow-400 hover:text-yellow-500 fill-yellow-400" />
@@ -258,10 +258,10 @@ const SwapComplete = () => {
                 {/* Thank You Message */}
                 <div className="text-center py-8">
                     <p className="text-3xl font-semibold text-primary">
-                        Cảm ơn bạn đã sử dụng dịch vụ của G3!
+                        Thank you for using G3 services!
                     </p>
                     <p className="text-2xl text-muted-foreground mt-2">
-                        Chúc bạn có hành trình an toàn và vui vẻ
+                        Have a safe and pleasant journey
                     </p>
                 </div>
             </div>
