@@ -74,7 +74,7 @@ export default function VehicleManagement() {
                                         Vehicle Management
                                     </h1>
                                     <p className="text-slate-600 mt-1 text-lg">
-                                        Manage and track your EV fleet
+                                        Manage and track your vehicles
                                     </p>
                                 </div>
                             </div>

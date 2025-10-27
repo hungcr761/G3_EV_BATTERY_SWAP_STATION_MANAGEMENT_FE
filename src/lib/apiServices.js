@@ -29,7 +29,6 @@ export const authAPI = {
 export const vehicleAPI = {
     getAll: () => USE_MOCK_API ? mockApi.getUserVehicles() : api.get('/vehicles'),
     getById: (id) => USE_MOCK_API ? mockApi.getVehicleById(id) : api.get(`/vehicles/${id}`),
-    // Luôn dùng mock cho vehicles without subscription vì backend chưa có API này
     getWithoutSubscription: () => USE_MOCK_API ? mockApi.getVehiclesWithoutSubscription() : api.get('/subscription/vehicles-without-subscription'),
     create: (data) =>
         USE_MOCK_API ? mockApi.createVehicle(data) : api.post('/vehicles', data),
@@ -71,9 +70,11 @@ export const subscriptionPlanAPI = {
 // Subscription APIs (User đăng ký gói cho xe)
 export const subscriptionAPI = {
     create: (data) => api.post('/subscription', data),
-    getByUserId: (userId) => mockApi.getSubscriptionsByUserId(userId),
     getByVehicleId: (vehicleId) => api.get(`/subscription/vehicle/${vehicleId}`),
-    cancel: (subscriptionId) => api.delete(`/subscription/${subscriptionId}`)
+    cancel: (subscriptionId) => api.delete(`/subscription/${subscriptionId}`),
+    getAll: () => api.get('/subscription'),
+    getByDriverId: (driverId) => api.get(`/subscription/driver/${driverId}`),
+    renew: (subscriptionId, data) => api.post(`/subscription/${subscriptionId}/renew`, data)
 };
 
 export const stationAPI = {

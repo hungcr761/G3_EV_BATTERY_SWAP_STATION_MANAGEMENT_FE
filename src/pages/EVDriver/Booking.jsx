@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router';
-import GoongMap from '../components/Map/GoongMap';
-import BookingFlow from '../components/Booking/BookingFlow';
-import VehicleSelector from '../components/Booking/VehicleSelector';
-import NoVehicleSelected from '../components/Booking/NoVehicleSelected';
-import { stationAPI, bookingAPI, vehicleAPI, modelAPI, batteryTypeAPI } from '../lib/apiServices';
+import GoongMap from '@/components/Map/GoongMap';
+import BookingFlow from '@/components/Booking/BookingFlow';
+import VehicleSelector from '@/components/Booking/VehicleSelector';
+import NoVehicleSelected from '@/components/Booking/NoVehicleSelected';
+import { stationAPI, bookingAPI, vehicleAPI, modelAPI, batteryTypeAPI } from '@/lib/apiServices';
 import {
     MapPin,
     Battery,

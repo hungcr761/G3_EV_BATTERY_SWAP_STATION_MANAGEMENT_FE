@@ -8,24 +8,24 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
-import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
-import Stations from './pages/Booking.jsx';
-import Services from './pages/Services';
-import Payment from './pages/Payment';
-import PaymentSuccess from './pages/PaymentSuccess';
 import Support from './pages/Support';
 import KioskHome from './pages/kiosk/KioskHome';
 import SwapStatus from './pages/kiosk/SwapStatus';
 import SwapComplete from './pages/kiosk/SwapComplete';
-// User flow pages
 import UserVerification from './pages/kiosk/UserVerification';
 import UserVehicleSelection from './pages/kiosk/UserVehicleSelection';
 import UserBatterySelection from './pages/kiosk/UserBatterySelection';
 import UserAvailabilityCheck from './pages/kiosk/UserAvailabilityCheck';
 import './App.css';
 import VehicleManagement from './pages/EVDriver/VehicleManagement.jsx';
+import SubscriptionManagement from './pages/EVDriver/subscriptionManagement.jsx';
+import Services from './pages/EVDriver/Services.jsx';
+import Payment from './pages/EVDriver/Payment.jsx';
+import PaymentSuccess from './pages/EVDriver/PaymentSuccess.jsx';
+import Stations from './pages/EVDriver/Booking.jsx';
+import Dashboard from './pages/EVDriver/Dashboard.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -107,6 +107,14 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <VehicleManagement />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/subscriptionManagement" element={
+            <ProtectedRoute>
+              <Layout>
+                <SubscriptionManagement />
               </Layout>
             </ProtectedRoute>
           } />

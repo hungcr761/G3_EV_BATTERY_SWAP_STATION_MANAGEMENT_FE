@@ -1,6 +1,6 @@
 
 import { modelAPI, vehicleAPI } from '@/lib/apiServices';
-import{ useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export default function useVehicle() {
     const [vehicles, setVehicles] = useState([]);
@@ -13,12 +13,12 @@ export default function useVehicle() {
 
     // fetch vehicles model
     useEffect(() => {
-        const fetchData = async() => {
-            try{
+        const fetchData = async () => {
+            try {
                 const modelRes = await modelAPI.getAll();
                 const models = modelRes.data?.payload?.vehicleModels || [];
                 setVehicleModels(models);
-            }catch(error){
+            } catch (error) {
                 console.log('Error fetching models', error);
             }
         };
@@ -30,11 +30,11 @@ export default function useVehicle() {
         setLoading(true);
         try {
             const res = await vehicleAPI.getAll();
-            const vehiclesData = res.data?.vehicles || [];
+            const vehiclesData = res.data?.vehicles || res.data || [];
 
             const mappedVehicles = vehiclesData.map(v => {
                 const modelName = v.model?.name || 'Unknown Model';
-                const batteryName = v.model?.batteryType?.battery_type_code || 'Unknown Batteryt';
+                const batteryName = v.model?.batteryType?.battery_type_code || 'Unknown Battery';
                 const batterySlot = v.model?.battery_slot || 0;
 
                 return {
@@ -42,12 +42,12 @@ export default function useVehicle() {
                     modelName,
                     batteryName,
                     batterySlot
-                };   
+                };
             })
 
             setVehicles(mappedVehicles);
         } catch (error) {
-            console.error('Error fetching vehicles:', error);;
+            console.error('Error fetching vehicles:', error);
         } finally {
             setLoading(false);
         }
@@ -59,7 +59,7 @@ export default function useVehicle() {
 
 
     // Submit add or update vehicle
-    const handleSubmit = async (data , editingVehicle , onSuccess) => {
+    const handleSubmit = async (data, editingVehicle, onSuccess) => {
         setIsSubmitting(true);
         setApiError('');
         try {
@@ -107,7 +107,7 @@ export default function useVehicle() {
         } catch (error) {
             setApiError(error.response?.data?.message || 'Error while saving data.');
             console.error(error.response?.data?.message || 'Error while saving data.');
-        }finally{
+        } finally {
             setIsSubmitting(false);
         };
     };
@@ -115,35 +115,35 @@ export default function useVehicle() {
 
     // Delete vehicle
     const handleDelete = (vehicle) => {
-        setConfirmDelete({show: true, vehicle: vehicle});
+        setConfirmDelete({ show: true, vehicle: vehicle });
     };
 
-    const executeDelete = async() => {
+    const executeDelete = async () => {
         const vehicleToDelete = confirmDelete.vehicle;
         const vehicleId = vehicleToDelete.vehicle_id;
 
-        setConfirmDelete({show: false , vehicle: null});
+        setConfirmDelete({ show: false, vehicle: null });
 
-        try{
+        try {
             const res = await vehicleAPI.delete(vehicleId);
-            const isSuccess = res.data?.success === true || 
+            const isSuccess = res.data?.success === true ||
                 res.status === 200 ||
                 res.status === 204;
 
-                if(isSuccess){
-                    setMessage({
-                        type: 'success',
-                        text: `Delete Vehicle ${vehicleToDelete.modelName} (${vehicleToDelete.license_plate}) Successfully!`
-                    });
+            if (isSuccess) {
+                setMessage({
+                    type: 'success',
+                    text: `Delete Vehicle ${vehicleToDelete.modelName} (${vehicleToDelete.license_plate}) Successfully!`
+                });
 
-                    await fetchVehicles();
+                await fetchVehicles();
 
-                    setTimeout(() => setMessage({
-                        type: '',
-                        text: ''
-                    }), 3000);
-                }
-        }catch(error){
+                setTimeout(() => setMessage({
+                    type: '',
+                    text: ''
+                }), 3000);
+            }
+        } catch (error) {
             setMessage({
                 type: 'error',
                 text: error.response?.data?.message || 'Cannot Delete Vehicle. Please try again!'
@@ -152,7 +152,7 @@ export default function useVehicle() {
             setTimeout(() => setMessage({
                 type: '',
                 text: ''
-            }), 5000);
+            }), 3000);
         }
     };
 

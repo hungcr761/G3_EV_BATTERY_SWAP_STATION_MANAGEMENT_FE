@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { useAuth } from '../hooks/useAuth'
-import { useApi } from '../hooks/useApi';
-import { bookingAPI } from '../lib/apiServices';
-import ProfileUpdate from '../components/Dashboard/ProfileUpdate';
-import VehicleManagement from './EVDriver/VehicleManagement';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAuth } from '@/hooks/useAuth'
+import { useApi } from '@/hooks/useApi';
+import { bookingAPI } from '@/lib/apiServices';
+import ProfileUpdate from '@/components/Dashboard/ProfileUpdate';
 import QRCodeLib from 'qrcode';
 import {
     Battery,
@@ -69,7 +68,6 @@ const Dashboard = () => {
     // Fetch bookings from API
     const { data: bookingsData, loading: bookingsLoading, error: bookingsError, refetch: refetchBookings } = useApi(bookingAPI.getMyBookings);
 
-    // Mock data - in real app, this would come from API
     const userStats = {
         totalSwaps: 45,
         thisMonthSwaps: 8,
@@ -168,10 +166,10 @@ const Dashboard = () => {
                             </div>
                             <div>
                                 <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                                    Chào mừng, {user?.fullname}!
+                                    Welcome, {user?.fullname}!
                                 </h1>
                                 <p className="text-slate-600 mt-1 text-lg">
-                                    {user?.role === 'driver' ? 'Tài xế xe điện' : 'Quản trị viên'} • {user?.email}
+                                    {user?.role === 'driver' ? 'EV Driver' : 'Administrator'} • {user?.email}
                                 </p>
                             </div>
                         </div>
@@ -184,7 +182,7 @@ const Dashboard = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-slate-600">Tổng lượt đổi pin</p>
+                                    <p className="text-sm font-medium text-slate-600">Total Battery Swaps</p>
                                     <p className="text-3xl font-bold text-slate-900 mt-1">{userStats.totalSwaps}</p>
                                 </div>
                                 <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md group-hover:shadow-lg transition-shadow duration-300">
@@ -198,7 +196,7 @@ const Dashboard = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-slate-600">Tháng này</p>
+                                    <p className="text-sm font-medium text-slate-600">This Month</p>
                                     <p className="text-3xl font-bold text-slate-900 mt-1">{userStats.thisMonthSwaps}</p>
                                 </div>
                                 <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md group-hover:shadow-lg transition-shadow duration-300">
@@ -212,7 +210,7 @@ const Dashboard = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-slate-600">SoH hiện tại</p>
+                                    <p className="text-sm font-medium text-slate-600">Current SoH</p>
                                     <p className="text-3xl font-bold text-slate-900 mt-1">{userStats.currentBatterySoH}%</p>
                                 </div>
                                 <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-md group-hover:shadow-lg transition-shadow duration-300">
@@ -226,7 +224,7 @@ const Dashboard = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-slate-600">Chi phí tháng</p>
+                                    <p className="text-sm font-medium text-slate-600">Monthly Cost</p>
                                     <p className="text-3xl font-bold text-slate-900 mt-1">
                                         {userStats.monthlyCost.toLocaleString()}đ
                                     </p>
@@ -246,14 +244,14 @@ const Dashboard = () => {
                             <CardHeader>
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <CardTitle className="text-2xl font-bold text-slate-800">Lịch sử đổi pin gần đây</CardTitle>
+                                        <CardTitle className="text-2xl font-bold text-slate-800">Recent Battery Swaps</CardTitle>
                                         <CardDescription className="text-slate-600 mt-1">
-                                            Các lần đổi pin của bạn trong thời gian qua
+                                            Your recent battery swap history
                                         </CardDescription>
                                     </div>
                                     <Button variant="outline" size="sm" className="border-slate-300 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-200">
                                         <Eye className="mr-2 h-4 w-4" />
-                                        Xem tất cả
+                                        View All
                                     </Button>
                                 </div>
                             </CardHeader>
@@ -293,10 +291,10 @@ const Dashboard = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center text-xl font-bold text-slate-800">
                                     <Calendar className="mr-2 h-6 w-6 text-purple-600" />
-                                    Lịch đặt trước
+                                    Upcoming Bookings
                                 </CardTitle>
                                 <CardDescription className="text-slate-600">
-                                    Các lịch đổi pin sắp tới
+                                    Your upcoming battery swap appointments
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -306,17 +304,17 @@ const Dashboard = () => {
                                             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg mb-3">
                                                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
                                             </div>
-                                            <p className="text-sm text-slate-600">Đang tải dữ liệu...</p>
+                                            <p className="text-sm text-slate-600">Loading data...</p>
                                         </div>
                                     ) : bookingsError ? (
                                         <div className="text-center py-6 bg-red-50 rounded-lg border border-red-200">
                                             <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                                            <p className="text-sm text-red-600">Lỗi tải dữ liệu: {bookingsError}</p>
+                                            <p className="text-sm text-red-600">Error loading data: {bookingsError}</p>
                                         </div>
                                     ) : upcomingBookings.length === 0 ? (
                                         <div className="text-center py-8 bg-slate-50 rounded-lg border border-slate-200">
                                             <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-                                            <p className="text-sm text-slate-600">Chưa có lịch đặt trước nào</p>
+                                            <p className="text-sm text-slate-600">No upcoming bookings</p>
                                         </div>
                                     ) : (
                                         upcomingBookings.map((booking) => (
@@ -369,7 +367,7 @@ const Dashboard = () => {
                                         onClick={() => navigate('/booking')}
                                     >
                                         <Plus className="mr-2 h-4 w-4" />
-                                        Đặt lịch mới
+                                        New Booking
                                     </Button>
                                 </div>
                             </CardContent>
@@ -378,19 +376,19 @@ const Dashboard = () => {
                         {/* Quick Actions */}
                         <Card className="border-slate-200/60 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
                             <CardHeader>
-                                <CardTitle className="text-xl font-bold text-slate-800">Thao tác nhanh</CardTitle>
+                                <CardTitle className="text-xl font-bold text-slate-800">Quick Actions</CardTitle>
                                 <CardDescription className="text-slate-600">
-                                    Các chức năng thường dùng
+                                    Frequently used functions
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <Button className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-200" variant="outline">
                                     <MapPin className="mr-2 h-4 w-4" />
-                                    Lịch sử thanh toán
+                                    Payment History
                                 </Button>
                                 <Button className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:border-purple-400 hover:text-purple-700 transition-all duration-200" variant="outline">
                                     <Calendar className="mr-2 h-4 w-4" />
-                                    Lịch sử đổi pin
+                                    Battery Swap History
                                 </Button>
                                 <Button
                                     className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 hover:border-emerald-400 hover:text-emerald-700 transition-all duration-200"
@@ -398,11 +396,13 @@ const Dashboard = () => {
                                     onClick={() => navigate('/vehiclesManagement')}
                                 >
                                     <Motorbike className="mr-2 h-4 w-4" />
-                                    Quản lý xe
+                                    Vehicle Management
                                 </Button>
-                                <Button className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 hover:border-amber-400 hover:text-amber-700 transition-all duration-200" variant="outline">
+                                <Button className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 hover:border-amber-400 hover:text-amber-700 transition-all duration-200"
+                                    variant="outline"
+                                    onClick={() => navigate('/subscriptionManagement')}>
                                     <CreditCard className="mr-2 h-4 w-4" />
-                                    Quản lý gói dịch vụ
+                                    Subscriptions Management
                                 </Button>
                             </CardContent>
                         </Card>
@@ -419,10 +419,10 @@ const Dashboard = () => {
                                         <div className="p-2 bg-purple-100 rounded-lg">
                                             <Calendar className="h-6 w-6 text-purple-600" />
                                         </div>
-                                        <span>Chi tiết lịch đặt trước</span>
+                                        <span>Booking Details</span>
                                     </DialogTitle>
                                     <DialogDescription className="mt-2 text-base text-slate-600">
-                                        Thông tin chi tiết về lịch đổi pin của bạn
+                                        Detailed information about your battery swap schedule
                                     </DialogDescription>
                                 </div>
                                 {selectedBooking && (
@@ -432,7 +432,7 @@ const Dashboard = () => {
                                         className="flex items-center space-x-2 border-slate-300 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-200"
                                     >
                                         <QrCode className="h-4 w-4" />
-                                        <span>Hiển thị mã QR</span>
+                                        <span>Show QR Code</span>
                                     </Button>
                                 )}
                             </div>
@@ -449,7 +449,7 @@ const Dashboard = () => {
                                         <CardHeader className="pb-3 px-5 pt-5">
                                             <CardTitle className="flex items-center space-x-2 text-lg">
                                                 <MapPin className="h-5 w-5 text-blue-600" />
-                                                <span className="text-blue-900">Thông tin trạm</span>
+                                                <span className="text-blue-900">Station Information</span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="px-5 pb-5">
@@ -468,7 +468,7 @@ const Dashboard = () => {
                                         <CardHeader className="pb-3 px-5 pt-5">
                                             <CardTitle className="flex items-center space-x-2 text-lg">
                                                 <Motorbike className="h-5 w-5 text-emerald-600" />
-                                                <span className="text-emerald-900">Thông tin xe</span>
+                                                <span className="text-emerald-900">Vehicle Information</span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="px-5 pb-5">
@@ -486,7 +486,7 @@ const Dashboard = () => {
                                         <CardHeader className="pb-3 px-5 pt-5">
                                             <CardTitle className="flex items-center space-x-2 text-lg">
                                                 <Calendar className="h-5 w-5 text-purple-600" />
-                                                <span className="text-purple-900">Lịch trình</span>
+                                                <span className="text-purple-900">Booking Schedule</span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="px-5 pb-5">
@@ -499,7 +499,7 @@ const Dashboard = () => {
                                                 </div>
                                                 <div className="pt-2 border-t border-purple-200">
                                                     <p className="text-xs text-purple-600">
-                                                        Đặt lúc: {new Date(selectedBooking.createTime).toLocaleString('vi-VN')}
+                                                        Created at: {new Date(selectedBooking.createTime).toLocaleString('vi-VN')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -511,14 +511,14 @@ const Dashboard = () => {
                                         <CardHeader className="pb-3 px-5 pt-5">
                                             <CardTitle className="flex items-center space-x-2 text-lg">
                                                 <Battery className="h-5 w-5 text-amber-600" />
-                                                <span className="text-amber-900">Thông tin pin</span>
+                                                <span className="text-amber-900">Battery Information</span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="px-5 pb-5">
                                             {selectedBooking.batteries && selectedBooking.batteries.length > 0 ? (
                                                 <div className="space-y-3">
                                                     <p className="text-sm font-medium text-amber-800">
-                                                        {selectedBooking.batteryCount} pin được đặt
+                                                        {selectedBooking.batteryCount} battery(ies) booked
                                                     </p>
                                                     <div className="space-y-2">
                                                         {selectedBooking.batteries.map((battery, index) => (
@@ -537,7 +537,7 @@ const Dashboard = () => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <p className="text-sm text-amber-700">Không có thông tin pin</p>
+                                                <p className="text-sm text-amber-700">No battery information</p>
                                             )}
                                         </CardContent>
                                     </Card>
@@ -546,7 +546,7 @@ const Dashboard = () => {
                                 {/* Actions */}
                                 <div className="flex justify-between items-center pt-6 px-2 border-t border-slate-200">
                                     <div className="text-sm text-slate-600 font-medium">
-                                        ID đặt lịch: <span className="font-mono text-slate-800">{selectedBooking.id}</span>
+                                        Booking ID: <span className="font-mono text-slate-800">{selectedBooking.id}</span>
                                     </div>
                                     <div className="flex space-x-3">
                                         <Button
@@ -554,7 +554,7 @@ const Dashboard = () => {
                                             onClick={() => setSelectedBooking(null)}
                                             className="border-slate-300 hover:bg-slate-50"
                                         >
-                                            Đóng
+                                            Close
                                         </Button>
                                         {selectedBooking.status === 'pending' && (
                                             <Button
@@ -563,7 +563,7 @@ const Dashboard = () => {
                                                 disabled={isCancelling}
                                                 className="bg-red-600 hover:bg-red-700 shadow-md hover:shadow-lg transition-all duration-200"
                                             >
-                                                Hủy lịch
+                                                Cancel Booking
                                             </Button>
                                         )}
                                     </div>
@@ -581,12 +581,12 @@ const Dashboard = () => {
                                 <AlertCircle className="h-8 w-8 text-red-600" />
                             </div>
                             <DialogTitle className="text-center text-2xl font-bold text-slate-800">
-                                Xác nhận hủy lịch
+                                Confirm Cancel Booking
                             </DialogTitle>
                             <DialogDescription className="text-center text-base text-slate-600">
-                                Bạn có chắc chắn muốn hủy lịch đặt trước này?
+                                Are you sure you want to cancel this booking?
                                 <br />
-                                <span className="text-red-600 font-medium">Hành động này không thể hoàn tác.</span>
+                                <span className="text-red-600 font-medium">This action cannot be undone.</span>
                             </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
@@ -597,7 +597,7 @@ const Dashboard = () => {
                                         {selectedBooking.date} từ {selectedBooking.time} - {selectedBooking.endTime}
                                     </p>
                                     <p className="text-sm text-slate-600">
-                                        Xe: {selectedBooking.vehicle}
+                                        Vehicle: {selectedBooking.vehicle}
                                     </p>
                                 </div>
                             )}
@@ -608,7 +608,7 @@ const Dashboard = () => {
                                     disabled={isCancelling}
                                     className="border-slate-300 hover:bg-slate-50"
                                 >
-                                    Không
+                                    No
                                 </Button>
                                 <Button
                                     variant="destructive"
@@ -631,10 +631,10 @@ const Dashboard = () => {
                                 <div className="p-2 bg-blue-100 rounded-lg">
                                     <QrCode className="h-6 w-6 text-blue-600" />
                                 </div>
-                                <span>Mã QR đặt lịch</span>
+                                <span>Booking QR Code</span>
                             </DialogTitle>
                             <DialogDescription className="text-center text-base text-slate-600">
-                                Quét mã QR này tại kiosk để xác nhận đặt lịch
+                                Scan this QR code at the kiosk to confirm your booking
                             </DialogDescription>
                         </DialogHeader>
                         <div className="flex flex-col items-center space-y-4 py-6">
@@ -644,10 +644,10 @@ const Dashboard = () => {
                             {selectedBooking && (
                                 <div className="text-center space-y-2 bg-slate-50 p-4 rounded-lg border border-slate-200 w-full">
                                     <p className="text-sm font-semibold text-slate-800">
-                                        ID đặt lịch: <span className="font-mono">{selectedBooking.id}</span>
+                                        Booking ID: <span className="font-mono">{selectedBooking.id}</span>
                                     </p>
                                     <p className="text-xs text-slate-600">
-                                        Trạm: {selectedBooking.station}
+                                        Station: {selectedBooking.station}
                                     </p>
                                 </div>
                             )}
@@ -658,7 +658,7 @@ const Dashboard = () => {
                                 onClick={() => setShowQRCode(false)}
                                 className="border-slate-300 hover:bg-slate-50"
                             >
-                                Đóng
+                                Close
                             </Button>
                         </div>
                     </DialogContent>
