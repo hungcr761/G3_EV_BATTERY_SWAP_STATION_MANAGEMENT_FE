@@ -27,7 +27,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                 setInternalVehicles(vehiclesData);
             } catch (error) {
                 console.error('Error fetching data:', error);
-                setError('Không thể tải danh sách xe');
+                setError('Unable to load vehicle list');
             } finally {
                 setLoading(false);
             }
@@ -46,7 +46,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
             <div className="flex items-center justify-center py-8">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Đang tải danh sách xe...</p>
+                    <p className="text-muted-foreground">Loading vehicle list...</p>
                 </div>
             </div>
         );
@@ -55,7 +55,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
     if (error) {
         return (
             <div className="text-center py-8">
-                <p className="text-red-500 mb-2">Lỗi tải dữ liệu</p>
+                <p className="text-red-500 mb-2">Data loading error</p>
                 <p className="text-sm text-muted-foreground">{error}</p>
             </div>
         );
@@ -65,8 +65,8 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
         return (
             <div className="text-center py-8">
                 <Motorbike className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">Bạn chưa có xe nào được đăng ký</p>
-                <Button variant="outline">Thêm xe mới</Button>
+                <p className="text-muted-foreground mb-4">You don't have any registered vehicles</p>
+                <Button variant="outline">Add New Vehicle</Button>
             </div>
         );
     }
@@ -75,12 +75,12 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
         <div className="space-y-6">
             <div className="text-center">
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                    {isForBooking ? 'Chọn xe để đặt lịch' : 'Chọn xe để tìm trạm'}
+                    {isForBooking ? 'Select Vehicle to Book' : 'Select Vehicle to Find Station'}
                 </h2>
                 <p className="text-muted-foreground">
                     {isForBooking
-                        ? 'Chọn xe để tiếp tục đặt lịch đổi pin'
-                        : 'Chọn xe để xem số lượng pin có sẵn tại các trạm'
+                        ? 'Select a vehicle to continue scheduling battery swap'
+                        : 'Select a vehicle to view available battery quantities at stations'
                     }
                 </p>
             </div>
@@ -109,7 +109,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                                     <div className="space-y-2 text-sm text-muted-foreground">
                                         <div className="flex items-center space-x-4">
                                             <span>VIN: {vehicle.vin}</span>
-                                            <span>Biển số: {vehicle.license_plate}</span>
+                                            <span>License Plate: {vehicle.license_plate}</span>
                                         </div>
 
                                         <div className="flex items-center space-x-4">
@@ -118,7 +118,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                                             </Badge>
                                             {vehicle.model?.battery_slot > 0 && (
                                                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                                    {vehicle.model.battery_slot} pin
+                                                    {vehicle.model.battery_slot} batteries
                                                 </Badge>
                                             )}
                                         </div>
@@ -134,7 +134,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                 <div className="flex justify-end pt-4">
                     <Button onClick={onContinue} size="lg">
                         <ArrowRight className="mr-2 h-4 w-4" />
-                        Tiếp tục tìm trạm
+                        Continue Finding Station
                     </Button>
                 </div>
             )}

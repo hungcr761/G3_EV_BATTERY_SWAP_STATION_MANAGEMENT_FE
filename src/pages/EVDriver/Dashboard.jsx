@@ -108,7 +108,7 @@ const Dashboard = () => {
 
         setIsCancelling(true);
         try {
-            await bookingAPI.delete(selectedBooking.id);
+            await bookingAPI.cancel(selectedBooking.id);
             // Refresh bookings list
             await refetchBookings();
             // Close the dialogs
@@ -352,17 +352,14 @@ const Dashboard = () => {
                                                         </Badge>
                                                         {booking.status && (
                                                             <Badge variant={
-                                                                booking.status === 'confirmed' ? 'default' :
-                                                                    booking.status === 'pending' ? 'secondary' :
-                                                                        'outline'
+                                                                booking.status === 'pending' ? 'secondary' :
+                                                                    'outline'
                                                             } className={
-                                                                booking.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                                                                    booking.status === 'pending' ? 'bg-amber-100 text-amber-700 border-amber-200' :
-                                                                        ''
+                                                                booking.status === 'pending' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                                                                    ''
                                                             }>
-                                                                {booking.status === 'confirmed' ? 'Đã xác nhận' :
-                                                                    booking.status === 'pending' ? 'Chờ xác nhận' :
-                                                                        booking.status}
+                                                                {booking.status === 'pending' ? 'Pending' :
+                                                                    booking.status}
                                                             </Badge>
                                                         )}
                                                     </div>
@@ -519,7 +516,7 @@ const Dashboard = () => {
                                                 <div>
                                                     <p className="font-semibold text-base text-purple-900">{selectedBooking.date}</p>
                                                     <p className="text-sm text-purple-700">
-                                                        {selectedBooking.time} - {selectedBooking.endTime}
+                                                        {new Date(selectedBooking.createTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} - {selectedBooking.time}
                                                     </p>
                                                 </div>
                                                 <div className="pt-2 border-t border-purple-200">

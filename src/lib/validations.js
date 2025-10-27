@@ -3,59 +3,59 @@ import { z } from 'zod';
 // Authentication schemas
 export const loginSchema = z.object({
     email: z.string()
-        .min(1, 'Email là bắt buộc')
-        .email('Email không hợp lệ')
-        .max(100, 'Email không được quá 100 ký tự')
+        .min(1, 'Email is required')
+        .email('Invalid email format')
+        .max(100, 'Email cannot exceed 100 characters')
         .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-            'Email không đúng định dạng'),
-    password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
+            'Invalid email format'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 export const forgotPasswordSchema = z.object({
     email: z.string()
-        .min(1, 'Email là bắt buộc')
-        .email('Email không hợp lệ')
-        .max(100, 'Email không được quá 100 ký tự')
+        .min(1, 'Email is required')
+        .email('Invalid email format')
+        .max(100, 'Email cannot exceed 100 characters')
         .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-            'Email không đúng định dạng'),
+            'Invalid email format'),
 });
 
 export const resetPasswordSchema = z.object({
     newPassword: z.string()
-        .min(8, 'Mật khẩu mới phải có ít nhất 8 ký tự')
-        .max(50, 'Mật khẩu mới không được quá 50 ký tự'),
+        .min(8, 'New password must be at least 8 characters')
+        .max(50, 'New password cannot exceed 50 characters'),
     confirmPassword: z.string(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Mật khẩu xác nhận không khớp',
+    message: 'Password confirmation does not match',
     path: ['confirmPassword'],
 });
 
 export const registerSchema = z.object({
     password: z.string()
-        .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
-        .max(50, 'Mật khẩu không được quá 50 ký tự'),
+        .min(8, 'Password must be at least 8 characters')
+        .max(50, 'Password cannot exceed 50 characters'),
     confirmPassword: z.string(),
     fullname: z.string()
-        .min(2, 'Họ tên phải có ít nhất 2 ký tự')
-        .max(50, 'Họ tên không được quá 50 ký tự')
+        .min(2, 'Full name must be at least 2 characters')
+        .max(50, 'Full name cannot exceed 50 characters')
         .regex(/^[a-zA-ZÀ-ỹĂĐĨŨƠàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ\s]+$/,
-            'Họ tên chỉ được chứa chữ cái và khoảng trắng')
+            'Full name can only contain letters and spaces')
         .refine((val) => val.trim().length >= 2, {
-            message: 'Họ tên không được chỉ chứa khoảng trắng'
+            message: 'Full name cannot contain only spaces'
         })
         .refine((val) => !/\s{2,}/.test(val), {
-            message: 'Họ tên không được chứa nhiều khoảng trắng liên tiếp'
+            message: 'Full name cannot contain consecutive spaces'
         }),
     email: z.string()
-        .min(1, 'Email là bắt buộc')
-        .email('Email không hợp lệ')
-        .max(100, 'Email không được quá 100 ký tự')
+        .min(1, 'Email is required')
+        .email('Invalid email format')
+        .max(100, 'Email cannot exceed 100 characters')
         .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-            'Email không đúng định dạng'),
+            'Invalid email format'),
     phone_number: z.string()
-        .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số'),
+        .regex(/^[0-9]{10,11}$/, 'Phone number must have 10-11 digits'),
 }).refine((data) => data.password === data.confirmPassword, {
-    message: 'Mật khẩu xác nhận không khớp',
+    message: 'Password confirmation does not match',
     path: ['confirmPassword'],
 });
 
@@ -93,96 +93,96 @@ export const vehicleSchema = z.object({
 // Service package schemas
 export const servicePackageSchema = z.object({
     packageType: z.enum(['basic', 'premium', 'unlimited'], {
-        errorMap: () => ({ message: 'Vui lòng chọn loại gói dịch vụ' }),
+        errorMap: () => ({ message: 'Please select a service package type' }),
     }),
     batteryType: z.enum(['type1', 'type2'], {
-        errorMap: () => ({ message: 'Vui lòng chọn loại pin' }),
+        errorMap: () => ({ message: 'Please select a battery type' }),
     }),
     duration: z.enum(['monthly', 'quarterly', 'yearly'], {
-        errorMap: () => ({ message: 'Vui lòng chọn thời hạn gói' }),
+        errorMap: () => ({ message: 'Please select package duration' }),
     }),
 });
 
 // Profile update schema
 export const profileUpdateSchema = z.object({
     fullname: z.string()
-        .min(2, 'Họ tên phải có ít nhất 2 ký tự')
-        .max(50, 'Họ tên không được quá 50 ký tự')
+        .min(2, 'Full name must be at least 2 characters')
+        .max(50, 'Full name cannot exceed 50 characters')
         .regex(/^[a-zA-ZÀ-ỹĂĐĨŨƠàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ\s]+$/,
-            'Họ tên chỉ được chứa chữ cái và khoảng trắng')
+            'Full name can only contain letters and spaces')
         .refine((val) => val.trim().length >= 2, {
-            message: 'Họ tên không được chỉ chứa khoảng trắng'
+            message: 'Full name cannot contain only spaces'
         })
         .refine((val) => !/\s{2,}/.test(val), {
-            message: 'Họ tên không được chứa nhiều khoảng trắng liên tiếp'
+            message: 'Full name cannot contain consecutive spaces'
         }),
     email: z.string()
-        .min(1, 'Email là bắt buộc')
-        .email('Email không hợp lệ')
-        .max(100, 'Email không được quá 100 ký tự')
+        .min(1, 'Email is required')
+        .email('Invalid email format')
+        .max(100, 'Email cannot exceed 100 characters')
         .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-            'Email không đúng định dạng')
+            'Invalid email format')
         .refine((val) => !val.includes('..'), {
-            message: 'Email không được chứa hai dấu chấm liên tiếp'
+            message: 'Email cannot contain consecutive dots'
         })
         .refine((val) => {
             const localPart = val.split('@')[0];
             return localPart && localPart.length <= 64;
         }, {
-            message: 'Phần trước @ không được quá 64 ký tự'
+            message: 'Part before @ cannot exceed 64 characters'
         }),
     phone: z.string()
-        .regex(/^[0-9]{10,11}$/, 'Số điện thoại phải có 10-11 chữ số')
-        .min(10, 'Số điện thoại phải có ít nhất 10 chữ số'),
+        .regex(/^[0-9]{10,11}$/, 'Phone number must have 10-11 digits')
+        .min(10, 'Phone number must have at least 10 digits'),
     citizen_id: z.string()
-        .min(1, 'Căn cước công dân là bắt buộc')
-        .regex(/^[0-9]{12}$/, 'Căn cước công dân phải có đúng 12 chữ số')
+        .min(1, 'Citizen ID is required')
+        .regex(/^[0-9]{12}$/, 'Citizen ID must have exactly 12 digits')
         .refine((val) => {
-            // Kiểm tra mã tỉnh trong CCCD (2 chữ số đầu)
+            // Check province code in citizen ID (first 2 digits)
             const provinceCode = parseInt(val.substring(0, 2));
             return provinceCode >= 1 && provinceCode <= 96;
         }, {
-            message: 'Mã tỉnh trong căn cước công dân không hợp lệ'
+            message: 'Invalid province code in citizen ID'
         }),
     driving_license: z.string()
-        .min(1, 'Bằng lái xe là bắt buộc')
-        .regex(/^[0-9]{12}$/, 'Bằng lái xe phải có đúng 12 chữ số')
+        .min(1, 'Driving license is required')
+        .regex(/^[0-9]{12}$/, 'Driving license must have exactly 12 digits')
         .refine((val) => {
-            // Kiểm tra mã tỉnh trong bằng lái xe (2 chữ số đầu)
+            // Check province code in driving license (first 2 digits)
             const provinceCode = parseInt(val.substring(0, 2));
             return provinceCode >= 1 && provinceCode <= 96;
         }, {
-            message: 'Mã tỉnh trong bằng lái xe không hợp lệ'
+            message: 'Invalid province code in driving license'
         })
 });
 
 // Password change schema
 export const passwordChangeSchema = z.object({
-    currentPassword: z.string().min(1, 'Mật khẩu hiện tại là bắt buộc'),
+    currentPassword: z.string().min(1, 'Current password is required'),
     newPassword: z.string()
-        .min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự')
-        .max(100, 'Mật khẩu mới không được quá 100 ký tự'),
+        .min(6, 'New password must be at least 6 characters')
+        .max(100, 'New password cannot exceed 100 characters'),
     confirmNewPassword: z.string(),
 }).refine((data) => data.newPassword === data.confirmNewPassword, {
-    message: 'Mật khẩu xác nhận không khớp',
+    message: 'Password confirmation does not match',
     path: ['confirmNewPassword'],
 });
 
 // Station search schema
 export const stationSearchSchema = z.object({
-    location: z.string().min(1, 'Vị trí là bắt buộc'),
+    location: z.string().min(1, 'Location is required'),
     batteryType: z.enum(['type1', 'type2', 'all']).optional(),
     radius: z.number().min(1).max(50).optional(),
 });
 
 // Booking schema
 export const bookingSchema = z.object({
-    stationId: z.string().min(1, 'Vui lòng chọn trạm'),
+    stationId: z.string().min(1, 'Please select a station'),
     batteryType: z.enum(['type1', 'type2'], {
-        errorMap: () => ({ message: 'Vui lòng chọn loại pin' }),
+        errorMap: () => ({ message: 'Please select a battery type' }),
     }),
-    scheduledTime: z.string().min(1, 'Vui lòng chọn thời gian'),
-    vehicleId: z.string().min(1, 'Vui lòng chọn xe'),
+    scheduledTime: z.string().min(1, 'Please select a time'),
+    vehicleId: z.string().min(1, 'Please select a vehicle'),
 });
 
 export default {

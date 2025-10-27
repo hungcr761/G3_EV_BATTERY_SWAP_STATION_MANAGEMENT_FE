@@ -78,7 +78,7 @@ const ProfileUpdate = ({ onBack }) => {
             if (!user?.account_id) {
                 setMessage({
                     type: 'error',
-                    text: 'Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại.'
+                    text: 'Account information not found. Please log in again.'
                 });
                 return;
             }
@@ -89,7 +89,7 @@ const ProfileUpdate = ({ onBack }) => {
             const response = await userAPI.updateProfile(user.account_id, validatedData);
 
             if (response.data.success || response.data.account) {
-                // Update user in AuthContext - response format: account hoặc payload.account
+                // Update user in AuthContext - response format: account or payload.account
                 const updatedAccount = response.data.account || response.data.payload?.account;
                 if (updateUser && updatedAccount) {
                     updateUser(updatedAccount);
@@ -97,7 +97,7 @@ const ProfileUpdate = ({ onBack }) => {
 
                 setMessage({
                     type: 'success',
-                    text: 'Cập nhật thông tin thành công!'
+                    text: 'Profile updated successfully!'
                 });
 
                 // Auto close message after 3 seconds
@@ -115,12 +115,12 @@ const ProfileUpdate = ({ onBack }) => {
                 setErrors(fieldErrors);
                 setMessage({
                     type: 'error',
-                    text: 'Vui lòng kiểm tra lại thông tin nhập vào'
+                    text: 'Please check the information entered'
                 });
             } else {
                 setMessage({
                     type: 'error',
-                    text: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật thông tin'
+                    text: error.response?.data?.message || 'An error occurred while updating information'
                 });
             }
         } finally {
@@ -155,9 +155,9 @@ const ProfileUpdate = ({ onBack }) => {
                         className="mb-6 hover:bg-white/60 transition-all duration-200"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Quay lại Dashboard
+                        Back to Dashboard
                     </Button>
-                    
+
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
                         <div className="flex items-center space-x-4">
                             <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
@@ -165,10 +165,10 @@ const ProfileUpdate = ({ onBack }) => {
                             </div>
                             <div>
                                 <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                                    Cập nhật thông tin cá nhân
+                                    Update Personal Information
                                 </h1>
                                 <p className="text-slate-600 mt-1 text-lg">
-                                    Quản lý thông tin tài khoản của bạn
+                                    Manage your account information
                                 </p>
                             </div>
                         </div>
@@ -178,17 +178,15 @@ const ProfileUpdate = ({ onBack }) => {
                 {/* Alert Message */}
                 {message.text && (
                     <div
-                        className={`mb-8 p-5 rounded-xl flex items-start space-x-4 backdrop-blur-sm border shadow-md transition-all duration-300 animate-in slide-in-from-top ${
-                            message.type === 'success'
+                        className={`mb-8 p-5 rounded-xl flex items-start space-x-4 backdrop-blur-sm border shadow-md transition-all duration-300 animate-in slide-in-from-top ${message.type === 'success'
                                 ? 'bg-emerald-50/90 text-emerald-900 border-emerald-200 shadow-emerald-100'
                                 : 'bg-red-50/90 text-red-900 border-red-200 shadow-red-100'
-                        }`}
+                            }`}
                     >
-                        <div className={`p-2 rounded-lg ${
-                            message.type === 'success' 
-                                ? 'bg-emerald-100' 
+                        <div className={`p-2 rounded-lg ${message.type === 'success'
+                                ? 'bg-emerald-100'
                                 : 'bg-red-100'
-                        }`}>
+                            }`}>
                             {message.type === 'success' ? (
                                 <CheckCircle className="h-5 w-5 flex-shrink-0" />
                             ) : (
@@ -205,9 +203,9 @@ const ProfileUpdate = ({ onBack }) => {
                     <div className="lg:col-span-2">
                         <Card className="border-slate-200/60 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
                             <CardHeader>
-                                <CardTitle className="text-2xl font-bold text-slate-800">Thông tin cá nhân</CardTitle>
+                                <CardTitle className="text-2xl font-bold text-slate-800">Personal Information</CardTitle>
                                 <CardDescription className="text-slate-600">
-                                    Cập nhật thông tin cá nhân của bạn
+                                    Update your personal information
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -215,7 +213,7 @@ const ProfileUpdate = ({ onBack }) => {
                                     {/* Full Name */}
                                     <div className="space-y-2">
                                         <Label htmlFor="fullname">
-                                            Họ và tên <span className="text-red-500">*</span>
+                                            Full Name <span className="text-red-500">*</span>
                                         </Label>
                                         <div className="relative">
                                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -225,7 +223,7 @@ const ProfileUpdate = ({ onBack }) => {
                                                 type="text"
                                                 value={formData.fullname}
                                                 onChange={handleChange}
-                                                placeholder="Nhập họ và tên"
+                                                placeholder="Enter full name"
                                                 className={`pl-10 ${errors.fullname ? 'border-red-500' : ''}`}
                                                 required
                                             />
@@ -255,14 +253,14 @@ const ProfileUpdate = ({ onBack }) => {
                                             />
                                         </div>
                                         <p className="text-xs text-gray-500">
-                                            Email không thể thay đổi
+                                            Email cannot be changed
                                         </p>
                                     </div>
 
                                     {/* Phone */}
                                     <div className="space-y-2">
                                         <Label htmlFor="phone">
-                                            Số điện thoại
+                                            Phone Number
                                         </Label>
                                         <div className="relative">
                                             <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -284,7 +282,7 @@ const ProfileUpdate = ({ onBack }) => {
                                     {/* Citizen ID */}
                                     <div className="space-y-2">
                                         <Label htmlFor="citizen_id">
-                                            Căn cước công dân <span className="text-red-500">*</span>
+                                            Citizen ID <span className="text-red-500">*</span>
                                         </Label>
                                         <div className="relative">
                                             <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -308,7 +306,7 @@ const ProfileUpdate = ({ onBack }) => {
                                     {/* Driving License */}
                                     <div className="space-y-2">
                                         <Label htmlFor="driving_license">
-                                            Bằng lái xe <span className="text-red-500">*</span>
+                                            Driving License <span className="text-red-500">*</span>
                                         </Label>
                                         <div className="relative">
                                             <Motorbike className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -339,12 +337,12 @@ const ProfileUpdate = ({ onBack }) => {
                                             {loading ? (
                                                 <>
                                                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                                    Đang lưu...
+                                                    Saving...
                                                 </>
                                             ) : (
                                                 <>
                                                     <Save className="mr-2 h-4 w-4" />
-                                                    Lưu thay đổi
+                                                    Save Changes
                                                 </>
                                             )}
                                         </Button>
@@ -354,7 +352,7 @@ const ProfileUpdate = ({ onBack }) => {
                                             onClick={onBack}
                                             className="border-slate-300 hover:bg-slate-50"
                                         >
-                                            Hủy
+                                            Cancel
                                         </Button>
                                     </div>
                                 </form>
@@ -370,10 +368,10 @@ const ProfileUpdate = ({ onBack }) => {
                                     <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
                                         <QrCode className="h-5 w-5 text-white" />
                                     </div>
-                                    Mã QR cá nhân
+                                    Personal QR Code
                                 </CardTitle>
                                 <CardDescription className="text-slate-600">
-                                    Quét mã tại trạm để đổi pin
+                                    Scan code at station to swap batteries
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="flex flex-col items-center space-y-6">
@@ -388,7 +386,7 @@ const ProfileUpdate = ({ onBack }) => {
                                         </div>
                                         <div className="text-center space-y-2 w-full">
                                             <p className="text-sm font-semibold text-slate-700">
-                                                Mã tài khoản:
+                                                Account ID:
                                             </p>
                                             <p className="text-xs text-slate-600 font-mono bg-slate-50 p-3 rounded-lg border border-slate-200 break-all">
                                                 {user?.account_id}
@@ -401,7 +399,7 @@ const ProfileUpdate = ({ onBack }) => {
                                             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg mb-4">
                                                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
                                             </div>
-                                            <p className="text-sm text-slate-600">Đang tải mã QR...</p>
+                                            <p className="text-sm text-slate-600">Loading QR code...</p>
                                         </div>
                                     </div>
                                 )}

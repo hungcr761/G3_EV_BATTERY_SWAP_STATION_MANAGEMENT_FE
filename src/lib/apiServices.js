@@ -94,7 +94,7 @@ export const bookingAPI = {
     delete: (id) => api.delete(`/booking/${id}`),
     getByUserId: (userId) => api.get(`/booking/user/${userId}`),
     getMyBookings: () => api.get('/booking/my-bookings?status=pending'),
-    cancel: (id) => api.post(`/booking/${id}/cancel`),
+    cancel: (id) => api.patch(`/booking/${id}/cancel`),
 };
 
 // Invoice APIs
@@ -109,4 +109,8 @@ export const paymentAPI = {
         USE_MOCK_API ? mockApi.createPayment(data) : api.post('/payment/create', data),
     getByDriverId: (driverId) =>
         USE_MOCK_API ? mockApi.getPaymentHistory(driverId) : api.get(`/payment/driver/${driverId}`),
+};
+
+export const swapAPI = {
+    checkAvailableBatteries: (stationId, batteryTypeId, Quantity) => api.get(`/swap/available-batteries?station_id=${stationId}&battery_type_id=${batteryTypeId}&quantity=${Quantity}`),
 };

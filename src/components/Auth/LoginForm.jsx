@@ -41,7 +41,7 @@ const LoginForm = () => {
                 setError(result.error);
             }
         } catch (err) {
-            setError('Đã xảy ra lỗi. Vui lòng thử lại.');
+            setError('An error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -52,9 +52,9 @@ const LoginForm = () => {
             <div className="max-w-md w-full space-y-8">
                 <Card>
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl font-bold">Đăng nhập</CardTitle>
+                        <CardTitle className="text-2xl font-bold">Login</CardTitle>
                         <CardDescription>
-                            Đăng nhập vào tài khoản EVSwap của bạn
+                            Sign in to your EVSwap account
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -71,7 +71,7 @@ const LoginForm = () => {
                                 <Input
                                     id="email"
                                     type="text"
-                                    placeholder="Nhập email"
+                                    placeholder="Enter email"
                                     {...register('email')}
                                     className={errors.email ? 'border-red-500' : ''}
                                 />
@@ -81,12 +81,12 @@ const LoginForm = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password">Mật khẩu</Label>
+                                <Label htmlFor="password">Password</Label>
                                 <div className="relative">
                                     <Input
                                         id="password"
                                         type={showPassword ? 'text' : 'password'}
-                                        placeholder="Nhập mật khẩu"
+                                        placeholder="Enter password"
                                         {...register('password')}
                                         className={errors.password ? 'border-red-500 pr-10' : 'pr-10'}
                                     />
@@ -118,7 +118,7 @@ const LoginForm = () => {
                                         className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                                     />
                                     <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                                        Ghi nhớ đăng nhập
+                                        Remember me
                                     </label>
                                 </div>
 
@@ -127,7 +127,7 @@ const LoginForm = () => {
                                         to="/forgot-password"
                                         className="font-medium text-primary hover:text-primary/80"
                                     >
-                                        Quên mật khẩu?
+                                        Forgot password?
                                     </Link>
                                 </div>
                             </div>
@@ -140,10 +140,10 @@ const LoginForm = () => {
                                 {isLoading ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Đang đăng nhập...
+                                        Logging in...
                                     </>
                                 ) : (
-                                    'Đăng nhập'
+                                    'Login'
                                 )}
                             </Button>
                         </form>
@@ -154,18 +154,18 @@ const LoginForm = () => {
                                     <div className="w-full border-t border-gray-300" />
                                 </div>
                                 <div className="relative flex justify-center text-sm">
-                                    <span className="px-2 bg-background text-muted-foreground">Hoặc</span>
+                                    <span className="px-2 bg-background text-muted-foreground">Or</span>
                                 </div>
                             </div>
 
                             <div className="mt-6 text-center">
                                 <p className="text-sm text-muted-foreground">
-                                    Chưa có tài khoản?{' '}
+                                    Don't have an account?{' '}
                                     <Link
                                         to="/register"
                                         className="font-medium text-primary hover:text-primary/80"
                                     >
-                                        Đăng ký ngay
+                                        Sign up now
                                     </Link>
                                 </p>
                             </div>

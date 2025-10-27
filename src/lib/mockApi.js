@@ -4,7 +4,7 @@ const mockUsers = [
         username: "admin",
         email: "admin@example.com",
         password: "admin1234",
-        fullname: "Quản trị viên",
+        fullname: "Administrator",
         phone_number: "0123456789",
         role: "admin",
         status: "active"
@@ -256,7 +256,7 @@ const mockVehicleModels = [
     { model_id: 27, name: 'Evo200', brand: 'VinFast', battery_type_id: 12, avg_energy_usage: '2.30' },
 ];
 
-// Mock subscription plans (fee_slot = 0: không theo lượt, fee_slot > 0: có theo lượt)
+// Mock subscription plans (fee_slot = 0: not per swap, fee_slot > 0: per swap)
 const mockSubscriptionPlans = [
     // === GÓI KHÔNG THEO LƯỢT (fee_slot = 0) ===
     {
@@ -264,12 +264,12 @@ const mockSubscriptionPlans = [
         admin_id: "166220a7-cde9-43b6-9165-c83a61ae4434",
         plan_name: "Unlimited Basic",
         plan_fee: "500000.00",
-        fee_slot: "0.00", // Không theo lượt
+        fee_slot: "0.00", // Not per swap
         penalty_fee: "50000.00",
         battery_cap: 1,
         soh_cap: "0.03",
         duration_days: 30,
-        description: "Gói không giới hạn lượt đổi - phù hợp người dùng thường xuyên",
+        description: "Unlimited swap package - suitable for regular users",
         is_active: true
     },
     {
@@ -277,12 +277,12 @@ const mockSubscriptionPlans = [
         admin_id: "166220a7-cde9-43b6-9165-c83a61ae4434",
         plan_name: "Unlimited Standard",
         plan_fee: "800000.00",
-        fee_slot: "0.00", // Không theo lượt
+        fee_slot: "0.00", // Not per swap
         penalty_fee: "80000.00",
         battery_cap: 2,
         soh_cap: "0.05",
         duration_days: 30,
-        description: "Gói không giới hạn lượt đổi - hỗ trợ 2 pin cùng lúc",
+        description: "Unlimited swap package - supports 2 batteries simultaneously",
         is_active: true
     },
     {
@@ -290,12 +290,12 @@ const mockSubscriptionPlans = [
         admin_id: "166220a7-cde9-43b6-9165-c83a61ae4434",
         plan_name: "Unlimited Premium",
         plan_fee: "1200000.00",
-        fee_slot: "0.00", // Không theo lượt
+        fee_slot: "0.00", // Not per swap
         penalty_fee: "100000.00",
         battery_cap: 3,
         soh_cap: "0.07",
         duration_days: 30,
-        description: "Gói không giới hạn lượt đổi - dành cho doanh nghiệp",
+        description: "Unlimited swap package - for businesses",
         is_active: true
     },
 
@@ -305,12 +305,12 @@ const mockSubscriptionPlans = [
         admin_id: "166220a7-cde9-43b6-9165-c83a61ae4434",
         plan_name: "Basic Plan",
         plan_fee: "200000.00",
-        fee_slot: "8000.00", // Phí theo lượt
+        fee_slot: "8000.00", // Per swap fee
         penalty_fee: "200.00",
         battery_cap: 1,
         soh_cap: "0.03",
         duration_days: 30,
-        description: "Gói cơ bản - thanh toán theo lượt đổi pin",
+        description: "Basic package - pay per battery swap",
         is_active: true
     },
     {
@@ -318,12 +318,12 @@ const mockSubscriptionPlans = [
         admin_id: "166220a7-cde9-43b6-9165-c83a61ae4434",
         plan_name: "Standard Plan",
         plan_fee: "350000.00",
-        fee_slot: "7500.00", // Phí theo lượt rẻ hơn
+        fee_slot: "7500.00", // Cheaper per swap fee
         penalty_fee: "400.00",
         battery_cap: 2,
         soh_cap: "0.05",
         duration_days: 30,
-        description: "Gói tiêu chuẩn - thanh toán theo lượt với giá ưu đãi",
+        description: "Standard package - pay per swap with discounted price",
         is_active: true
     },
     {
@@ -331,12 +331,12 @@ const mockSubscriptionPlans = [
         admin_id: "166220a7-cde9-43b6-9165-c83a61ae4434",
         plan_name: "Premium Plan",
         plan_fee: "500000.00",
-        fee_slot: "7000.00", // Phí theo lượt rẻ nhất
+        fee_slot: "7000.00", // Lowest per swap fee
         penalty_fee: "600.00",
         battery_cap: 3,
         soh_cap: "0.07",
         duration_days: 30,
-        description: "Gói cao cấp - thanh toán theo lượt với giá tốt nhất",
+        description: "Premium package - pay per swap with best price",
         is_active: true
     }
 ];
@@ -544,13 +544,13 @@ export const mockApi = {
                 response: {
                     status: 401,
                     data: {
-                        message: "email hoặc mật khẩu không đúng"
+                        message: "Invalid email or password"
                     }
                 }
             });
         }
 
-        // Generate mock token (không chứa user info)
+        // Generate mock token (does not contain user info)
         const token = `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
         // Return user data without password
@@ -580,7 +580,7 @@ export const mockApi = {
                 response: {
                     status: 400,
                     data: {
-                        message: "Email đã được sử dụng"
+                        message: "Email already in use"
                     }
                 }
             });
@@ -623,14 +623,14 @@ export const mockApi = {
     async logout() {
         await delay(300);
 
-        // Xóa thông tin user khi logout
+        // Remove user info when logout
         localStorage.removeItem("currentUser");
         sessionStorage.removeItem("currentUser");
 
         return {
             data: {
                 success: true,
-                message: "Đăng xuất thành công"
+                message: "Logout successful"
             }
         };
     },
@@ -646,20 +646,20 @@ export const mockApi = {
                 response: {
                     status: 401,
                     data: {
-                        message: "Token không hợp lệ"
+                        message: "Invalid token"
                     }
                 }
             });
         }
 
-        // Lấy thông tin user từ storage
+        // Get user info from storage
         const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
         if (!userInfoStr) {
             return Promise.reject({
                 response: {
                     status: 401,
                     data: {
-                        message: "Người dùng không tồn tại"
+                        message: "User does not exist"
                     }
                 }
             });
@@ -688,20 +688,20 @@ export const mockApi = {
                 response: {
                     status: 401,
                     data: {
-                        message: "Token không hợp lệ"
+                        message: "Invalid token"
                     }
                 }
             });
         }
 
-        // Lấy thông tin user từ storage
+        // Get user info from storage
         const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
         if (!userInfoStr) {
             return Promise.reject({
                 response: {
                     status: 401,
                     data: {
-                        message: "Người dùng không tồn tại"
+                        message: "User does not exist"
                     }
                 }
             });
@@ -709,7 +709,7 @@ export const mockApi = {
 
         const currentUser = JSON.parse(userInfoStr);
 
-        // Tìm user trong mock database
+        // Find user in mock database
         const userIndex = mockUsers.findIndex(u => u.account_id === currentUser.account_id);
 
         if (userIndex === -1) {
@@ -717,13 +717,13 @@ export const mockApi = {
                 response: {
                     status: 401,
                     data: {
-                        message: "Người dùng không tồn tại"
+                        message: "User does not exist"
                     }
                 }
             });
         }
 
-        // Map field names từ frontend sang backend format
+        // Map field names from frontend to backend format
         const updatedData = {
             fullname: profileData.fullname,
             phone_number: profileData.phone || profileData.phone_number,
@@ -739,7 +739,7 @@ export const mockApi = {
 
         const { password: _, ...account } = mockUsers[userIndex];
 
-        // Cập nhật lại storage
+        // Update storage
         if (localStorage.getItem("currentUser")) {
             localStorage.setItem("currentUser", JSON.stringify(account));
         } else if (sessionStorage.getItem("currentUser")) {
@@ -760,14 +760,14 @@ export const mockApi = {
     async getUserVehicles() {
         await delay(500);
 
-        // Lấy thông tin user từ storage
+        // Get user info from storage
         const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
         if (!userInfoStr) {
             return Promise.reject({
                 response: {
                     status: 401,
                     data: {
-                        message: "Người dùng không tồn tại"
+                        message: "User does not exist"
                     }
                 }
             });
@@ -775,7 +775,7 @@ export const mockApi = {
 
         const currentUser = JSON.parse(userInfoStr);
 
-        // Lọc xe theo account_id
+        // Filter vehicles by account_id
         const userVehicles = mockVehicles.filter(v => v.account_id === currentUser.account_id);
 
         return {
@@ -805,14 +805,14 @@ export const mockApi = {
     async createVehicle(vehicleData) {
         await delay(700);
 
-        // Lấy thông tin user từ storage
+        // Get user info from storage
         const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
         if (!userInfoStr) {
             return Promise.reject({
                 response: {
                     status: 401,
                     data: {
-                        message: "Người dùng không tồn tại"
+                        message: "User does not exist"
                     }
                 }
             });
@@ -820,27 +820,27 @@ export const mockApi = {
 
         const currentUser = JSON.parse(userInfoStr);
 
-        // Kiểm tra VIN đã tồn tại chưa
+        // Check if VIN already exists
         const existingVehicle = mockVehicles.find(v => v.vin === vehicleData.vin);
         if (existingVehicle) {
             return Promise.reject({
                 response: {
                     status: 400,
                     data: {
-                        message: "Số VIN đã tồn tại trong hệ thống"
+                        message: "VIN already exists in system"
                     }
                 }
             });
         }
 
-        // Tạo xe mới
+        // Create new vehicle
         const newVehicle = {
             vehicle_id: `vehicle-${Date.now()}`,
             account_id: currentUser.account_id,
             vin: vehicleData.vin,
             model: vehicleData.model,
             license_plate: vehicleData.license_plate || vehicleData.licensePlate,
-            battery_soh: 100, // Xe mới có SoH là 100%
+            battery_soh: 100, // New vehicle has 100% SoH
             status: "active",
             created_at: new Date().toISOString()
         };
@@ -850,7 +850,7 @@ export const mockApi = {
         return {
             data: {
                 success: true,
-                message: "Thêm xe thành công",
+                message: "Vehicle added successfully",
                 payload: {
                     vehicle: newVehicle
                 }
@@ -862,14 +862,14 @@ export const mockApi = {
     async updateVehicle(vehicleId, vehicleData) {
         await delay(600);
 
-        // Lấy thông tin user từ storage
+        // Get user info from storage
         const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
         if (!userInfoStr) {
             return Promise.reject({
                 response: {
                     status: 401,
                     data: {
-                        message: "Người dùng không tồn tại"
+                        message: "User does not exist"
                     }
                 }
             });
@@ -877,7 +877,7 @@ export const mockApi = {
 
         const currentUser = JSON.parse(userInfoStr);
 
-        // Tìm xe
+        // Find vehicle
         const vehicleIndex = mockVehicles.findIndex(
             v => v.vehicle_id === vehicleId && v.account_id === currentUser.account_id
         );
@@ -887,13 +887,13 @@ export const mockApi = {
                 response: {
                     status: 404,
                     data: {
-                        message: "Không tìm thấy xe"
+                        message: "Vehicle not found"
                     }
                 }
             });
         }
 
-        // Kiểm tra VIN mới có trùng với xe khác không
+        // Check if new VIN conflicts with other vehicles
         if (vehicleData.vin !== mockVehicles[vehicleIndex].vin) {
             const existingVehicle = mockVehicles.find(
                 v => v.vin === vehicleData.vin && v.vehicle_id !== vehicleId
@@ -903,14 +903,14 @@ export const mockApi = {
                     response: {
                         status: 400,
                         data: {
-                            message: "Số VIN đã tồn tại trong hệ thống"
+                            message: "VIN already exists in system"
                         }
                     }
                 });
             }
         }
 
-        // Cập nhật xe
+        // Update vehicle
         mockVehicles[vehicleIndex] = {
             ...mockVehicles[vehicleIndex],
             vin: vehicleData.vin,
@@ -922,7 +922,7 @@ export const mockApi = {
         return {
             data: {
                 success: true,
-                message: "Cập nhật xe thành công",
+                message: "Vehicle updated successfully",
                 payload: {
                     vehicle: mockVehicles[vehicleIndex]
                 }
@@ -934,14 +934,14 @@ export const mockApi = {
     async deleteVehicle(vehicleId) {
         await delay(500);
 
-        // Lấy thông tin user từ storage
+        // Get user info from storage
         const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
         if (!userInfoStr) {
             return Promise.reject({
                 response: {
                     status: 401,
                     data: {
-                        message: "Người dùng không tồn tại"
+                        message: "User does not exist"
                     }
                 }
             });
@@ -949,7 +949,7 @@ export const mockApi = {
 
         const currentUser = JSON.parse(userInfoStr);
 
-        // Tìm xe
+        // Find vehicle
         const vehicleIndex = mockVehicles.findIndex(
             v => v.vehicle_id === vehicleId && v.account_id === currentUser.account_id
         );
@@ -959,13 +959,13 @@ export const mockApi = {
                 response: {
                     status: 404,
                     data: {
-                        message: "Không tìm thấy xe"
+                        message: "Vehicle not found"
                     }
                 }
             });
         }
 
-        // Xóa xe
+        // Delete vehicle
         mockVehicles.splice(vehicleIndex, 1);
 
         return {
@@ -1137,14 +1137,14 @@ export const mockApi = {
     async getVehiclesWithoutSubscription() {
         await delay(600);
 
-        // Lấy thông tin user từ storage
+        // Get user info from storage
         const userInfoStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
         if (!userInfoStr) {
             return Promise.reject({
                 response: {
                     status: 401,
                     data: {
-                        message: "Người dùng không tồn tại"
+                        message: "User does not exist"
                     }
                 }
             });
