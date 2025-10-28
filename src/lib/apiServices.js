@@ -8,21 +8,21 @@ const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false' && (!import.m
 // Authentication APIs
 export const authAPI = {
     login: (credentials) =>
-        USE_MOCK_API ? mockApi.login(credentials) : api.post('/user/login', credentials),
+        USE_MOCK_API ? mockApi.login(credentials) : api.post('/auth/login', credentials),
     register: (userData) =>
-        USE_MOCK_API ? mockApi.register(userData) : api.post('/user/register', userData),
+        USE_MOCK_API ? mockApi.register(userData) : api.post('/auth/register', userData),
     logout: () =>
-        USE_MOCK_API ? mockApi.logout() : api.post('/user/logout'),
+        USE_MOCK_API ? mockApi.logout() : api.post('/auth/logout'),
     getProfile: (userId) =>
-        USE_MOCK_API ? mockApi.getProfile() : api.get(`/user/id/${userId}`),
+        USE_MOCK_API ? mockApi.getProfile() : api.get(`/auth/profile/${userId}`),
     forgotPassword: (email) =>
-        USE_MOCK_API ? mockApi.forgotPassword(email) : api.post('/user/forgot-password', email),
+        USE_MOCK_API ? mockApi.forgotPassword(email) : api.post('/auth/forgot-password', email),
     resetPassword: (data) =>
-        USE_MOCK_API ? mockApi.resetPassword(data) : api.post('/user/reset-password', data),
+        USE_MOCK_API ? mockApi.resetPassword(data) : api.post('/auth/reset-password', data),
     requestVerification: (data) =>
-        USE_MOCK_API ? mockApi.requestVerification(data) : api.post('/user/request-verification', data),
+        USE_MOCK_API ? mockApi.requestVerification(data) : api.post('/auth/request-verification', data),
     verifyEmail: (data) =>
-        USE_MOCK_API ? mockApi.verifyEmail(data) : api.post('/user/verify-email', data),
+        USE_MOCK_API ? mockApi.verifyEmail(data) : api.post('/auth/verify-email', data),
 };
 
 // Vehicle APIs
@@ -50,13 +50,13 @@ export const batteryTypeAPI = {
 
 // user APIs
 export const userAPI = {
-    getAll: (params) => api.get('/api/user', { params }),
-    getById: (id) => api.get(`/user/id/${id}`),
-    create: (data) => api.post('/api/users', data),
-    update: (id, data) => api.put(`/user/id/${id}`, data),
-    delete: (id) => api.delete(`/user/id/${id}`),
+    getAll: (params) => api.get('/users', { params }),
+    getById: (id) => api.get(`/users/id/${id}`),
+    create: (data) => api.post('/users', data),
+    update: (id, data) => api.put(`/users/${id}`, data),
+    delete: (id) => api.delete(`/users/${id}`),
     updateProfile: (id, data) =>
-        USE_MOCK_API ? mockApi.updateProfile(data) : api.put(`/user/id/${id}`, data),
+        USE_MOCK_API ? mockApi.updateProfile(data) : api.put(`/users/${id}`, data),
 };
 
 

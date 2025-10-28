@@ -40,7 +40,18 @@ const SwapStatus = () => {
                 if (userId && !bookingId) {
                     setIsUserFlow(true);
                     const userFlowData = location.state;
-                    const isFirstTime = userFlowData?.isFirstTimeSwap || false;
+                    // Check first-time status from API data if available, otherwise use passed state
+                    console.log('Full userFlowData:', userFlowData);
+                    console.log('selectedVehicle:', userFlowData?.selectedVehicle);
+                    console.log('firstTimeData from state:', userFlowData?.firstTimeData);
+                    console.log('isFirstTimeSwap from state:', userFlowData?.isFirstTimeSwap);
+
+                    const isFirstTime = userFlowData?.firstTimeData?.data?.is_first_time || userFlowData?.isFirstTimeSwap || false;
+                    console.log('First-time detection:', {
+                        firstTimeData: userFlowData?.firstTimeData?.data?.is_first_time,
+                        isFirstTimeSwap: userFlowData?.isFirstTimeSwap,
+                        finalIsFirstTime: isFirstTime
+                    });
                     setIsFirstTimeSwap(isFirstTime);
 
                     setUserData({
@@ -246,7 +257,9 @@ const SwapStatus = () => {
             // Simulate verification delay
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Check if this is first time pickup
+            // Check flow type and first-time status
+            console.log('Flow check:', { isUserFlow, isFirstTimeSwap, userId, bookingId });
+
             if (isUserFlow && isFirstTimeSwap) {
                 // First time pickup flow (no booking)
                 setCurrentAction({
@@ -286,11 +299,46 @@ const SwapStatus = () => {
 
                 setCurrentAction({
                     title: 'Battery Ready for Pickup',
-                    description: `Battery is ready at slot ${pickupData.data.slot_number}. Please take your battery.`,
+                    description: `Battery is ready at slot ${firstTimeValidationData?.data?.available_batteries_out?.[0]?.slot_number || firstTimePickupData?.data?.slot_number || 'N/A'}. Please take your battery.`,
                     progress: 83,
                     status: 'in_progress',
                     showButton: true,
                     buttonText: 'Battery Retrieved'
+                });
+            } else if (isUserFlow && !isFirstTimeSwap) {
+                // Regular user flow (no booking, not first time)
+                setCurrentAction(prev => ({
+                    ...prev,
+                    title: 'Getting Empty Slots',
+                    description: 'Retrieving list of empty slots at station',
+                    progress: 33,
+                    status: 'in_progress'
+                }));
+
+                const slots = await fetchEmptySlots();
+                if (slots.length === 0) {
+                    setCurrentAction(prev => ({
+                        ...prev,
+                        title: 'Error',
+                        description: 'No empty slots available at station',
+                        status: 'error'
+                    }));
+                    return;
+                }
+
+                // Select random slots for battery insertion
+                const currentData = userData;
+                const requestedQuantity = currentData.requestedQuantity || 1;
+                const selectedSlotsForInsertion = selectRandomSlots(slots, requestedQuantity);
+                setSelectedSlots(selectedSlotsForInsertion);
+
+                setCurrentAction({
+                    title: 'Insert Old Batteries',
+                    description: `Please insert ${requestedQuantity} old batteries into slots: ${selectedSlotsForInsertion.map(s => s.slot_number).join(', ')}`,
+                    progress: 50,
+                    status: 'in_progress',
+                    showButton: true,
+                    buttonText: 'Batteries Inserted'
                 });
             } else if (!isUserFlow && bookingData) {
                 // Check if this is first time with booking
@@ -370,8 +418,7 @@ const SwapStatus = () => {
                     });
                 }
             } else {
-                // Regular swap flow
-                // Step 2: Get empty slots
+                // Regular booking flow (not first time)
                 setCurrentAction(prev => ({
                     ...prev,
                     title: 'Getting Empty Slots',
@@ -391,8 +438,8 @@ const SwapStatus = () => {
                     return;
                 }
 
-                // Step 3: Select random slots for battery insertion
-                const currentData = isUserFlow ? userData : bookingData;
+                // Select random slots for battery insertion
+                const currentData = bookingData;
                 const requestedQuantity = currentData.requestedQuantity || 1;
                 const selectedSlotsForInsertion = selectRandomSlots(slots, requestedQuantity);
                 setSelectedSlots(selectedSlotsForInsertion);

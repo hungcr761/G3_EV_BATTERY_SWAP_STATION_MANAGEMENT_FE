@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout/Layout';
 import KioskLayout from './components/Layout/KioskLayout';
+import AdminLayout from './components/Layout/AdminLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -26,6 +27,14 @@ import Payment from './pages/EVDriver/Payment.jsx';
 import PaymentSuccess from './pages/EVDriver/PaymentSuccess.jsx';
 import Stations from './pages/EVDriver/Booking.jsx';
 import Dashboard from './pages/EVDriver/Dashboard.jsx';
+// Admin pages
+import AdminLogin from './pages/Admin/AdminLogin';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import StationManagement from './pages/Admin/StationManagement';
+import UserManagement from './pages/Admin/UserManagement';
+import BatteryManagement from './pages/Admin/BatteryManagement';
+import AnalyticsReports from './pages/Admin/AnalyticsReports';
+import SystemSettings from './pages/Admin/SystemSettings';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -40,6 +49,30 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+// Admin Protected Route Component
+const AdminProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Check if user has admin role (this would come from your auth system)
+  if (user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
 };
 
 function App() {
@@ -85,6 +118,7 @@ function App() {
 
           {/* Auth routes without layout */}
           <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
@@ -137,6 +171,50 @@ function App() {
           <Route path="/kiosk/:stationId/user/:userId/battery" element={<KioskLayout><UserBatterySelection /></KioskLayout>} />
           <Route path="/kiosk/:stationId/user/:userId/availability" element={<KioskLayout><UserAvailabilityCheck /></KioskLayout>} />
           <Route path="/kiosk/:stationId/user/:userId/swap" element={<KioskLayout><SwapStatus /></KioskLayout>} />
+
+          {/* Admin routes */}
+          <Route path="/admin" element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/stations" element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <StationManagement />
+              </AdminLayout>
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <UserManagement />
+              </AdminLayout>
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/batteries" element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <BatteryManagement />
+              </AdminLayout>
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/analytics" element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <AnalyticsReports />
+              </AdminLayout>
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/settings" element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <SystemSettings />
+              </AdminLayout>
+            </AdminProtectedRoute>
+          } />
 
           {/* Redirect unknown routes to home */}
           <Route path="*" element={<Navigate to="/" replace />} />

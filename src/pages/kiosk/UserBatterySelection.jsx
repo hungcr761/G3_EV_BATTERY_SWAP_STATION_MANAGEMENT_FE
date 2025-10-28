@@ -24,7 +24,9 @@ const UserBatterySelection = () => {
         navigate(`/kiosk/${stationId}/user/${userId}/availability`, {
             state: {
                 selectedVehicle,
-                selectedBatteries
+                selectedBatteries,
+                isFirstTimeSwap: location.state?.isFirstTimeSwap,
+                firstTimeData: location.state?.firstTimeData
             }
         });
     };
