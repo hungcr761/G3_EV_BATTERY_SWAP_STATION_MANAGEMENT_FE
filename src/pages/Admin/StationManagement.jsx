@@ -12,90 +12,19 @@ import {
     Users,
     AlertTriangle,
     CheckCircle,
-    Clock
+    Clock,
+    Loader2
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
+import { useStation } from '../../hooks/useStation';
 
 const StationManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
-
-    // Mock data - will be replaced with real API calls
-    const stations = [
-        {
-            id: 1,
-            name: 'Station A1 - Downtown',
-            location: '123 Main St, Downtown',
-            coordinates: { lat: 10.7769, lng: 106.7009 },
-            status: 'operational',
-            batteryCount: 12,
-            capacity: 20,
-            staffCount: 3,
-            lastMaintenance: '2024-01-15',
-            nextMaintenance: '2024-02-15',
-            swapsToday: 45,
-            usersServed: 38
-        },
-        {
-            id: 2,
-            name: 'Station A2 - Mall Area',
-            location: '456 Shopping Ave, Mall District',
-            coordinates: { lat: 10.7869, lng: 106.7109 },
-            status: 'operational',
-            batteryCount: 8,
-            capacity: 15,
-            staffCount: 2,
-            lastMaintenance: '2024-01-10',
-            nextMaintenance: '2024-02-10',
-            swapsToday: 32,
-            usersServed: 28
-        },
-        {
-            id: 3,
-            name: 'Station B1 - Airport',
-            location: '789 Airport Blvd, Terminal 2',
-            coordinates: { lat: 10.7969, lng: 106.7209 },
-            status: 'maintenance',
-            batteryCount: 0,
-            capacity: 25,
-            staffCount: 4,
-            lastMaintenance: '2024-01-20',
-            nextMaintenance: '2024-01-25',
-            swapsToday: 0,
-            usersServed: 0
-        },
-        {
-            id: 4,
-            name: 'Station B2 - University',
-            location: '321 Campus Rd, University Area',
-            coordinates: { lat: 10.8069, lng: 106.7309 },
-            status: 'low_stock',
-            batteryCount: 3,
-            capacity: 18,
-            staffCount: 2,
-            lastMaintenance: '2024-01-12',
-            nextMaintenance: '2024-02-12',
-            swapsToday: 28,
-            usersServed: 25
-        },
-        {
-            id: 5,
-            name: 'Station C1 - Business District',
-            location: '654 Corporate St, Business Center',
-            coordinates: { lat: 10.8169, lng: 106.7409 },
-            status: 'operational',
-            batteryCount: 15,
-            capacity: 20,
-            staffCount: 3,
-            lastMaintenance: '2024-01-18',
-            nextMaintenance: '2024-02-18',
-            swapsToday: 52,
-            usersServed: 48
-        }
-    ];
+    const { stations, loading, error, fetchStations } = useStation();
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -124,12 +53,39 @@ const StationManagement = () => {
         }
     };
 
-    const filteredStations = stations.filter(station => {
-        const matchesSearch = station.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            station.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const filteredStations = (stations || []).filter(station => {
+        const matchesSearch = station.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            station.address?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = filterStatus === 'all' || station.status === filterStatus;
         return matchesSearch && matchesFilter;
     });
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="flex items-center gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span>Loading stations...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Stations</h3>
+                    <p className="text-gray-600 mb-4">{error}</p>
+                    <Button onClick={fetchStations} className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -185,13 +141,13 @@ const StationManagement = () => {
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-2">
                                 <MapPin className="h-5 w-5 text-blue-600" />
-                                <h3 className="font-semibold text-gray-900">{station.name}</h3>
+                                <h3 className="font-semibold text-gray-900">{station.name || 'Unnamed Station'}</h3>
                             </div>
                             <div className="flex items-center gap-1">
-                                <Badge className={getStatusColor(station.status)}>
+                                <Badge className={getStatusColor(station.status || 'operational')}>
                                     <div className="flex items-center gap-1">
-                                        {getStatusIcon(station.status)}
-                                        {getStatusText(station.status)}
+                                        {getStatusIcon(station.status || 'operational')}
+                                        {getStatusText(station.status || 'operational')}
                                     </div>
                                 </Badge>
                                 <Button variant="ghost" size="sm">
@@ -201,7 +157,7 @@ const StationManagement = () => {
                         </div>
 
                         <div className="space-y-3">
-                            <p className="text-sm text-gray-600">{station.location}</p>
+                            <p className="text-sm text-gray-600">{station.address || 'No address provided'}</p>
 
                             {/* Battery Status */}
                             <div className="flex items-center justify-between">
@@ -210,7 +166,7 @@ const StationManagement = () => {
                                     <span className="text-sm text-gray-600">Batteries</span>
                                 </div>
                                 <span className="text-sm font-medium">
-                                    {station.batteryCount}/{station.capacity}
+                                    {station.current_battery_count || 0}/{station.max_battery_capacity || 0}
                                 </span>
                             </div>
 
@@ -220,19 +176,19 @@ const StationManagement = () => {
                                     <Users className="h-4 w-4 text-green-600" />
                                     <span className="text-sm text-gray-600">Staff</span>
                                 </div>
-                                <span className="text-sm font-medium">{station.staffCount}</span>
+                                <span className="text-sm font-medium">{station.staff_count || 0}</span>
                             </div>
 
-                            {/* Today's Stats */}
+                            {/* Station Info */}
                             <div className="pt-3 border-t border-gray-200">
                                 <div className="grid grid-cols-2 gap-4 text-sm">
                                     <div>
-                                        <p className="text-gray-600">Swaps Today</p>
-                                        <p className="font-semibold text-gray-900">{station.swapsToday}</p>
+                                        <p className="text-gray-600">Station ID</p>
+                                        <p className="font-semibold text-gray-900">#{station.id}</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-600">Users Served</p>
-                                        <p className="font-semibold text-gray-900">{station.usersServed}</p>
+                                        <p className="text-gray-600">Status</p>
+                                        <p className="font-semibold text-gray-900 capitalize">{station.status || 'Unknown'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -265,7 +221,7 @@ const StationManagement = () => {
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Stations</p>
-                            <p className="text-2xl font-semibold text-gray-900">{stations.length}</p>
+                            <p className="text-2xl font-semibold text-gray-900">{(stations || []).length}</p>
                         </div>
                     </div>
                 </Card>
@@ -278,7 +234,7 @@ const StationManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Operational</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {stations.filter(s => s.status === 'operational').length}
+                                {(stations || []).filter(s => s.status === 'operational').length}
                             </p>
                         </div>
                     </div>
@@ -292,7 +248,7 @@ const StationManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Batteries</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {stations.reduce((sum, s) => sum + s.batteryCount, 0)}
+                                {(stations || []).reduce((sum, s) => sum + (s.current_battery_count || 0), 0)}
                             </p>
                         </div>
                     </div>
@@ -306,7 +262,7 @@ const StationManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Staff</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {stations.reduce((sum, s) => sum + s.staffCount, 0)}
+                                {(stations || []).reduce((sum, s) => sum + (s.staff_count || 0), 0)}
                             </p>
                         </div>
                     </div>

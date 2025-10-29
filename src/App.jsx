@@ -28,7 +28,6 @@ import PaymentSuccess from './pages/EVDriver/PaymentSuccess.jsx';
 import Stations from './pages/EVDriver/Booking.jsx';
 import Dashboard from './pages/EVDriver/Dashboard.jsx';
 // Admin pages
-import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import StationManagement from './pages/Admin/StationManagement';
 import UserManagement from './pages/Admin/UserManagement';
@@ -119,7 +118,6 @@ function App() {
 
           {/* Auth routes without layout */}
           <Route path="/login" element={<Login />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 

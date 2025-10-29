@@ -218,22 +218,6 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                 </CardContent>
             </Card>
 
-            {/* Important Notice */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                    <Battery className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                        <p className="font-medium mb-2">Lưu ý quan trọng:</p>
-                        <ul className="list-disc list-inside space-y-1">
-                            <li>Lệnh đặt lịch đã active ngay từ khi bạn xác nhận</li>
-                            <li>Lệnh đặt sẽ kết thúc vào thời gian bạn chọn đến trạm</li>
-                            <li>Nếu không đến trạm trong thời gian quy định, lệnh đặt sẽ tự động bị hủy</li>
-                            <li>Vui lòng đến trạm đúng giờ để đảm bảo có pin sẵn sàng</li>
-                            <li><strong>Quan trọng:</strong> Mang theo mã QR này và quét tại kiosk để xác nhận đặt lịch</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
 
             {/* Action Button */}
             <div className="flex justify-center pt-4">

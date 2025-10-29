@@ -109,24 +109,8 @@ const TimeSelection = ({ onTimeSelect, selectedTime, onNext, onBack }) => {
                 <p className="text-muted-foreground">
                     Chọn thời gian bạn muốn đến trạm đổi pin
                 </p>
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center justify-center space-x-2 text-blue-700">
-                        <Calendar className="h-4 w-4" />
-                        <span className="font-medium">{formatDate(currentTime)}</span>
-                    </div>
-                </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                    <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                        <p className="font-medium mb-1">Thông tin đặt lịch:</p>
-                        <p>Lệnh đặt lịch sẽ active ngay từ khi bạn xác nhận và kéo dài đến thời gian bạn chọn.
-                            Ví dụ: nếu bây giờ là 10:00 và bạn chọn 12:00, lệnh đặt sẽ active từ 10:00 - 12:00.</p>
-                    </div>
-                </div>
-            </div>
 
             {/* Enhanced Time Picker */}
             <div className="space-y-4">
