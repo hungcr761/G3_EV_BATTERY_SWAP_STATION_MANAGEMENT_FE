@@ -24,7 +24,8 @@ import {
     AlertCircle,
     QrCode,
     ChevronRight,
-    MessageSquare
+    MessageSquare,
+    Loader2
 } from 'lucide-react';
 
 const Dashboard = () => {

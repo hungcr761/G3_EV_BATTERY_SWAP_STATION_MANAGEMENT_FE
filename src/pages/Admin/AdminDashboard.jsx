@@ -8,18 +8,21 @@ import {
     Clock,
     DollarSign,
     Activity,
-    BarChart3
+    BarChart3,
+    Loader2
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
+import { useStation } from '../../hooks/useStation';
 
 const AdminDashboard = () => {
+    const { stations, loading: stationsLoading, error: stationsError } = useStation();
+
     // Mock data - will be replaced with real API calls
     const stats = [
         {
             name: 'Total Stations',
-            value: '24',
-            change: '+2',
+            value: stationsLoading ? '...' : (stations || []).length.toString(),
             changeType: 'positive',
             icon: MapPin,
             color: 'text-blue-600',
@@ -85,7 +88,16 @@ const AdminDashboard = () => {
         }
     ];
 
-    const stationStatus = [
+    // Use real station data or fallback to mock data
+    const stationStatus = (stations || []).length > 0 ? stations.slice(0, 5).map(station => ({
+        name: station.name || 'Unnamed Station',
+        location: station.address || 'No address',
+        status: station.status || 'operational',
+        batteries: station.current_battery_count || 0,
+        capacity: station.max_battery_capacity || 0,
+        swapsToday: 0, // This would come from a separate API call
+        usersServed: 0 // This would come from a separate API call
+    })) : [
         { name: 'Station A1', location: 'Downtown', status: 'operational', batteries: 12, capacity: 20, swapsToday: 45, usersServed: 38 },
         { name: 'Station A2', location: 'Mall Area', status: 'operational', batteries: 8, capacity: 15, swapsToday: 32, usersServed: 28 },
         { name: 'Station B1', location: 'Airport', status: 'maintenance', batteries: 0, capacity: 25, swapsToday: 0, usersServed: 0 },
@@ -111,6 +123,29 @@ const AdminDashboard = () => {
         }
     };
 
+    if (stationsLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="flex items-center gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span>Loading dashboard...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (stationsError) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Dashboard</h3>
+                    <p className="text-gray-600 mb-4">{stationsError}</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -134,17 +169,7 @@ const AdminDashboard = () => {
                                     <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
                                 </div>
                             </div>
-                            <div className="mt-4">
-                                <div className="flex items-center">
-                                    <TrendingUp className={`h-4 w-4 ${stat.changeType === 'positive' ? 'text-green-500' : 'text-red-500'
-                                        }`} />
-                                    <span className={`ml-1 text-sm ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                                        }`}>
-                                        {stat.change}
-                                    </span>
-                                    <span className="ml-1 text-sm text-gray-500">from last month</span>
-                                </div>
-                            </div>
+
                         </Card>
                     );
                 })}

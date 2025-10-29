@@ -206,21 +206,6 @@ const BookingConfirmation = ({
                 </CardContent>
             </Card>
 
-            {/* Important Notice */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                    <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                        <p className="font-medium mb-1">Lưu ý quan trọng:</p>
-                        <ul className="list-disc list-inside space-y-1">
-                            <li>Lệnh đặt lịch sẽ active ngay từ khi bạn xác nhận</li>
-                            <li>Lệnh đặt sẽ kết thúc vào thời gian bạn chọn đến trạm</li>
-                            <li>Nếu không đến trạm trong thời gian quy định, lệnh đặt sẽ tự động bị hủy</li>
-                            <li>Vui lòng đến trạm đúng giờ để đảm bảo có pin sẵn sàng</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
 
             {/* Action Buttons */}
             <div className="flex justify-between pt-4">
