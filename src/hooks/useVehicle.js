@@ -102,7 +102,7 @@ export default function useVehicle() {
 
                 setTimeout(() => {
                     setMessage({ type: '', text: '' });
-                }, 3000);
+                }, 6000);
             }
         } catch (error) {
             setApiError(error.response?.data?.message || 'Error while saving data.');
@@ -141,7 +141,7 @@ export default function useVehicle() {
                 setTimeout(() => setMessage({
                     type: '',
                     text: ''
-                }), 3000);
+                }), 6000);
             }
         } catch (error) {
             setMessage({
@@ -152,7 +152,7 @@ export default function useVehicle() {
             setTimeout(() => setMessage({
                 type: '',
                 text: ''
-            }), 3000);
+            }), 6000);
         }
     };
 
