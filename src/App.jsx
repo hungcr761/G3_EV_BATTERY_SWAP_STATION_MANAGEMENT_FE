@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
+import { Routes, Route, Navigate } from 'react-router';
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout/Layout';
@@ -35,6 +35,7 @@ import UserManagement from './pages/Admin/UserManagement';
 import BatteryManagement from './pages/Admin/BatteryManagement';
 import AnalyticsReports from './pages/Admin/AnalyticsReports';
 import SystemSettings from './pages/Admin/SystemSettings';
+import PaymentHistory from './pages/EVDriver/PaymentHistory.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -152,6 +153,13 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
+          <Route path='/paymentHistory' element={
+            <ProtectedRoute>
+              <Layout>
+                <PaymentHistory />
+              </Layout>
+            </ProtectedRoute>
+          }/>
           <Route path="/settings" element={
             <ProtectedRoute>
               <Layout>

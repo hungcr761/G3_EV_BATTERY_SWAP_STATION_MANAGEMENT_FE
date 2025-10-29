@@ -22,7 +22,9 @@ import {
     TestTube,
     User,
     AlertCircle,
-    QrCode
+    QrCode,
+    ChevronRight,
+    MessageSquare
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -160,6 +162,11 @@ const Dashboard = () => {
                 {/* Header */}
                 <div className="mb-8">
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute inset-0" style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+                            }} />
+                        </div>
                         <div className="flex items-center space-x-4">
                             <div className="h-20 w-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg flex items-center justify-center">
                                 <User className="h-10 w-10 text-white" />
@@ -244,7 +251,10 @@ const Dashboard = () => {
                             <CardHeader>
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <CardTitle className="text-2xl font-bold text-slate-800">Recent Battery Swaps</CardTitle>
+                                        <CardTitle className="text-2xl flex items-center gap-2">
+                                            <Battery className="h-6 w-6 text-blue-600" />
+                                            Recent Battery Swaps
+                                        </CardTitle>
                                         <CardDescription className="text-slate-600 mt-1">
                                             Your recent battery swap history
                                         </CardDescription>
@@ -360,7 +370,7 @@ const Dashboard = () => {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full border-slate-300 hover:bg-purple-50 hover:border-purple-400 hover:text-purple-700 transition-all duration-200"
+                                        className="w-full border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 hover:border-purple-400 hover:text-purple-700 transition-all duration-200"
                                         onClick={() => navigate('/booking')}
                                     >
                                         <Plus className="mr-2 h-4 w-4" />
@@ -371,35 +381,50 @@ const Dashboard = () => {
                         </Card>
 
                         {/* Quick Actions */}
-                        <Card className="border-slate-200/60 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
+                        <Card className="border-slate-200/60 shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
                             <CardHeader>
                                 <CardTitle className="text-xl font-bold text-slate-800">Quick Actions</CardTitle>
-                                <CardDescription className="text-slate-600">
+                                <CardDescription className="text-xl">
                                     Frequently used functions
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-3">
-                                <Button className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-200" variant="outline">
-                                    <MapPin className="mr-2 h-4 w-4" />
-                                    Payment History
+                            <CardContent className="space-y-2">
+                                <Button className="w-full justify-between group bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-slate-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-400 hover:text-blue-700 transition-all duration-200"
+                                    variant="outline"
+                                    onClick={() => navigate('/paymentHistory')}>
+                                    <span className="flex items-center">
+                                        <CreditCard className="mr-2 h-4 w-4" />
+                                        Payment History
+                                    </span>
+                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                                 </Button>
-                                <Button className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:border-purple-400 hover:text-purple-700 transition-all duration-200" variant="outline">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    Battery Swap History
+                                <Button className="w-full justify-between group bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 text-slate-700 hover:from-purple-100 hover:to-pink-100 hover:border-purple-400 hover:text-purple-700 transition-all duration-200"
+                                    variant="outline">
+                                    <span className="flex items-center">
+                                        <Battery className="mr-2 h-4 w-4" />
+                                        Battery Swap History
+                                    </span>
+                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                                 </Button>
                                 <Button
-                                    className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 hover:border-emerald-400 hover:text-emerald-700 transition-all duration-200"
+                                    className="w-full justify-between group bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 text-slate-700 hover:from-emerald-100 hover:to-teal-100 hover:border-emerald-400 hover:text-emerald-700 transition-all duration-200"
                                     variant="outline"
                                     onClick={() => navigate('/vehiclesManagement')}
                                 >
-                                    <Motorbike className="mr-2 h-4 w-4" />
-                                    Vehicle Management
+                                    <span className="flex items-center">
+                                        <Motorbike className="mr-2 h-4 w-4" />
+                                        Vehicle Management
+                                    </span>
+                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                                 </Button>
-                                <Button className="w-full justify-start bg-white border-slate-300 text-slate-700 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 hover:border-amber-400 hover:text-amber-700 transition-all duration-200"
+                                <Button className="w-full justify-between group bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 text-slate-700 hover:from-amber-100 hover:to-orange-100 hover:border-amber-400 hover:text-amber-700 transition-all duration-200"
                                     variant="outline"
                                     onClick={() => navigate('/subscriptionManagement')}>
-                                    <CreditCard className="mr-2 h-4 w-4" />
-                                    Subscriptions Management
+                                    <span className="flex items-center">
+                                        <CreditCard className="mr-2 h-4 w-4" />
+                                        Subscriptions Management
+                                    </span>
+                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                                 </Button>
                             </CardContent>
                         </Card>

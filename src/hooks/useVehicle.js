@@ -1,6 +1,6 @@
 
-import { modelAPI, vehicleAPI } from '@/lib/apiServices';
-import { useCallback, useEffect, useState } from 'react'
+import { modelAPI, vehicleAPI, subscriptionAPI } from '@/lib/apiServices';
+import { use, useCallback, useEffect, useState } from 'react'
 
 export default function useVehicle() {
     const [vehicles, setVehicles] = useState([]);
@@ -113,8 +113,52 @@ export default function useVehicle() {
     };
 
 
-    // Delete vehicle
-    const handleDelete = (vehicle) => {
+    // Delete vehicle - Check for active subscriptions first
+    const handleDelete = async (vehicle) => {
+        // try {
+        //     // Get current user
+        //     const userData = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+        //     if (!userData) {
+        //         setMessage({
+        //             type: 'error',
+        //             text: 'User not authenticated. Please login again.'
+        //         });
+        //         setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+        //         return;
+        //     }
+
+        //     const user = JSON.parse(userData);
+
+        //     // Fetch subscriptions for this user
+        //     const res = await subscriptionAPI.getByDriverId(user.account_id);
+        //     const subscriptions = res.data?.payload?.subscriptions || [];
+
+        //     // Check if vehicle has any active subscriptions
+        //     const activeSubscription = subscriptions.find(
+        //         sub => sub.vehicle_id === vehicle.vehicle_id && sub.status === 'active'
+        //     );
+
+        //     if (activeSubscription) {
+        //         setMessage({
+        //             type: 'error',
+        //             text: `Cannot delete vehicle ${vehicle.modelName} (${vehicle.license_plate}). This vehicle has an active subscription "${activeSubscription.plan_name}". Please cancel the subscription first in Subscription Management.`
+        //         });
+        //         setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+        //         return;
+        //     }
+
+        //     // No active or pending subscriptions, proceed with delete confirmation
+        //     setConfirmDelete({ show: true, vehicle: vehicle });
+
+        // } catch (error) {
+        //     console.error('Error checking subscriptions:', error);
+        //     setMessage({
+        //         type: 'error',
+        //         text: 'Failed to verify vehicle subscriptions. Please try again.'
+        //     });
+        //     setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+        // }
+
         setConfirmDelete({ show: true, vehicle: vehicle });
     };
 
@@ -125,7 +169,40 @@ export default function useVehicle() {
         setConfirmDelete({ show: false, vehicle: null });
 
         try {
+            // Get current user
+            const userData = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+            if (!userData) {
+                setMessage({
+                    type: 'error',
+                    text: 'User not authenticated. Please login again.'
+                });
+                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+                return;
+            }
+
+            const user = JSON.parse(userData);
+
+            // Fetch subscriptions for this user
+            const response = await subscriptionAPI.getByDriverId(user.account_id);
+            const subscriptions = response.data?.payload?.subscriptions || [];
+
+            // Check if vehicle has any active subscriptions
+            const activeSub = subscriptions.find(
+                sub => sub.vehicle_id === vehicleId && sub.status === 'active'
+            );
+
+            if (activeSub) {
+                setMessage({
+                    type: 'error',
+                    text: `Cannot delete vehicle ${vehicleToDelete.modelName} (${vehicleToDelete.license_plate}). This vehicle has an active subscription "${activeSub.plan_name}". Please cancel the subscription first in Subscription Management.`
+                });
+                setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+                return;
+            }
+
+            // No active subscriptions, proceed with delete
             const res = await vehicleAPI.delete(vehicleId);
+
             const isSuccess = res.data?.success === true ||
                 res.status === 200 ||
                 res.status === 204;
@@ -141,9 +218,16 @@ export default function useVehicle() {
                 setTimeout(() => setMessage({
                     type: '',
                     text: ''
-                }), 6000);
+                }), 3000);
+            } else {
+                setMessage({
+                    type: 'error',
+                    text: 'Cannot delete vehicle. Please try again!'
+                });
+                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
             }
         } catch (error) {
+            console.error('Error in executeDelete:', error);
             setMessage({
                 type: 'error',
                 text: error.response?.data?.message || 'Cannot Delete Vehicle. Please try again!'
