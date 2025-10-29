@@ -1,214 +1,237 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
-import {
-    MessageCircle,
-    Phone,
-    Mail,
-    MapPin,
-    Clock,
-    HelpCircle,
-    FileText,
-    AlertTriangle
-} from 'lucide-react';
+
+import { useState } from 'react';
+import { AlertCircle, Calendar, Clock, FileText, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+
+import useTicket from '@/hooks/useTicket';
 
 const Support = () => {
-    const faqs = [
-        {
-            question: 'How do I swap batteries at the station?',
-            answer: 'Scan the QR code at the station, the system will automatically swap batteries in 3-5 minutes.'
-        },
-        {
-            question: 'Can I cancel my scheduled appointment?',
-            answer: 'Yes, you can cancel your appointment up to 2 hours in advance without any charges.'
-        },
-        {
-            question: 'How do I track my usage costs?',
-            answer: 'Go to Dashboard > Transaction History to view detailed costs.'
-        },
-        {
-            question: 'Are batteries insured?',
-            answer: 'All batteries are fully insured, including damage and loss coverage.'
-        }
-    ];
+    const {
+        tickets,
+        loading,
+        message,
+        isSubmitting,
+        createTicket,
+        closeTicket,
+        getStatusColor,
+        getStatusLabel,
+        getSubjectLabel
+    } = useTicket();
 
-    const contactMethods = [
-        {
-            icon: <Phone className="h-6 w-6" />,
-            title: '24/7 Hotline',
-            description: '',
-            action: 'Call Now'
-        },
-        {
-            icon: <Mail className="h-6 w-6" />,
-            title: 'Support Email',
-            description: '',
-            action: 'Send Email'
-        },
-        {
-            icon: <MessageCircle className="h-6 w-6" />,
-            title: 'Live Chat',
-            description: 'Instant support',
-            action: 'Start Chat'
+    const [formData, setFormData] = useState({
+        subject: '',
+        description: ''
+    });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!formData.subject || !formData.description) {
+            return;
         }
-    ];
+
+        const success = await createTicket(formData);
+
+        if (success) {
+            setFormData({ subject: '', description: '' });
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-background py-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
             <div className="container mx-auto px-4">
-                <div className="max-w-6xl mx-auto">
-                    {/* Header */}
-                    <div className="text-center mb-12">
-                        <h1 className="text-3xl font-bold text-foreground mb-4">
-                            Customer Support
-                        </h1>
-                        <p className="text-xl text-muted-foreground">
-                            We are always ready to support you 24/7
-                        </p>
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                        Support Center
+                    </h1>
+                    <p className="text-slate-600">
+                        Submit your issues and track support tickets
+                    </p>
+                </div>
+
+                {/* Message Alert */}
+                {message && (
+                    <div className={`mb-6 p-4 rounded-lg flex items-center space-x-2 ${message.type === 'success'
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                        : 'bg-red-50 border border-red-200 text-red-700'
+                        }`}>
+                        <AlertCircle className="h-5 w-5" />
+                        <p>{message.text}</p>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Create Ticket Form */}
+                    <div className="lg:col-span-1">
+                        <Card className="sticky top-6">
+                            <CardHeader>
+                                <CardTitle className="flex items-center">
+                                    <FileText className="mr-2 h-5 w-5" />
+                                    Submit Support Request
+                                </CardTitle>
+                                <CardDescription>
+                                    Describe the issue you're experiencing in detail
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div>
+                                        <Label htmlFor="subject">Issue Type</Label>
+                                        <select
+                                            id="subject"
+                                            value={formData.subject}
+                                            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                                            className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                                            required
+                                        >
+                                            <option value="">Select issue type</option>
+                                            <option value="station_issue">Station Issue</option>
+                                            <option value="payment_issue">Payment Issue</option>
+                                            <option value="battery_issue">Battery Issue</option>
+                                            <option value="account_issue">Account Issue</option>
+                                            <option value="vehicle_issue">Vehicle Issue</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="description">Description</Label>
+                                        <textarea
+                                            id="description"
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            className="w-full h-32 px-3 py-2 rounded-md border border-input bg-background"
+                                            placeholder="Describe your issue in detail..."
+                                            required
+                                        />
+                                    </div>
+
+                                    <Button
+                                        type="submit"
+                                        className="w-full"
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? 'Submitting...' : 'Submit Ticket'}
+                                    </Button>
+                                </form>
+                            </CardContent>
+                        </Card>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Contact Methods */}
-                        <div className="lg:col-span-1 space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Direct Contact</CardTitle>
-                                    <CardDescription>
-                                        Choose the contact method that works best for you
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    {contactMethods.map((method, index) => (
-                                        <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                                                    <div className="text-primary">
-                                                        {method.icon}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-medium">{method.title}</h4>
-                                                    <p className="text-sm text-muted-foreground">{method.description}</p>
-                                                </div>
-                                            </div>
-                                            <Button variant="outline" size="sm">
-                                                {method.action}
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Contact Information</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center space-x-3">
-                                        <MapPin className="h-5 w-5 text-primary" />
-                                        <div>
-                                            <p className="font-medium">Address</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                123 ABC Street, XYZ District, HCMC
-                                            </p>
-                                        </div>
+                    {/* Tickets List */}
+                    <div className="lg:col-span-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>My Support Tickets</CardTitle>
+                                <CardDescription>
+                                    Track your submitted tickets
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {loading ? (
+                                    <div className="text-center py-8">
+                                        <p className="text-slate-500">Loading tickets...</p>
                                     </div>
-                                    <div className="flex items-center space-x-3">
-                                        <Clock className="h-5 w-5 text-primary" />
-                                        <div>
-                                            <p className="font-medium">Working Hours</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                24/7 - Non-stop support
-                                            </p>
-                                        </div>
+                                ) : tickets.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <p className="text-slate-500">No tickets found</p>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* FAQ and Support Form */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* FAQ */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center">
-                                        <HelpCircle className="mr-2 h-5 w-5" />
-                                        Frequently Asked Questions
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Find answers to common questions
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
+                                ) : (
                                     <div className="space-y-4">
-                                        {faqs.map((faq, index) => (
-                                            <div key={index} className="border rounded-lg p-4">
-                                                <h4 className="font-medium mb-2">{faq.question}</h4>
-                                                <p className="text-sm text-muted-foreground">{faq.answer}</p>
-                                            </div>
-                                        ))}
+                                        {tickets.map((ticket) => {
+                                            const isResolved = ticket.status === 'resolved';
+                                            const isClosed = ticket.status === 'closed';
+
+                                            return (
+                                                <div
+                                                    key={ticket.ticket_id}
+                                                    className="border border-slate-200/60 rounded-lg p-4 bg-white/80 backdrop-blur-sm hover:shadow-md transition-all"
+                                                >
+                                                    {/* Header
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div className="flex items-center space-x-2">
+                                                            <FileText className="h-5 w-5 text-blue-600" />
+                                                            <div>
+                                                                <h3 className="font-bold text-slate-800">
+                                                                    {getSubjectLabel(ticket.subject)}
+                                                                </h3>
+                                                                <p className="text-xs text-slate-500 font-mono">
+                                                                    #{ticket.ticket_id?.slice(-8).toUpperCase()}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <Badge
+                                                            className={`bg-${getStatusColor(ticket.status)}-100 text-${getStatusColor(ticket.status)}-700 border-${getStatusColor(ticket.status)}-200`}
+                                                        >
+                                                            {getStatusLabel(ticket.status)}
+                                                        </Badge>
+                                                    </div> */}
+
+                                                    {/* Description */}
+                                                    <div className="bg-slate-50 p-3 rounded-lg mb-3">
+                                                        <p className="text-sm text-slate-700">
+                                                            {ticket.description}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Dates */}
+                                                    <div className="flex items-center space-x-4 mb-3">
+                                                        <div className="flex items-center space-x-2">
+                                                            <Calendar className="h-4 w-4 text-slate-500" />
+                                                            <div>
+                                                                <p className="text-xs text-slate-500">Created</p>
+                                                                <p className="text-sm font-semibold text-slate-700">
+                                                                    {new Date(ticket.create_date).toLocaleDateString()}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        {ticket.resolve_date && (
+                                                            <div className="flex items-center space-x-2">
+                                                                <Clock className="h-4 w-4 text-emerald-500" />
+                                                                <div>
+                                                                    <p className="text-xs text-slate-500">Resolved</p>
+                                                                    <p className="text-sm font-semibold text-slate-700">
+                                                                        {new Date(ticket.resolve_date).toLocaleDateString()}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Action Buttons */}
+                                                    {isResolved && !isClosed && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                                                            onClick={() => closeTicket(ticket.ticket_id)}
+                                                            disabled={isSubmitting}
+                                                        >
+                                                            <CheckCircle className="mr-2 h-4 w-4" />
+                                                            Mark as Closed
+                                                        </Button>
+                                                    )}
+
+                                                    {isClosed && (
+                                                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center space-x-2">
+                                                            <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                                            <p className="text-sm font-medium text-emerald-700">
+                                                                This ticket has been closed
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Support Request Form */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center">
-                                        <FileText className="mr-2 h-5 w-5" />
-                                        Submit Support Request
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Describe the issue you're experiencing in detail
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <form className="space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">
-                                                    Issue Type
-                                                </label>
-                                                <select className="w-full h-10 px-3 rounded-md border border-input bg-background">
-                                                    <option value="">Select issue type</option>
-                                                    <option value="technical">Technical Issue</option>
-                                                    <option value="billing">Billing Issue</option>
-                                                    <option value="booking">Booking Issue</option>
-                                                    <option value="other">Other</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">
-                                                    Priority Level
-                                                </label>
-                                                <select className="w-full h-10 px-3 rounded-md border border-input bg-background">
-                                                    <option value="low">Low</option>
-                                                    <option value="medium">Medium</option>
-                                                    <option value="high">High</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">
-                                                Detailed Description
-                                            </label>
-                                            <textarea
-                                                className="w-full h-32 px-3 py-2 rounded-md border border-input bg-background"
-                                                placeholder="Describe the issue you're experiencing in detail..."
-                                            />
-                                        </div>
-
-                                        <Button className="w-full">
-                                            <AlertTriangle className="mr-2 h-4 w-4" />
-                                            Submit Support Request
-                                        </Button>
-                                    </form>
-                                </CardContent>
-                            </Card>
-                        </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>

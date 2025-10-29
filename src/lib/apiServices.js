@@ -8,7 +8,7 @@ const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false' && (!import.m
 // Authentication APIs
 export const authAPI = {
     login: (credentials) =>
-        USE_MOCK_API ? mockApi.login(credentials) : api.post('/auth/login', credentials),
+        USE_MOCK_API ? mockApi.login(credentials) : api.post('/login', credentials),
     register: (userData) =>
         USE_MOCK_API ? mockApi.register(userData) : api.post('/auth/register', userData),
     logout: () =>
@@ -71,7 +71,7 @@ export const subscriptionPlanAPI = {
 export const subscriptionAPI = {
     create: (data) => api.post('/subscription', data),
     getByVehicleId: (vehicleId) => api.get(`/subscription/vehicle/${vehicleId}`),
-    cancel: (subscriptionId) => api.delete(`/subscription/${subscriptionId}`),
+    cancel: (subscriptionId) => api.put(`/subscription/cancel/${subscriptionId}`),
     getAll: () => api.get('/subscription'),
     getByDriverId: (driverId) => api.get(`/subscription/driver/${driverId}`),
     renew: (subscriptionId, data) => api.post(`/subscription/${subscriptionId}/renew`, data)
@@ -126,3 +126,9 @@ export const swapAPI = {
     executeFirstTimeWithBooking: (data) => api.post('/swap/execute-first-time-with-booking', data),
     checkFirstTimePickup: (vehicleId) => api.get(`/swap/check-first-time-pickup?vehicle_id=${vehicleId}`),
 };
+
+// Ticket APIs 
+export const ticketAPI = {
+    create: (data) => api.post('/support-ticket' , data),
+    getByDriverId: (driverId) => api.get(`/support-ticket/creator/${driverId}`)
+}; 

@@ -6,7 +6,7 @@ export default function useSubscription() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [message, setMessage] = useState({ type: '', text: '' });
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [confirmCancel , setConfirmCancel] = useState({show: false, subscription: null});
 
     const fetchSubscriptions = useCallback(async () => {
         setLoading(true);
@@ -68,85 +68,65 @@ export default function useSubscription() {
         fetchSubscriptions();
     }, [fetchSubscriptions]);
 
-    // Cancel subscription
-    const handleDelete = async (subscriptionId) => {
-        setIsSubmitting(true);
+
+    const handleCancel = async (subscription) => {
+        setConfirmCancel({ show: true, subscription });
+    };
+
+    const executeCancel = async () => {
+        const subscriptionCancel = confirmCancel.subscription;
+        const subscriptionId = subscriptionCancel.subscription_id;
+
+        setConfirmCancel({show: false, subscription: null});
+
         try {
             const response = await subscriptionAPI.cancel(subscriptionId);
 
-            if (response.status === 200 || response.data?.success) {
+            if (response.status === 200 || response.data?.success === true) {
                 setMessage({
                     type: 'success',
                     text: 'Subscription cancelled successfully!'
                 });
 
-                // Refresh subscriptions list
                 await fetchSubscriptions();
 
                 setTimeout(() => {
                     setMessage({ type: '', text: '' });
-                }, 6000);
+                }, 3000);
+            }else{
+                setMessage({
+                    type: 'error',
+                    text: 'Failed to cancel subscription'
+                });
+
+                setTimeout(() => setMessage({
+                    type: '',
+                    text: ''
+                }), 3000);
             }
         } catch (error) {
             console.error('Error cancelling subscription:', error);
             setMessage({
                 type: 'error',
-                text: error.response?.data?.message || 'Failed to cancel subscription'
+                text: 'Failed to cancel subscription'
             });
 
             setTimeout(() => {
                 setMessage({ type: '', text: '' });
             }, 6000);
         } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    // Renew subscription
-    const handleRenewal = async (subscriptionId, planId) => {
-        setIsSubmitting(true);
-        try {
-            const response = await subscriptionAPI.renew(subscriptionId, { plan_id: planId });
-
-            if (response.status === 200 || response.data?.success) {
-                setMessage({
-                    type: 'success',
-                    text: 'Subscription renewed successfully!'
-                });
-
-                // Refresh subscriptions list
-                await fetchSubscriptions();
-
-                setTimeout(() => {
-                    setMessage({ type: '', text: '' });
-                }, 6000);
-
-                return true;
+                setConfirmCancel({ show: false, subscription: null });
             }
-        } catch (error) {
-            console.error('Error renewing subscription:', error);
-            setMessage({
-                type: 'error',
-                text: error.response?.data?.message || 'Failed to renew subscription'
-            });
-
-            setTimeout(() => {
-                setMessage({ type: '', text: '' });
-            }, 6000);
-
-            return false;
-        } finally {
-            setIsSubmitting(false);
-        }
     };
+
 
     // Calculate days remaining
     const getDaysRemaining = (endDate) => {
         const end = new Date(endDate);
         const today = new Date();
         const diffTime = end - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
     };
 
     // Get status badge color
@@ -169,13 +149,14 @@ export default function useSubscription() {
         loading,
         error,
         message,
-        isSubmitting,
-
+        confirmCancel,
         // Methods
         fetchSubscriptions,
-        handleDelete,
-        handleRenewal,
+        handleCancel,
+        executeCancel,
+        // handleRenewal,
         getDaysRemaining,
-        getStatusColor
+        getStatusColor,
+        setConfirmCancel
     };
 }

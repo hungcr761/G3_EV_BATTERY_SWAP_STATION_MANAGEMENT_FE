@@ -1,46 +1,50 @@
-import { CardContent } from '@/components/ui/card';
-import { Button as ShadButton } from '@/components/ui/button';
+import { CardContent, Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import useSubscription from '@/hooks/useSubscription';
 import SubscriptionCard from '@/components/Subscription/SubscriptionCard';
-import { Button, Card } from '@radix-ui/themes';
 import { AlertCircle, ArrowLeft, CheckCircle, Loader2, Package } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router';
 
 export default function SubscriptionManagement() {
   const navigate = useNavigate();
-  const [selectedSubscription, setSelectedSubscription] = useState(null);
-  const [showDeleteSubDialog, setShowDeleteSubDialog] = useState(false);
-  const [DeleteSubId, setDeleteSubId] = useState(null);
+  // local dialog state removed - using hook's confirmCancel instead
 
   const {
     subscriptions,
     loading,
     error,
     message,
-    isSubmitting,
-    handleDelete,
-    handleRenewal,
+    confirmCancel,
+    fetchSubscriptions,
+    handleCancel,
+    executeCancel,
     getDaysRemaining,
     getStatusColor,
-    fetchSubscriptions
+    setConfirmCancel
   } = useSubscription();
 
-  const handleDeleteClick = (subscriptionId) => {
-    setDeleteSubId(subscriptionId);
-    setShowDeleteSubDialog(true);
-  };
 
-  const confirmDelete = async () => {
-    await handleDelete(DeleteSubId);
-    setShowDeleteSubDialog(false);
-    setDeleteSubId(null);
-  };
+  // dialog state handled by the useSubscription hook (confirmCancel)
+
+  // const handleCancelClick = (subscriptionId) => {
+  //   setDeleteSubId(subscriptionId);
+  //   setShowDeleteSubDialog(true);
+  // };
+
+  // const confirmDelete = async () => {
+  //   await handleCancel(deleteSubId);
+  //   setShowDeleteSubDialog(false);
+  //   setDeleteSubId(null);
+  // };
 
   // const handleRenewalClick = (subscription) => {
   //   setSelectedSubscription(subscription);
   //   setShowDeleteSubDialog
   // };
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -48,9 +52,9 @@ export default function SubscriptionManagement() {
         {/* Header */}
         <div className="mb-8">
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => navigate('/dashboard')}
-            className='mb-6 hover:bg-white/60 transition-all duration-200 flex items-center'
+            className='mb-6 hover:bg-white/60 transition-all duration-200'
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back To Dashboard
@@ -154,23 +158,73 @@ export default function SubscriptionManagement() {
                     Your Subscriptions <span className="text-slate-500 font-normal">({subscriptions.length})</span>
                   </h2>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {subscriptions.map((subscription) => (
-                    <SubscriptionCard
-                      key={subscription.subscription_id}
-                      subscription={subscription}
-                      onDelete={handleDeleteClick}
-                      onRenew={(sub) => setSelectedSubscription(sub)}
-                      getDaysRemaining={getDaysRemaining}
-                      getStatusColor={getStatusColor}
-                      isSubmitting={isSubmitting}
-                    />
-                  ))}
-                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {subscriptions.map(subscription => (
+                            <SubscriptionCard
+                              key={subscription.subscription_id}
+                              subscription={subscription}
+                              onCancel={handleCancel}
+                              getDaysRemaining={getDaysRemaining}
+                              getStatusColor={getStatusColor}
+                              isCanceling={confirmCancel?.subscription?.subscription_id === subscription.subscription_id}
+                            />
+                          ))}
+                        </div>
               </div>
             )}
           </>
         )}
+
+        {/* Cancel Confirm Dialog */}
+        <Dialog
+          open={confirmCancel?.show}
+          onOpenChange={(open) => {
+            if (!open) {
+              setConfirmCancel({ show: false, subscription: null });
+            }
+          }}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader className="space-y-4">
+              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <DialogTitle className="text-center text-2xl font-bold text-slate-800">
+                Confirm Cancel
+              </DialogTitle>
+              <DialogDescription className="text-center text-base text-slate-600">
+                Are you sure you want to cancel subscription for <strong className="text-slate-900">{confirmCancel?.subscription?.vehicle?.license_plate}</strong>? 
+                <br />
+                <span className="text-red-600 font-medium">This action cannot be undone.</span>
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex space-x-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1 border-slate-300 hover:bg-slate-50"
+                onClick={() => setConfirmCancel({ show: false, subscription: null })}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1 bg-red-600 hover:bg-red-700 shadow-md hover:shadow-lg transition-all duration-200"
+                onClick={executeCancel}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Canceling...
+                  </>
+                ) : (
+                  'Cancel Subscription'
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

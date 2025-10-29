@@ -30,6 +30,17 @@ import {
 const Dashboard = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+ 
+    const toTitleCase = (s) => {
+        if (!s) return '';
+        return s
+            .toString()
+            .split(' ')
+            .filter(Boolean)
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+    };
+
     const [showMockTest, setShowMockTest] = useState(false);
     const [showProfileUpdate, setShowProfileUpdate] = useState(false);
     const [showVehicleManagement, setShowVehicleManagement] = useState(false);
@@ -159,6 +170,13 @@ const Dashboard = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
             <div className="container mx-auto px-4 max-w-7xl">
+                {/* Background with welcome */}
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute inset-0" style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+                    }} />
+                </div>
+                
                 {/* Header */}
                 <div className="mb-8">
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
@@ -173,7 +191,7 @@ const Dashboard = () => {
                             </div>
                             <div>
                                 <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                                    Welcome, {user?.fullname}!
+                                    Welcome, {toTitleCase(user?.fullname)}!
                                 </h1>
                                 <p className="text-slate-600 mt-1 text-lg">
                                     {user?.role === 'driver' ? 'EV Driver' : 'Administrator'} • {user?.email}
