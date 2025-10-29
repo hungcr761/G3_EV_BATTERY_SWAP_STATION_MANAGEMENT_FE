@@ -29,7 +29,7 @@ export default function VehicleManagement() {
 
     const handleEdit = (v) => {
         setEditingVehicle(v);
-        setApiError(''); 
+        setApiError('');
         setShowDialog(true);
     };
 
@@ -54,8 +54,8 @@ export default function VehicleManagement() {
             <div className="container mx-auto px-4 max-w-7xl py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <Button 
-                        variant='ghost' 
+                    <Button
+                        variant='ghost'
                         onClick={() => navigate('/dashboard')}
                         className='mb-6 hover:bg-white/60 transition-all duration-200'
                     >
@@ -78,7 +78,7 @@ export default function VehicleManagement() {
                                     </p>
                                 </div>
                             </div>
-                            <Button 
+                            <Button
                                 onClick={handleAddNew}
                                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 px-6 py-6 text-base"
                             >
@@ -92,17 +92,15 @@ export default function VehicleManagement() {
                 {/* Alert Message */}
                 {message.text && (
                     <div
-                        className={`mb-8 p-5 rounded-xl flex items-start space-x-4 backdrop-blur-sm border shadow-md transition-all duration-300 animate-in slide-in-from-top ${
-                            message.type === 'success'
-                                ? 'bg-emerald-50/90 text-emerald-900 border-emerald-200 shadow-emerald-100'
-                                : 'bg-red-50/90 text-red-900 border-red-200 shadow-red-100'
-                        }`}
+                        className={`mb-8 p-5 rounded-xl flex items-start space-x-4 backdrop-blur-sm border shadow-md transition-all duration-300 animate-in slide-in-from-top ${message.type === 'success'
+                            ? 'bg-emerald-50/90 text-emerald-900 border-emerald-200 shadow-emerald-100'
+                            : 'bg-red-50/90 text-red-900 border-red-200 shadow-red-100'
+                            }`}
                     >
-                        <div className={`p-2 rounded-lg ${
-                            message.type === 'success' 
-                                ? 'bg-emerald-100' 
-                                : 'bg-red-100'
-                        }`}>
+                        <div className={`p-2 rounded-lg ${message.type === 'success'
+                            ? 'bg-emerald-100'
+                            : 'bg-red-100'
+                            }`}>
                             {message.type === 'success' ? (
                                 <CheckCircle className="h-5 w-5 flex-shrink-0" />
                             ) : (
@@ -135,7 +133,7 @@ export default function VehicleManagement() {
                                     <p className="text-slate-600 mb-8 text-lg max-w-md mx-auto">
                                         Start building your EV fleet by adding your first vehicle.
                                     </p>
-                                    <Button 
+                                    <Button
                                         onClick={handleAddNew}
                                         className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 px-8 py-6 text-base"
                                     >
@@ -175,8 +173,8 @@ export default function VehicleManagement() {
                                 {editingVehicle ? 'Update Vehicle Information' : 'Add New Vehicle'}
                             </DialogTitle>
                             <DialogDescription className="text-base text-slate-600">
-                                {editingVehicle 
-                                    ? 'Edit your vehicle information below. VIN cannot be changed.' 
+                                {editingVehicle
+                                    ? 'Edit your vehicle information below. VIN cannot be changed.'
                                     : 'Fill in your new vehicle information to add it to your fleet.'}
                             </DialogDescription>
                         </DialogHeader>
@@ -204,31 +202,54 @@ export default function VehicleManagement() {
                         }
                     }}
                 >
-                    <DialogContent className="max-w-md">
-                        <DialogHeader className="space-y-4">
-                            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                                <AlertCircle className="h-8 w-8 text-red-600" />
+                    <DialogContent className="max-w-md p-0 overflow-hidden">
+                        <div className="bg-red-600/95 text-white px-6 py-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">
+                                    <AlertCircle className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+                                    <p className="text-white/90 text-sm">This action is permanent</p>
+                                </div>
                             </div>
-                            <DialogTitle className="text-center text-2xl font-bold text-slate-800">
-                                Confirm Delete
-                            </DialogTitle>
-                            <DialogDescription className="text-center text-base text-slate-600">
-                                Are you sure you want to delete vehicle <strong className="text-slate-900">{confirmDelete?.vehicle?.modelName}</strong> ({confirmDelete?.vehicle?.license_plate})? 
-                                <br />
-                                <span className="text-red-600 font-medium">This action cannot be undone.</span>
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex space-x-3 pt-4">
+                        </div>
+
+                        <div className="px-6 pt-5 pb-2 space-y-4">
+                            <DialogHeader className="p-0">
+                                <DialogTitle className="text-xl font-bold text-slate-900">
+                                    Delete vehicle?
+                                </DialogTitle>
+                                <DialogDescription className="text-slate-600">
+                                    You are about to delete the following vehicle. This will remove it from your account and cannot be undone.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-500">Model</p>
+                                        <p className="font-medium text-slate-900">{confirmDelete?.vehicle?.modelName || 'Unknown Model'}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-slate-500">License plate</p>
+                                        <p className="font-mono font-semibold text-slate-900">{confirmDelete?.vehicle?.license_plate || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-6 pb-6 flex justify-end gap-3">
                             <Button
                                 variant="outline"
-                                className="flex-1 border-slate-300 hover:bg-slate-50"
+                                className="border-slate-300 hover:bg-slate-50"
                                 onClick={() => setConfirmDelete(null)}
                             >
                                 Cancel
                             </Button>
                             <Button
                                 variant="destructive"
-                                className="flex-1 bg-red-600 hover:bg-red-700 shadow-md hover:shadow-lg transition-all duration-200"
+                                className="bg-red-600 hover:bg-red-700 shadow-md hover:shadow-lg transition-all duration-200"
                                 onClick={executeDelete}
                                 disabled={isSubmitting}
                             >

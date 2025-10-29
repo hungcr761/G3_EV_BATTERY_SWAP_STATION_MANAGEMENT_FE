@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Motorbike, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
-import { vehicleAPI, subscriptionAPI } from '../../lib/apiServices';
+import { vehicleAPI, subscriptionAPI, swapAPI } from '../../lib/apiServices';
 
 const UserVehicleSelection = () => {
     const { stationId, userId } = useParams();
@@ -18,10 +18,10 @@ const UserVehicleSelection = () => {
     // Helper function to make battery type names more user-friendly
     const getBatteryDisplayName = (batteryTypeCode) => {
         const batteryNames = {
-            'NMC-50': 'Pin NMC 50kWh',
-            'LFP-60': 'Pin LFP 60kWh',
-            'NMC-100': 'Pin NMC 100kWh',
-            'LFP-80': 'Pin LFP 80kWh'
+            'NMC-50': 'NMC 50kWh',
+            'LFP-60': 'LFP 60kWh',
+            'NMC-100': 'NMC 100kWh',
+            'LFP-80': 'LFP 80kWh'
         };
         return batteryNames[batteryTypeCode] || batteryTypeCode;
     };
@@ -33,10 +33,11 @@ const UserVehicleSelection = () => {
                 const response = await vehicleAPI.getAll();
                 const vehiclesData = response.data?.vehicles || [];
 
-                // Fetch subscription data for each vehicle
+                // Fetch subscription data and first-time status for each vehicle
                 const vehiclesWithSubscriptions = await Promise.all(
                     vehiclesData.map(async (vehicle) => {
                         try {
+                            // Fetch subscription data
                             const subscriptionResponse = await subscriptionAPI.getByVehicleId(vehicle.vehicle_id);
                             const subscriptionData = subscriptionResponse.data;
 
@@ -44,6 +45,19 @@ const UserVehicleSelection = () => {
                             const hasActiveSubscription = subscriptionData?.payload?.subscription?.some(
                                 sub => sub.status === 'active'
                             ) || false;
+
+                            // Check if this is first time taking battery using new API
+                            let isFirstTimeSwap = false;
+                            let firstTimeData = null;
+                            try {
+                                const firstTimeResponse = await swapAPI.checkFirstTimePickup(vehicle.vehicle_id);
+                                firstTimeData = firstTimeResponse.data;
+                                isFirstTimeSwap = firstTimeData?.data?.is_first_time || false;
+                            } catch (firstTimeError) {
+                                console.error(`Error checking first time status for vehicle ${vehicle.vehicle_id}:`, firstTimeError);
+                                // If first time check fails, assume not first time
+                                isFirstTimeSwap = false;
+                            }
 
                             const modelName = vehicle.model?.name || 'Unknown Model';
                             const batteryTypeCode = vehicle.model?.batteryType?.battery_type_code || 'Unknown';
@@ -58,6 +72,8 @@ const UserVehicleSelection = () => {
                                 batteryCapacity,
                                 batterySlots,
                                 hasActiveSubscription,
+                                isFirstTimeSwap,
+                                firstTimeData,
                                 subscription: subscriptionData?.payload?.subscription || []
                             };
                         } catch (subscriptionError) {
@@ -76,6 +92,8 @@ const UserVehicleSelection = () => {
                                 batteryCapacity,
                                 batterySlots,
                                 hasActiveSubscription: false,
+                                isFirstTimeSwap: false,
+                                firstTimeData: null,
                                 subscription: []
                             };
                         }
@@ -85,7 +103,7 @@ const UserVehicleSelection = () => {
                 setVehicles(vehiclesWithSubscriptions);
             } catch (error) {
                 console.error('Error fetching vehicles:', error);
-                setError('Không thể tải danh sách xe');
+                setError('Unable to load vehicle list');
             } finally {
                 setLoading(false);
             }
@@ -101,7 +119,11 @@ const UserVehicleSelection = () => {
     const handleContinue = () => {
         if (!selectedVehicle || !selectedVehicle.hasActiveSubscription) return;
         navigate(`/kiosk/${stationId}/user/${userId}/battery`, {
-            state: { selectedVehicle }
+            state: {
+                selectedVehicle,
+                isFirstTimeSwap: selectedVehicle.isFirstTimeSwap,
+                firstTimeData: selectedVehicle.firstTimeData
+            }
         });
     };
 
@@ -115,7 +137,7 @@ const UserVehicleSelection = () => {
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-24 w-24 border-b-4 border-primary mx-auto mb-6"></div>
-                        <p className="text-2xl text-muted-foreground">Đang tải danh sách xe...</p>
+                        <p className="text-2xl text-muted-foreground">Loading vehicle list...</p>
                     </div>
                 </div>
             </div>
@@ -129,14 +151,14 @@ const UserVehicleSelection = () => {
                     <Card className="border-red-300 bg-red-50">
                         <CardContent className="p-8">
                             <div className="text-center">
-                                <h3 className="text-2xl font-bold text-red-800 mb-2">Lỗi</h3>
+                                <h3 className="text-2xl font-bold text-red-800 mb-2">Error</h3>
                                 <p className="text-xl text-red-600">{error}</p>
                                 <Button
                                     variant="outline"
                                     onClick={handleBack}
                                     className="mt-4"
                                 >
-                                    Quay lại
+                                    Go Back
                                 </Button>
                             </div>
                         </CardContent>
@@ -151,9 +173,9 @@ const UserVehicleSelection = () => {
             <div className="max-w-6xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="text-center space-y-4">
-                    <h1 className="text-5xl font-bold text-primary">Chọn xe</h1>
+                    <h1 className="text-5xl font-bold text-primary">Select Vehicle</h1>
                     <p className="text-2xl text-muted-foreground">
-                        Chọn xe bạn muốn đổi pin
+                        Choose the vehicle you want to swap batteries for
                     </p>
                 </div>
 
@@ -163,10 +185,10 @@ const UserVehicleSelection = () => {
                         <Card
                             key={vehicle.vehicle_id}
                             className={`transition-all ${!vehicle.hasActiveSubscription
-                                    ? 'border-2 border-gray-300 bg-gray-100 cursor-not-allowed opacity-60'
-                                    : selectedVehicle?.vehicle_id === vehicle.vehicle_id
-                                        ? 'border-4 border-primary shadow-xl scale-105 cursor-pointer'
-                                        : 'border-2 border-gray-200 hover:border-primary hover:shadow-lg cursor-pointer'
+                                ? 'border-2 border-gray-300 bg-gray-100 cursor-not-allowed opacity-60'
+                                : selectedVehicle?.vehicle_id === vehicle.vehicle_id
+                                    ? 'border-4 border-primary shadow-xl scale-105 cursor-pointer'
+                                    : 'border-2 border-gray-200 hover:border-primary hover:shadow-lg cursor-pointer'
                                 }`}
                             onClick={() => vehicle.hasActiveSubscription && handleVehicleSelect(vehicle)}
                         >
@@ -190,24 +212,24 @@ const UserVehicleSelection = () => {
                                                 {vehicle.hasActiveSubscription ? (
                                                     <Badge variant="default" className="text-lg px-3 py-1 bg-green-100 text-green-800">
                                                         <CheckCircle2 className="h-4 w-4 mr-1" />
-                                                        Có gói
+                                                        Has Subscription
                                                     </Badge>
                                                 ) : (
                                                     <Badge variant="outline" className="text-lg px-3 py-1 border-red-300 text-red-600">
-                                                        Không có gói
+                                                        No Subscription
                                                     </Badge>
                                                 )}
                                                 {selectedVehicle?.vehicle_id === vehicle.vehicle_id && (
                                                     <Badge variant="default" className="text-lg px-3 py-1">
                                                         <CheckCircle2 className="h-4 w-4 mr-1" />
-                                                        Đã chọn
+                                                        Selected
                                                     </Badge>
                                                 )}
                                             </div>
                                             <div className="text-sm text-muted-foreground">
-                                                <p>Số slot pin: {vehicle.batterySlots} {vehicle.batterySlots === 1 ? 'pin' : 'pin'}</p>
+                                                <p>Battery slots: {vehicle.batterySlots} {vehicle.batterySlots === 1 ? 'battery' : 'batteries'}</p>
                                                 {!vehicle.hasActiveSubscription && (
-                                                    <p className="text-red-600 font-semibold">Cần đăng ký gói để sử dụng</p>
+                                                    <p className="text-red-600 font-semibold">Need to register package to use</p>
                                                 )}
                                             </div>
                                         </div>
@@ -227,7 +249,7 @@ const UserVehicleSelection = () => {
                         className="text-2xl px-12 py-8 h-auto"
                     >
                         <ArrowLeft className="mr-3 h-6 w-6" />
-                        Quay lại
+                        Go Back
                     </Button>
 
                     <Button
@@ -236,7 +258,7 @@ const UserVehicleSelection = () => {
                         disabled={!selectedVehicle || !selectedVehicle.hasActiveSubscription}
                         className="text-2xl px-12 py-8 h-auto"
                     >
-                        Tiếp tục
+                        Continue
                         <ArrowRight className="ml-3 h-6 w-6" />
                     </Button>
                 </div>
@@ -247,17 +269,17 @@ const UserVehicleSelection = () => {
                         <CardContent className="p-6">
                             <div className="text-center">
                                 <h3 className={`text-2xl font-bold mb-2 ${selectedVehicle.hasActiveSubscription ? 'text-blue-800' : 'text-red-800'}`}>
-                                    Xe đã chọn
+                                    Selected Vehicle
                                 </h3>
                                 <p className={`text-xl mb-2 ${selectedVehicle.hasActiveSubscription ? 'text-blue-600' : 'text-red-600'}`}>
                                     {selectedVehicle.modelName} - {selectedVehicle.license_plate}
                                 </p>
                                 <div className={`text-lg space-y-1 ${selectedVehicle.hasActiveSubscription ? 'text-blue-500' : 'text-red-500'}`}>
-                                    <p>Loại pin: {selectedVehicle.batteryType}</p>
-                                    <p>Dung lượng: {selectedVehicle.batteryCapacity} kWh</p>
-                                    <p>Số slot pin: {selectedVehicle.batterySlots} {selectedVehicle.batterySlots === 1 ? 'pin' : 'pin'}</p>
+                                    <p>Battery Type: {selectedVehicle.batteryType}</p>
+                                    <p>Capacity: {selectedVehicle.batteryCapacity} kWh</p>
+                                    <p>Battery slots: {selectedVehicle.batterySlots} {selectedVehicle.batterySlots === 1 ? 'battery' : 'batteries'}</p>
                                     <p className="font-semibold">
-                                        {selectedVehicle.hasActiveSubscription ? '✅ Có gói đăng ký' : '❌ Chưa có gói đăng ký'}
+                                        {selectedVehicle.hasActiveSubscription ? '✅ Has subscription package' : '❌ No subscription package'}
                                     </p>
                                 </div>
                             </div>

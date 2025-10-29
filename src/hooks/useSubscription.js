@@ -73,7 +73,7 @@ export default function useSubscription() {
         setIsSubmitting(true);
         try {
             const response = await subscriptionAPI.cancel(subscriptionId);
-            
+
             if (response.status === 200 || response.data?.success) {
                 setMessage({
                     type: 'success',
@@ -85,7 +85,7 @@ export default function useSubscription() {
 
                 setTimeout(() => {
                     setMessage({ type: '', text: '' });
-                }, 3000);
+                }, 6000);
             }
         } catch (error) {
             console.error('Error cancelling subscription:', error);
@@ -96,7 +96,7 @@ export default function useSubscription() {
 
             setTimeout(() => {
                 setMessage({ type: '', text: '' });
-            }, 3000);
+            }, 6000);
         } finally {
             setIsSubmitting(false);
         }
@@ -107,7 +107,7 @@ export default function useSubscription() {
         setIsSubmitting(true);
         try {
             const response = await subscriptionAPI.renew(subscriptionId, { plan_id: planId });
-            
+
             if (response.status === 200 || response.data?.success) {
                 setMessage({
                     type: 'success',
@@ -119,7 +119,7 @@ export default function useSubscription() {
 
                 setTimeout(() => {
                     setMessage({ type: '', text: '' });
-                }, 3000);
+                }, 6000);
 
                 return true;
             }
@@ -132,7 +132,7 @@ export default function useSubscription() {
 
             setTimeout(() => {
                 setMessage({ type: '', text: '' });
-            }, 3000);
+            }, 6000);
 
             return false;
         } finally {

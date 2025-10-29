@@ -28,7 +28,7 @@ const UserVerification = () => {
                     if (response.data && response.data.success) {
                         setUserData(response.data.payload.user);
                     } else {
-                        setError('Không tìm thấy thông tin người dùng');
+                        setError('User information not found');
                         return;
                     }
                 }
@@ -43,7 +43,7 @@ const UserVerification = () => {
                 setAutoNavigate(true);
             } catch (error) {
                 console.error('Error fetching user data:', error);
-                setError('Không thể tải thông tin người dùng');
+                setError('Unable to load user information');
             } finally {
                 setLoading(false);
             }
@@ -72,7 +72,7 @@ const UserVerification = () => {
 
     const handleContinue = () => {
         if (userVehicles.length === 0) {
-            setError('Bạn chưa có xe nào. Vui lòng thêm xe trong ứng dụng trước khi sử dụng dịch vụ.');
+            setError('You have no vehicles. Please add a vehicle in the app before using the service.');
             return;
         }
         // Stop auto-navigation and proceed immediately
@@ -86,7 +86,7 @@ const UserVerification = () => {
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-24 w-24 border-b-4 border-primary mx-auto mb-6"></div>
-                        <p className="text-2xl text-muted-foreground">Đang tải thông tin...</p>
+                        <p className="text-2xl text-muted-foreground">Loading information...</p>
                     </div>
                 </div>
             </div>
@@ -102,14 +102,14 @@ const UserVerification = () => {
                             <div className="flex items-start space-x-4">
                                 <AlertCircle className="h-12 w-12 text-red-600 flex-shrink-0" />
                                 <div>
-                                    <h3 className="text-2xl font-bold text-red-800 mb-2">Lỗi xác thực</h3>
+                                    <h3 className="text-2xl font-bold text-red-800 mb-2">Authentication Error</h3>
                                     <p className="text-xl text-red-600">{error}</p>
                                     <Button
                                         variant="outline"
                                         onClick={() => navigate(`/kiosk/${stationId}`)}
                                         className="mt-4"
                                     >
-                                        Quay lại
+                                        Go Back
                                     </Button>
                                 </div>
                             </div>
@@ -129,24 +129,24 @@ const UserVerification = () => {
                         <CheckCircle2 className="h-16 w-16 text-green-600" />
                     </div>
                     <h1 className="text-5xl font-bold text-green-600">
-                        Xác thực thành công!
+                        Verification Successful!
                     </h1>
                     <p className="text-2xl text-muted-foreground">
-                        Chào mừng bạn đến với dịch vụ đổi pin
+                        Welcome to the battery swap service
                     </p>
                 </div>
 
                 {/* User Info Card */}
                 <Card className="border-4 border-green-500 shadow-2xl">
                     <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-                        <CardTitle className="text-3xl">Thông tin tài khoản</CardTitle>
+                        <CardTitle className="text-3xl">Account Information</CardTitle>
                     </CardHeader>
                     <CardContent className="p-8">
                         <div className="flex items-center space-x-6">
                             <User className="h-16 w-16 text-primary" />
                             <div className="flex-1">
                                 <h2 className="text-3xl font-bold mb-2">
-                                    {userData?.fullname || 'Khách hàng'}
+                                    {userData?.fullname || 'Customer'}
                                 </h2>
                                 <p className="text-xl text-muted-foreground mb-1">
                                     {userData?.email || 'N/A'}
@@ -156,7 +156,7 @@ const UserVerification = () => {
                                 </p>
                             </div>
                             <Badge variant="secondary" className="text-xl px-6 py-3 bg-green-100 text-green-800">
-                                Đã xác thực
+                                Verified
                             </Badge>
                         </div>
                     </CardContent>
@@ -166,7 +166,7 @@ const UserVerification = () => {
                 <div className="text-center space-y-4">
                     {autoNavigate && userVehicles.length > 0 && (
                         <div className="text-2xl text-muted-foreground mb-4">
-                            Tự động chuyển trang sau <span className="font-bold text-primary">{countdown}</span> giây
+                            Auto redirect in <span className="font-bold text-primary">{countdown}</span> seconds
                         </div>
                     )}
                     <Button
@@ -176,7 +176,7 @@ const UserVerification = () => {
                         className="text-3xl px-16 py-12 h-auto"
                     >
                         <ArrowRight className="mr-4 h-8 w-8" />
-                        {autoNavigate && userVehicles.length > 0 ? 'Tiếp tục ngay' : 'Tiếp tục chọn xe'}
+                        {autoNavigate && userVehicles.length > 0 ? 'Continue Now' : 'Continue to Select Vehicle'}
                     </Button>
                 </div>
 
@@ -188,10 +188,10 @@ const UserVerification = () => {
                                 <AlertCircle className="h-8 w-8 text-yellow-600 flex-shrink-0" />
                                 <div>
                                     <h3 className="text-xl font-bold text-yellow-800 mb-2">
-                                        Chưa có xe
+                                        No Vehicles
                                     </h3>
                                     <p className="text-lg text-yellow-700">
-                                        Vui lòng thêm xe trong ứng dụng trước khi sử dụng dịch vụ đổi pin.
+                                        Please add a vehicle in the app before using the battery swap service.
                                     </p>
                                 </div>
                             </div>

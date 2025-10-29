@@ -76,7 +76,9 @@ const UserAvailabilityCheck = () => {
             state: {
                 selectedVehicle,
                 selectedBatteries,
-                availabilityData
+                availabilityData,
+                isFirstTimeSwap: location.state?.isFirstTimeSwap,
+                firstTimeData: location.state?.firstTimeData
             }
         });
     };
@@ -234,9 +236,6 @@ const UserAvailabilityCheck = () => {
                                             </p>
                                             <p className="text-muted-foreground">
                                                 <span className="font-medium">SOH:</span> {battery.current_soh}%
-                                            </p>
-                                            <p className="text-muted-foreground">
-                                                <span className="font-medium">Cabinet:</span> {battery.cabinet.cabinet_id}
                                             </p>
                                         </div>
                                     </div>

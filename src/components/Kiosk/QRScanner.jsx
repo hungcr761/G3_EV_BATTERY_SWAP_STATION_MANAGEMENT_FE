@@ -256,7 +256,7 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                                         type="text"
                                         placeholder="VD: BK123456789"
                                         value={bookingId}
-                                        onChange={(e) => setBookingId(e.target.value.toUpperCase())}
+                                        onChange={(e) => setBookingId(e.target.value)}
                                         className="text-3xl text-center py-8 h-auto tracking-wider"
                                         autoFocus
                                     />

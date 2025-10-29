@@ -100,10 +100,10 @@ const ProfileUpdate = ({ onBack }) => {
                     text: 'Profile updated successfully!'
                 });
 
-                // Auto close message after 3 seconds
+                // Auto close message after 6 seconds
                 setTimeout(() => {
                     setMessage({ type: '', text: '' });
-                }, 3000);
+                }, 6000);
             }
         } catch (error) {
             if (error.name === 'ZodError') {
@@ -179,13 +179,13 @@ const ProfileUpdate = ({ onBack }) => {
                 {message.text && (
                     <div
                         className={`mb-8 p-5 rounded-xl flex items-start space-x-4 backdrop-blur-sm border shadow-md transition-all duration-300 animate-in slide-in-from-top ${message.type === 'success'
-                                ? 'bg-emerald-50/90 text-emerald-900 border-emerald-200 shadow-emerald-100'
-                                : 'bg-red-50/90 text-red-900 border-red-200 shadow-red-100'
+                            ? 'bg-emerald-50/90 text-emerald-900 border-emerald-200 shadow-emerald-100'
+                            : 'bg-red-50/90 text-red-900 border-red-200 shadow-red-100'
                             }`}
                     >
                         <div className={`p-2 rounded-lg ${message.type === 'success'
-                                ? 'bg-emerald-100'
-                                : 'bg-red-100'
+                            ? 'bg-emerald-100'
+                            : 'bg-red-100'
                             }`}>
                             {message.type === 'success' ? (
                                 <CheckCircle className="h-5 w-5 flex-shrink-0" />

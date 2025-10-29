@@ -339,7 +339,7 @@ const Dashboard = () => {
                                                         <p className="text-xs text-slate-600 mt-1">{booking.address}</p>
                                                         <p className="text-xs text-slate-600 mt-1 flex items-center">
                                                             <Calendar className="h-3 w-3 mr-1" />
-                                                            {booking.date} từ {booking.time} - {booking.endTime}
+                                                            {booking.date} from {new Date(booking.createTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} - {booking.time}
                                                         </p>
                                                         <p className="text-xs text-slate-600 flex items-center mt-1">
                                                             <Motorbike className="h-3 w-3 mr-1" />
@@ -433,51 +433,56 @@ const Dashboard = () => {
 
                 {/* Booking Details Dialog */}
                 <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader className="pb-4">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <DialogTitle className="flex items-center space-x-2 text-2xl font-bold text-slate-800">
-                                        <div className="p-2 bg-purple-100 rounded-lg">
-                                            <Calendar className="h-6 w-6 text-purple-600" />
-                                        </div>
-                                        <span>Booking Details</span>
-                                    </DialogTitle>
-                                    <DialogDescription className="mt-2 text-base text-slate-600">
-                                        Detailed information about your battery swap schedule
-                                    </DialogDescription>
+                    <DialogContent className="max-w-4xl p-0 overflow-hidden">
+                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">
+                                        <Calendar className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold">Booking Details</h3>
+                                        <p className="text-white/90 text-sm">Battery swap schedule information</p>
+                                    </div>
                                 </div>
                                 {selectedBooking && (
                                     <Button
                                         variant="outline"
                                         onClick={() => setShowQRCode(true)}
-                                        className="flex items-center space-x-2 border-slate-300 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-200"
+                                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30"
                                     >
-                                        <QrCode className="h-4 w-4" />
-                                        <span>Show QR Code</span>
+                                        <QrCode className="h-4 w-4 mr-2" />
+                                        Show QR Code
                                     </Button>
                                 )}
                             </div>
-                        </DialogHeader>
-                        {selectedBooking && (
-                            <div className="space-y-6 pt-2">
-                                {/* Status Header */}
+                        </div>
 
+                        {selectedBooking && (
+                            <div className="px-6 pt-6 pb-2 space-y-6">
+                                <DialogHeader className="p-0">
+                                    <DialogTitle className="text-xl font-bold text-slate-900">
+                                        Booking Information
+                                    </DialogTitle>
+                                    <DialogDescription className="text-slate-600">
+                                        Complete details about your scheduled battery swap appointment
+                                    </DialogDescription>
+                                </DialogHeader>
 
                                 {/* Main Content Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-1">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Station Info */}
-                                    <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                                    <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
                                         <CardHeader className="pb-3 px-5 pt-5">
-                                            <CardTitle className="flex items-center space-x-2 text-lg">
+                                            <CardTitle className="flex items-center space-x-2 text-lg text-slate-800">
                                                 <MapPin className="h-5 w-5 text-blue-600" />
-                                                <span className="text-blue-900">Station Information</span>
+                                                <span>Station Information</span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="px-5 pb-5">
                                             <div className="space-y-2">
-                                                <p className="font-semibold text-base text-blue-900">{selectedBooking.station}</p>
-                                                <p className="text-sm text-blue-700 flex items-start">
+                                                <p className="font-semibold text-base text-slate-900">{selectedBooking.station}</p>
+                                                <p className="text-sm text-slate-600 flex items-start">
                                                     <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                                                     {selectedBooking.address}
                                                 </p>
@@ -486,17 +491,17 @@ const Dashboard = () => {
                                     </Card>
 
                                     {/* Vehicle Info */}
-                                    <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-emerald-50 to-teal-50">
+                                    <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
                                         <CardHeader className="pb-3 px-5 pt-5">
-                                            <CardTitle className="flex items-center space-x-2 text-lg">
+                                            <CardTitle className="flex items-center space-x-2 text-lg text-slate-800">
                                                 <Motorbike className="h-5 w-5 text-emerald-600" />
-                                                <span className="text-emerald-900">Vehicle Information</span>
+                                                <span>Vehicle Information</span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="px-5 pb-5">
                                             <div className="space-y-2">
-                                                <p className="font-semibold text-base text-emerald-900">{selectedBooking.vehicle}</p>
-                                                <p className="text-sm text-emerald-700">
+                                                <p className="font-semibold text-base text-slate-900">{selectedBooking.vehicle}</p>
+                                                <p className="text-sm text-slate-600">
                                                     {selectedBooking.vehicleBrand} {selectedBooking.vehicleModel}
                                                 </p>
                                             </div>
@@ -504,23 +509,23 @@ const Dashboard = () => {
                                     </Card>
 
                                     {/* Booking Schedule */}
-                                    <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-purple-50 to-pink-50">
+                                    <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
                                         <CardHeader className="pb-3 px-5 pt-5">
-                                            <CardTitle className="flex items-center space-x-2 text-lg">
+                                            <CardTitle className="flex items-center space-x-2 text-lg text-slate-800">
                                                 <Calendar className="h-5 w-5 text-purple-600" />
-                                                <span className="text-purple-900">Booking Schedule</span>
+                                                <span>Booking Schedule</span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="px-5 pb-5">
                                             <div className="space-y-3">
                                                 <div>
-                                                    <p className="font-semibold text-base text-purple-900">{selectedBooking.date}</p>
-                                                    <p className="text-sm text-purple-700">
-                                                        {new Date(selectedBooking.createTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} - {selectedBooking.time}
+                                                    <p className="font-semibold text-base text-slate-900">{selectedBooking.date}</p>
+                                                    <p className="text-sm text-slate-600">
+                                                        {new Date(selectedBooking.createTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - {selectedBooking.time}
                                                     </p>
                                                 </div>
-                                                <div className="pt-2 border-t border-purple-200">
-                                                    <p className="text-xs text-purple-600">
+                                                <div className="pt-2 border-t border-slate-200">
+                                                    <p className="text-xs text-slate-500">
                                                         Created at: {new Date(selectedBooking.createTime).toLocaleString('vi-VN')}
                                                     </p>
                                                 </div>
@@ -529,29 +534,29 @@ const Dashboard = () => {
                                     </Card>
 
                                     {/* Battery Info */}
-                                    <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow duration-200 bg-gradient-to-br from-amber-50 to-orange-50">
+                                    <Card className="border-slate-200/60 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
                                         <CardHeader className="pb-3 px-5 pt-5">
-                                            <CardTitle className="flex items-center space-x-2 text-lg">
+                                            <CardTitle className="flex items-center space-x-2 text-lg text-slate-800">
                                                 <Battery className="h-5 w-5 text-amber-600" />
-                                                <span className="text-amber-900">Battery Information</span>
+                                                <span>Battery Information</span>
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="px-5 pb-5">
                                             {selectedBooking.batteries && selectedBooking.batteries.length > 0 ? (
                                                 <div className="space-y-3">
-                                                    <p className="text-sm font-medium text-amber-800">
+                                                    <p className="text-sm font-medium text-slate-700">
                                                         {selectedBooking.batteryCount} battery(ies) booked
                                                     </p>
                                                     <div className="space-y-2">
                                                         {selectedBooking.batteries.map((battery, index) => (
-                                                            <div key={battery.battery_id} className="bg-white p-3 rounded-lg border border-amber-200 shadow-sm">
+                                                            <div key={battery.battery_id} className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                                                                 <div className="flex items-center justify-between">
-                                                                    <p className="font-medium text-sm text-amber-900">Pin #{index + 1}</p>
+                                                                    <p className="font-medium text-sm text-slate-900">Pin #{index + 1}</p>
                                                                     <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
                                                                         {battery.current_soc}% SoC
                                                                     </Badge>
                                                                 </div>
-                                                                <p className="text-xs text-amber-700 mt-1">
+                                                                <p className="text-xs text-slate-600 mt-1">
                                                                     Serial: {battery.battery_serial}
                                                                 </p>
                                                             </div>
@@ -559,39 +564,42 @@ const Dashboard = () => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <p className="text-sm text-amber-700">No battery information</p>
+                                                <p className="text-sm text-slate-600">No battery information</p>
                                             )}
                                         </CardContent>
                                     </Card>
                                 </div>
-
-                                {/* Actions */}
-                                <div className="flex justify-between items-center pt-6 px-2 border-t border-slate-200">
-                                    <div className="text-sm text-slate-600 font-medium">
-                                        Booking ID: <span className="font-mono text-slate-800">{selectedBooking.id}</span>
-                                    </div>
-                                    <div className="flex space-x-3">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setSelectedBooking(null)}
-                                            className="border-slate-300 hover:bg-slate-50"
-                                        >
-                                            Close
-                                        </Button>
-                                        {selectedBooking.status === 'pending' && (
-                                            <Button
-                                                variant="destructive"
-                                                onClick={handleCancelClick}
-                                                disabled={isCancelling}
-                                                className="bg-red-600 hover:bg-red-700 shadow-md hover:shadow-lg transition-all duration-200"
-                                            >
-                                                Cancel Booking
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
                             </div>
                         )}
+
+                        <div className="px-6 pb-6 flex justify-between items-center">
+                            <div className="flex space-x-3">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setSelectedBooking(null)}
+                                    className="border-slate-300 hover:bg-slate-50"
+                                >
+                                    Close
+                                </Button>
+                                {selectedBooking?.status === 'pending' && (
+                                    <Button
+                                        variant="destructive"
+                                        onClick={handleCancelClick}
+                                        disabled={isCancelling}
+                                        className="bg-red-600 hover:bg-red-700 shadow-md hover:shadow-lg transition-all duration-200"
+                                    >
+                                        {isCancelling ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Cancelling...
+                                            </>
+                                        ) : (
+                                            'Cancel Booking'
+                                        )}
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
                     </DialogContent>
                 </Dialog>
 
