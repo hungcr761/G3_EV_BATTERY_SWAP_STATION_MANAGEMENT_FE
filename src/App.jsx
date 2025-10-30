@@ -35,6 +35,7 @@ import BatteryManagement from './pages/Admin/BatteryManagement';
 import AnalyticsReports from './pages/Admin/AnalyticsReports';
 import SystemSettings from './pages/Admin/SystemSettings';
 import PaymentHistory from './pages/EVDriver/PaymentHistory.jsx';
+import ShiftSchedule from './pages/Admin/ShiftSchedule';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -183,6 +184,13 @@ function App() {
             <AdminProtectedRoute>
               <AdminLayout>
                 <AdminDashboard />
+              </AdminLayout>
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/shifts" element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <ShiftSchedule />
               </AdminLayout>
             </AdminProtectedRoute>
           } />
