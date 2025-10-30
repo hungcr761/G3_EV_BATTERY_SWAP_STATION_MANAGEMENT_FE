@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
-    allowedHosts: ['devserver-main--starlit-tartufo-97bd76.netlify.app'],
+    allowedHosts: ['devserver-main--starlit-tartufo-97bd76.netlify.app', 'g3-ev-battery-swap-station-management-fe.onrender.com'],
     port: 5173
   },
   resolve: {
