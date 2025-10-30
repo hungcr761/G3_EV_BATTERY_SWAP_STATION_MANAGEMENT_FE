@@ -21,7 +21,7 @@ import UserBatterySelection from './pages/kiosk/UserBatterySelection';
 import UserAvailabilityCheck from './pages/kiosk/UserAvailabilityCheck';
 import './App.css';
 import VehicleManagement from './pages/EVDriver/VehicleManagement.jsx';
-import SubscriptionManagement from './pages/EVDriver/subscriptionManagement.jsx';
+import SubscriptionManagement from './pages/EVDriver/SubscriptionManagement.jsx';
 import Services from './pages/EVDriver/Services.jsx';
 import Payment from './pages/EVDriver/Payment.jsx';
 import PaymentSuccess from './pages/EVDriver/PaymentSuccess.jsx';
@@ -158,7 +158,7 @@ function App() {
                 <PaymentHistory />
               </Layout>
             </ProtectedRoute>
-          }/>
+          } />
           <Route path="/settings" element={
             <ProtectedRoute>
               <Layout>
