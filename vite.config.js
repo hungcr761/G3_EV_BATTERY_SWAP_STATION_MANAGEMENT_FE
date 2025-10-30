@@ -10,6 +10,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
+    allowedHosts: ['devserver-main--starlit-tartufo-97bd76.netlify.app'],
     port: 5173
   },
   resolve: {
