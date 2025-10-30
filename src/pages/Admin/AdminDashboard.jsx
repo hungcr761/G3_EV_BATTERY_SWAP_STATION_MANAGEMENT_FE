@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router';
 import {
     MapPin,
     Users,
@@ -14,9 +15,16 @@ import {
 import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { useStation } from '../../hooks/useStation';
+import { useApi } from '../../hooks/useApi';
+import { batteryAPI } from '../../lib/apiServices';
 
 const AdminDashboard = () => {
     const { stations, loading: stationsLoading, error: stationsError } = useStation();
+    const { data: batteries, loading: batteriesLoading, error: batteriesError } = useApi(batteryAPI.getAll, []);
+
+    const batteriesInStock = Array.isArray(batteries)
+        ? batteries.filter(b => (b?.vehicle_id == null) && (b?.slot_id != null)).length
+        : 0;
 
     // Mock data - will be replaced with real API calls
     const stats = [
@@ -39,7 +47,7 @@ const AdminDashboard = () => {
         },
         {
             name: 'Batteries in Stock',
-            value: '456',
+            value: batteriesLoading ? '...' : batteriesInStock.toString(),
             change: '-8',
             changeType: 'negative',
             icon: Battery,
@@ -118,7 +126,7 @@ const AdminDashboard = () => {
         switch (status) {
             case 'operational': return 'Operational';
             case 'maintenance': return 'Maintenance';
-            case 'low_stock': return 'Low Stock';
+            case 'closed': return 'Closed';
             default: return 'Unknown';
         }
     };
@@ -238,26 +246,31 @@ const AdminDashboard = () => {
             <Card className="p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <button className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Link to="/admin/stations" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <MapPin className="h-6 w-6 text-blue-600 mb-2" />
                         <p className="font-medium text-gray-900">Add New Station</p>
                         <p className="text-sm text-gray-500">Register a new battery swap station</p>
-                    </button>
-                    <button className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    </Link>
+                    <Link to="/admin/shifts" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <Clock className="h-6 w-6 text-blue-600 mb-2" />
+                        <p className="font-medium text-gray-900">Manage Shifts</p>
+                        <p className="text-sm text-gray-500">Schedule staff across stations</p>
+                    </Link>
+                    <Link to="/admin/users" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <Users className="h-6 w-6 text-green-600 mb-2" />
                         <p className="font-medium text-gray-900">Manage Staff</p>
                         <p className="text-sm text-gray-500">Add or update station staff</p>
-                    </button>
-                    <button className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    </Link>
+                    <Link to="/admin/batteries" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <Battery className="h-6 w-6 text-orange-600 mb-2" />
                         <p className="font-medium text-gray-900">Battery Inventory</p>
                         <p className="text-sm text-gray-500">Check and manage battery stock</p>
-                    </button>
-                    <button className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    </Link>
+                    <Link to="/admin/analytics" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <BarChart3 className="h-6 w-6 text-purple-600 mb-2" />
                         <p className="font-medium text-gray-900">View Reports</p>
                         <p className="text-sm text-gray-500">Generate analytics and reports</p>
-                    </button>
+                    </Link>
                 </div>
             </Card>
         </div>

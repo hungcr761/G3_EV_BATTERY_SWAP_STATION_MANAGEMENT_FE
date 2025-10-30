@@ -126,3 +126,8 @@ export const swapAPI = {
     executeFirstTimeWithBooking: (data) => api.post('/swap/execute-first-time-with-booking', data),
     checkFirstTimePickup: (vehicleId) => api.get(`/swap/check-first-time-pickup?vehicle_id=${vehicleId}`),
 };
+
+// Battery APIs
+export const batteryAPI = {
+    getAll: () => api.get('/battery/all'),
+};

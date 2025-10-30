@@ -12,7 +12,8 @@ import {
     Bell,
     User,
     LogOut,
-    ChevronDown
+    ChevronDown,
+    Clock
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -32,6 +33,7 @@ const AdminLayout = ({ children }) => {
     const navigation = [
         { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
         { name: 'Station Management', href: '/admin/stations', icon: MapPin },
+        { name: 'Shift Scheduling', href: '/admin/shifts', icon: Clock },
         { name: 'User Management', href: '/admin/users', icon: Users },
         { name: 'Battery Management', href: '/admin/batteries', icon: Battery },
         { name: 'Analytics & Reports', href: '/admin/analytics', icon: BarChart3 },

@@ -39,7 +39,7 @@ const StationManagement = () => {
         switch (status) {
             case 'operational': return 'Operational';
             case 'maintenance': return 'Maintenance';
-            case 'low_stock': return 'Low Stock';
+            case 'closed': return 'Closed';
             default: return 'Unknown';
         }
     };

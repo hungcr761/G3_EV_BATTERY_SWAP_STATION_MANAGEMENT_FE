@@ -21,95 +21,37 @@ import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
+import { useApi } from '../../hooks/useApi';
+import { batteryAPI } from '../../lib/apiServices';
 
 const BatteryManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterStation, setFilterStation] = useState('all');
 
-    // Mock data - will be replaced with real API calls
-    const batteries = [
-        {
-            id: 'BAT001',
-            model: 'LiFePO4-72V-50Ah',
-            serialNumber: 'SN123456789',
-            status: 'available',
-            soh: 95.5,
-            cycles: 245,
-            lastCharge: '2024-01-20 14:30',
-            location: 'Station A1',
-            capacity: 50,
-            voltage: 72,
-            temperature: 25.3,
-            healthScore: 92,
-            nextMaintenance: '2024-03-15',
-            totalSwaps: 156
-        },
-        {
-            id: 'BAT002',
-            model: 'LiFePO4-72V-50Ah',
-            serialNumber: 'SN123456790',
-            status: 'charging',
-            soh: 88.2,
-            cycles: 312,
-            lastCharge: '2024-01-20 15:45',
-            location: 'Station A1',
-            capacity: 50,
-            voltage: 72,
-            temperature: 28.7,
-            healthScore: 85,
-            nextMaintenance: '2024-02-28',
-            totalSwaps: 198
-        },
-        {
-            id: 'BAT003',
-            model: 'LiFePO4-72V-50Ah',
-            serialNumber: 'SN123456791',
-            status: 'maintenance',
-            soh: 76.8,
-            cycles: 445,
-            lastCharge: '2024-01-18 09:15',
-            location: 'Station A2',
-            capacity: 50,
-            voltage: 72,
-            temperature: 22.1,
-            healthScore: 78,
-            nextMaintenance: '2024-01-25',
-            totalSwaps: 267
-        },
-        {
-            id: 'BAT004',
-            model: 'LiFePO4-72V-50Ah',
-            serialNumber: 'SN123456792',
-            status: 'in_use',
-            soh: 91.3,
-            cycles: 189,
-            lastCharge: '2024-01-20 12:20',
-            location: 'Station B1',
-            capacity: 50,
-            voltage: 72,
-            temperature: 26.8,
-            healthScore: 89,
-            nextMaintenance: '2024-04-10',
-            totalSwaps: 134
-        },
-        {
-            id: 'BAT005',
-            model: 'LiFePO4-72V-50Ah',
-            serialNumber: 'SN123456793',
-            status: 'degraded',
-            soh: 65.4,
-            cycles: 523,
-            lastCharge: '2024-01-15 16:30',
-            location: 'Station B2',
-            capacity: 50,
-            voltage: 72,
-            temperature: 31.2,
-            healthScore: 62,
-            nextMaintenance: '2024-01-22',
-            totalSwaps: 312
-        }
-    ];
+
+    const { data: apiBatteries, loading: batteriesLoading, error: batteriesError } = useApi(batteryAPI.getAll, []);
+
+    const batteries = Array.isArray(apiBatteries)
+        ? apiBatteries.map((b) => ({
+            id: b?.battery_id ?? b?.battery_serial ?? null,
+            serialNumber: b?.battery_serial ?? null,
+            status: b?.status ?? null,
+            soh: b?.current_soh != null ? parseFloat(b.current_soh) : null,
+            soc: b?.current_soc != null ? parseFloat(b.current_soc) : null,
+            // Fields not provided by API -> leave null
+            model: null,
+            cycles: null,
+            lastCharge: null,
+            location: null,
+            capacity: null,
+            voltage: null,
+            temperature: null,
+            healthScore: null,
+            nextMaintenance: null,
+            totalSwaps: null,
+        }))
+        : [];
 
     const stations = ['All Stations', 'Station A1', 'Station A2', 'Station B1', 'Station B2', 'Station C1'];
 
@@ -146,10 +88,10 @@ const BatteryManagement = () => {
         }
     };
 
-    const getHealthColor = (healthScore) => {
-        if (healthScore >= 90) return 'text-green-600';
-        if (healthScore >= 80) return 'text-yellow-600';
-        if (healthScore >= 70) return 'text-orange-600';
+    const getSocColor = (soc) => {
+        if (soc >= 90) return 'text-green-600';
+        if (soc >= 80) return 'text-yellow-600';
+        if (soc >= 70) return 'text-orange-600';
         return 'text-red-600';
     };
 
@@ -161,11 +103,11 @@ const BatteryManagement = () => {
     };
 
     const filteredBatteries = batteries.filter(battery => {
-        const matchesSearch = battery.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            battery.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            battery.model.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'all' || battery.status === filterStatus;
-        const matchesStation = filterStation === 'all' || battery.location === filterStation;
+        const matchesSearch = (battery.id ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (battery.serialNumber ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (battery.model ?? '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = filterStatus === 'all' || (battery.status === filterStatus);
+        const matchesStation = filterStation === 'all' || (battery.location === filterStation);
         return matchesSearch && matchesStatus && matchesStation;
     });
 
@@ -232,11 +174,11 @@ const BatteryManagement = () => {
             {/* Batteries Grid */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
                 {filteredBatteries.map((battery) => (
-                    <Card key={battery.id} className="p-6 hover:shadow-lg transition-shadow">
+                    <Card key={battery.serialNumber} className="p-6 hover:shadow-lg transition-shadow">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-2">
                                 <Battery className="h-5 w-5 text-blue-600" />
-                                <h3 className="font-semibold text-gray-900">{battery.id}</h3>
+                                <h3 className="font-semibold text-gray-900">{battery.serialNumber}</h3>
                             </div>
                             <div className="flex items-center gap-1">
                                 <Badge className={getStatusColor(battery.status)}>
@@ -254,7 +196,7 @@ const BatteryManagement = () => {
                         <div className="space-y-3">
                             <div className="text-sm text-gray-600">
                                 <p className="font-medium">{battery.model}</p>
-                                <p className="text-xs">SN: {battery.serialNumber}</p>
+                                <p className="text-xs">ID: {battery.id}</p>
                             </div>
 
                             {/* Location */}
@@ -272,9 +214,9 @@ const BatteryManagement = () => {
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">Health Score</p>
-                                    <p className={`text-lg font-semibold ${getHealthColor(battery.healthScore)}`}>
-                                        {battery.healthScore}
+                                    <p className="text-xs text-gray-500">State of Charge</p>
+                                    <p className={`text-lg font-semibold ${getSocColor(battery.soc)}`}>
+                                        {battery.soc}%
                                     </p>
                                 </div>
                             </div>
@@ -372,9 +314,9 @@ const BatteryManagement = () => {
                             <TrendingUp className="h-6 w-6 text-purple-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Avg Health Score</p>
+                            <p className="text-sm font-medium text-gray-600">Avg SOC</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {Math.round(batteries.reduce((sum, b) => sum + b.healthScore, 0) / batteries.length)}
+                                {batteries.length > 0 ? Math.round(batteries.reduce((sum, b) => sum + (b.soc ?? 0), 0) / batteries.length) : 0}
                             </p>
                         </div>
                     </div>
