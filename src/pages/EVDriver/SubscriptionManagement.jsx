@@ -25,6 +25,13 @@ export default function SubscriptionManagement() {
     setConfirmCancel
   } = useSubscription();
 
+  // active subscriptions 
+  const activeSubscriptions = subscriptions.filter(
+    (s) => String(s?.status).toLowerCase() === 'active'
+  );
+
+
+
 
   // dialog state handled by the useSubscription hook (confirmCancel)
 
@@ -133,7 +140,7 @@ export default function SubscriptionManagement() {
         {/* Subscription List */}
         {!loading && !error && (
           <>
-            {subscriptions.length === 0 ? (
+            {activeSubscriptions.length === 0 ? (
               <Card className="border-slate-200/60 shadow-md bg-white/80 backdrop-blur-sm">
                 <CardContent className="py-16 text-center">
                   <Package className="h-20 w-20 text-slate-400 mx-auto mb-4" />
@@ -152,14 +159,14 @@ export default function SubscriptionManagement() {
                 </CardContent>
               </Card>
             ) : (
-              <div>
+                <div>
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold text-slate-800">
-                    Your Subscriptions <span className="text-slate-500 font-normal">({subscriptions.length})</span>
+                    Your Subscriptions <span className="text-slate-500 font-normal">({activeSubscriptions.length})</span>
                   </h2>
                 </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {subscriptions.map(subscription => (
+                          {activeSubscriptions.map((subscription) => (
                             <SubscriptionCard
                               key={subscription.subscription_id}
                               subscription={subscription}

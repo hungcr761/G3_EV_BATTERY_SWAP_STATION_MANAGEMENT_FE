@@ -1,5 +1,3 @@
-// API service functions
-
 import { api } from './api';
 import { mockApi } from './mockApi';
 
@@ -8,7 +6,7 @@ const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API !== 'false' && (!import.m
 // Authentication APIs
 export const authAPI = {
     login: (credentials) =>
-        USE_MOCK_API ? mockApi.login(credentials) : api.post('/login', credentials),
+        USE_MOCK_API ? mockApi.login(credentials) : api.post('/auth/login', credentials),
     register: (userData) =>
         USE_MOCK_API ? mockApi.register(userData) : api.post('/auth/register', userData),
     logout: () =>
@@ -101,14 +99,13 @@ export const bookingAPI = {
 export const invoiceAPI = {
     createFromSubscription: (data) =>
         USE_MOCK_API ? mockApi.createInvoiceFromSubscription(data) : api.post('/invoice/create-from-subscription', data),
+    getPaymentHistoryByDriverId: (driverId) => api.get(`/invoice/payment-history/driver/${driverId}`)
 };
 
 // Payment APIs
 export const paymentAPI = {
     create: (data) =>
-        USE_MOCK_API ? mockApi.createPayment(data) : api.post('/payment/create', data),
-    getByDriverId: (driverId) =>
-        USE_MOCK_API ? mockApi.getPaymentHistory(driverId) : api.get(`/payment/driver/${driverId}`),
+        USE_MOCK_API ? mockApi.createPayment(data) : api.post('/payment/create', data)
 };
 
 export const swapAPI = {
