@@ -29,6 +29,7 @@ export const authAPI = {
 export const vehicleAPI = {
     getAll: () => USE_MOCK_API ? mockApi.getUserVehicles() : api.get('/vehicles'),
     getById: (id) => USE_MOCK_API ? mockApi.getVehicleById(id) : api.get(`/vehicles/${id}`),
+    getByUserId: (userId) => api.get(`/vehicles/user/${userId}`),
     getWithoutSubscription: () => USE_MOCK_API ? mockApi.getVehiclesWithoutSubscription() : api.get('/subscription/vehicles-without-subscription'),
     create: (data) =>
         USE_MOCK_API ? mockApi.createVehicle(data) : api.post('/vehicles', data),
@@ -115,14 +116,10 @@ export const swapAPI = {
     checkAvailableBatteries: (stationId, batteryTypeId, Quantity) => api.get(`/swap/available-batteries?station_id=${stationId}&battery_type_id=${batteryTypeId}&quantity=${Quantity}`),
     getEmptySlots: (stationId) => api.get(`/swap/empty-slots?station_id=${stationId}`),
     validateAndPrepare: (data) => api.post('/swap/validate-and-prepare', data),
+    execute: (data) => api.post('/swap/execute', data),
     firstTimePickup: (driverId, vehicleId, stationId) => api.post('/swap/first-time-pickup', { driver_id: driverId, vehicle_id: vehicleId, station_id: stationId }),
-    validateWithBooking: (bookingId, driverId, vehicleId, stationId, batteryTypeId) => api.post('/swap/validate-with-booking', {
-        booking_id: bookingId,
-        driver_id: driverId,
-        vehicle_id: vehicleId,
-        station_id: stationId,
-        battery_type_id: batteryTypeId
-    }),
+    validateWithBooking: (data) => api.post('/swap/validate-with-booking', data),
+    executeWithBooking: (data) => api.post('/swap/execute-with-booking', data),
     executeFirstTimeWithBooking: (data) => api.post('/swap/execute-first-time-with-booking', data),
     checkFirstTimePickup: (vehicleId) => api.get(`/swap/check-first-time-pickup?vehicle_id=${vehicleId}`),
 };
@@ -130,4 +127,11 @@ export const swapAPI = {
 // Battery APIs
 export const batteryAPI = {
     getAll: () => api.get('/battery/all'),
+    getByVehicleId: (vehicleId) => api.get(`/batteries/vehicle/${vehicleId}`),
+    createForVehicle: (vehicleId) => api.post(`/batteries/vehicle/${vehicleId}`),
+};
+
+// Analysis APIs
+export const analysisAPI = {
+    getRevenue: (params) => api.get('/analysis/revenue', { params }),
 };

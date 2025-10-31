@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     BarChart3,
     TrendingUp,
@@ -18,6 +18,7 @@ import {
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
+import { analysisAPI } from '../../lib/apiServices';
 
 // Simple Line Chart Component
 const LineChart = ({ data, width = 400, height = 200, color = '#3B82F6' }) => {
@@ -123,37 +124,109 @@ const LineChart = ({ data, width = 400, height = 200, color = '#3B82F6' }) => {
 const AnalyticsReports = () => {
     const [selectedPeriod, setSelectedPeriod] = useState('30d');
     const [selectedStation, setSelectedStation] = useState('all');
+    const [revenueData, setRevenueData] = useState([]);
+    const [revenueLoading, setRevenueLoading] = useState(true);
 
-    // Mock data - will be replaced with real API calls
-    const subscriptionData = [
-        { month: 'Jan', subscriptionRevenue: 45000, exceedFees: 3200, totalRevenue: 48200, swaps: 1200, activeSubscriptions: 150 },
-        { month: 'Feb', subscriptionRevenue: 52000, exceedFees: 4100, totalRevenue: 56100, swaps: 1350, activeSubscriptions: 165 },
-        { month: 'Mar', subscriptionRevenue: 48000, exceedFees: 2800, totalRevenue: 50800, swaps: 1280, activeSubscriptions: 160 },
-        { month: 'Apr', subscriptionRevenue: 61000, exceedFees: 5200, totalRevenue: 66200, swaps: 1620, activeSubscriptions: 180 },
-        { month: 'May', subscriptionRevenue: 58000, exceedFees: 4500, totalRevenue: 62500, swaps: 1540, activeSubscriptions: 175 },
-        { month: 'Jun', subscriptionRevenue: 67000, exceedFees: 6800, totalRevenue: 73800, swaps: 1780, activeSubscriptions: 195 }
-    ];
+    // Calculate date range based on selected period
+    const getDateRange = (period) => {
+        const endDate = new Date();
+        const startDate = new Date();
+        
+        switch (period) {
+            case '7d':
+                startDate.setDate(endDate.getDate() - 7);
+                return { startDate, endDate, groupDate: 'day' };
+            case '30d':
+                startDate.setDate(endDate.getDate() - 30);
+                return { startDate, endDate, groupDate: 'day' };
+            case '90d':
+                startDate.setDate(endDate.getDate() - 90);
+                return { startDate, endDate, groupDate: 'week' };
+            case '1y':
+                startDate.setFullYear(endDate.getFullYear() - 1);
+                return { startDate, endDate, groupDate: 'month' };
+            default:
+                startDate.setDate(endDate.getDate() - 30);
+                return { startDate, endDate, groupDate: 'day' };
+        }
+    };
+
+    // Fetch revenue data
+    useEffect(() => {
+        const fetchRevenueData = async () => {
+            try {
+                setRevenueLoading(true);
+                const { startDate, endDate, groupDate } = getDateRange(selectedPeriod);
+                
+                const startDateStr = startDate.toISOString().split('T')[0];
+                const endDateStr = endDate.toISOString().split('T')[0];
+                
+                const response = await analysisAPI.getRevenue({
+                    startDate: startDateStr,
+                    endDate: endDateStr,
+                    groupDate: groupDate
+                });
+                
+                if (response.data?.success && response.data?.payload) {
+                    // Transform API data to match component format
+                    const transformedData = response.data.payload.map((item, index) => {
+                        const periodDate = new Date(item.period);
+                        let label = '';
+                        
+                        if (groupDate === 'month') {
+                            label = periodDate.toLocaleDateString('en-US', { month: 'short' });
+                        } else if (groupDate === 'week') {
+                            label = `Week ${index + 1}`;
+                        } else {
+                            label = periodDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }
+                        
+                        return {
+                            period: item.period,
+                            label: label,
+                            totalRevenue: parseFloat(item.totalRevenue || 0),
+                            totalPlanFee: parseFloat(item.totalPlanFee || 0),
+                            totalSwapFee: parseFloat(item.totalSwapFee || 0),
+                            totalPenaltyFee: parseFloat(item.totalPenaltyFee || 0)
+                        };
+                    });
+                    
+                    setRevenueData(transformedData);
+                } else {
+                    setRevenueData([]);
+                }
+            } catch (err) {
+                console.error('Error fetching revenue data:', err);
+                setRevenueData([]);
+            } finally {
+                setRevenueLoading(false);
+            }
+        };
+        
+        fetchRevenueData();
+    }, [selectedPeriod]);
 
     // Format data for line charts
-    const totalRevenueChartData = subscriptionData.map(item => ({
-        label: item.month,
+    const totalRevenueChartData = revenueData.map(item => ({
+        label: item.label,
         value: item.totalRevenue
     }));
 
-    const subscriptionRevenueChartData = subscriptionData.map(item => ({
-        label: item.month,
-        value: item.subscriptionRevenue
+    const subscriptionRevenueChartData = revenueData.map(item => ({
+        label: item.label,
+        value: item.totalPlanFee
     }));
 
-    const exceedFeesChartData = subscriptionData.map(item => ({
-        label: item.month,
-        value: item.exceedFees
+    const exceedFeesChartData = revenueData.map(item => ({
+        label: item.label,
+        value: item.totalPenaltyFee
     }));
 
-    const swapsChartData = subscriptionData.map(item => ({
-        label: item.month,
-        value: item.swaps
-    }));
+    // Calculate totals
+    const totalRevenue = revenueData.reduce((sum, item) => sum + item.totalRevenue, 0);
+    const totalPlanFee = revenueData.reduce((sum, item) => sum + item.totalPlanFee, 0);
+    const totalPenaltyFee = revenueData.reduce((sum, item) => sum + item.totalPenaltyFee, 0);
+    const avgMonthlyRevenue = revenueData.length > 0 ? totalRevenue / revenueData.length : 0;
 
     const stationPerformance = [
         { name: 'Station A1', location: 'Downtown', swaps: 45, efficiency: 95, usersServed: 38, avgSwapsPerUser: 1.18 },
@@ -303,7 +376,7 @@ const AnalyticsReports = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                ${subscriptionData.reduce((sum, d) => sum + d.totalRevenue, 0).toLocaleString()}
+                                {revenueLoading ? '...' : `$${totalRevenue.toLocaleString()}`}
                             </p>
                             <div className="flex items-center mt-1">
                                 <TrendingUp className="h-4 w-4 text-green-500" />
@@ -366,7 +439,7 @@ const AnalyticsReports = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Subscription Revenue Trend</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                             <span className="text-sm text-gray-600">Revenue ($)</span>
@@ -384,13 +457,13 @@ const AnalyticsReports = () => {
                         <div className="text-center p-3 bg-green-50 rounded-lg">
                             <p className="text-gray-600">Total Revenue</p>
                             <p className="font-semibold text-green-700">
-                                ${subscriptionData.reduce((sum, d) => sum + d.totalRevenue, 0).toLocaleString()}
+                                {revenueLoading ? '...' : `$${totalRevenue.toLocaleString()}`}
                             </p>
                         </div>
                         <div className="text-center p-3 bg-blue-50 rounded-lg">
-                            <p className="text-gray-600">Avg Monthly</p>
+                            <p className="text-gray-600">Avg Period</p>
                             <p className="font-semibold text-blue-700">
-                                ${Math.round(subscriptionData.reduce((sum, d) => sum + d.totalRevenue, 0) / subscriptionData.length).toLocaleString()}
+                                {revenueLoading ? '...' : `$${Math.round(avgMonthlyRevenue).toLocaleString()}`}
                             </p>
                         </div>
                     </div>
@@ -434,7 +507,7 @@ const AnalyticsReports = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Breakdown</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                        <h4 className="text-md font-medium text-gray-700 mb-3">Subscription Revenue vs Exceed Fees</h4>
+                        <h4 className="text-md font-medium text-gray-700 mb-3">Plan Fee Trend</h4>
                         <div className="flex justify-center">
                             <LineChart
                                 data={subscriptionRevenueChartData}
@@ -444,11 +517,11 @@ const AnalyticsReports = () => {
                             />
                         </div>
                         <div className="mt-2 text-center">
-                            <span className="text-sm text-gray-600">Subscription Revenue (Green)</span>
+                            <span className="text-sm text-gray-600">Plan Fee (Green)</span>
                         </div>
                     </div>
                     <div>
-                        <h4 className="text-md font-medium text-gray-700 mb-3">Exceed Fees Trend</h4>
+                        <h4 className="text-md font-medium text-gray-700 mb-3">Penalty Fee Trend</h4>
                         <div className="flex justify-center">
                             <LineChart
                                 data={exceedFeesChartData}
@@ -458,27 +531,27 @@ const AnalyticsReports = () => {
                             />
                         </div>
                         <div className="mt-2 text-center">
-                            <span className="text-sm text-gray-600">Exceed Fees (Orange)</span>
+                            <span className="text-sm text-gray-600">Penalty Fee (Orange)</span>
                         </div>
                     </div>
                 </div>
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Total Subscription Revenue</p>
+                        <p className="text-gray-600 text-sm">Total Plan Fee</p>
                         <p className="font-semibold text-green-700 text-lg">
-                            ${subscriptionData.reduce((sum, d) => sum + d.subscriptionRevenue, 0).toLocaleString()}
+                            {revenueLoading ? '...' : `$${totalPlanFee.toLocaleString()}`}
                         </p>
                     </div>
                     <div className="text-center p-4 bg-orange-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Total Exceed Fees</p>
+                        <p className="text-gray-600 text-sm">Total Penalty Fee</p>
                         <p className="font-semibold text-orange-700 text-lg">
-                            ${subscriptionData.reduce((sum, d) => sum + d.exceedFees, 0).toLocaleString()}
+                            {revenueLoading ? '...' : `$${totalPenaltyFee.toLocaleString()}`}
                         </p>
                     </div>
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Active Subscriptions</p>
+                        <p className="text-gray-600 text-sm">Total Swap Fee</p>
                         <p className="font-semibold text-blue-700 text-lg">
-                            {subscriptionData[subscriptionData.length - 1].activeSubscriptions}
+                            {revenueLoading ? '...' : `$${revenueData.reduce((sum, d) => sum + d.totalSwapFee, 0).toLocaleString()}`}
                         </p>
                     </div>
                 </div>
