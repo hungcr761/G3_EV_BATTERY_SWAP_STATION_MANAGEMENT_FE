@@ -15,7 +15,7 @@ import {
     Calendar,
     ExternalLink
 } from 'lucide-react';
-import { subscriptionPlanAPI, vehicleAPI } from '@/lib/apiServices';
+import { subscriptionPlanAPI, vehicleAPI, batteryAPI } from '@/lib/apiServices';
 
 export default function PaymentSuccess() {
     const [searchParams] = useSearchParams();
@@ -24,6 +24,7 @@ export default function PaymentSuccess() {
     const [paymentData, setPaymentData] = useState(null);
     const [error, setError] = useState(null);
     const [retryLoading, setRetryLoading] = useState(false);
+    const [batteryCreationStatus, setBatteryCreationStatus] = useState(null);
 
     useEffect(() => {
         const extractPaymentData = () => {
@@ -70,6 +71,32 @@ export default function PaymentSuccess() {
 
         extractPaymentData();
     }, [searchParams]);
+
+    // Create batteries for vehicle when payment is successful
+    useEffect(() => {
+        const createBatteriesForVehicle = async () => {
+            // Only proceed if payment is successful and vehicleId is available
+            if (paymentData?.isSuccess && paymentData?.vehicleId) {
+                try {
+                    console.log('Creating batteries for vehicle:', paymentData.vehicleId);
+                    setBatteryCreationStatus('creating');
+                    const response = await batteryAPI.createForVehicle(paymentData.vehicleId);
+                    console.log('Batteries created successfully:', response.data);
+                    setBatteryCreationStatus('success');
+                } catch (err) {
+                    console.error('Error creating batteries for vehicle:', err);
+                    setBatteryCreationStatus('error');
+                    // Don't show error to user as payment was successful
+                    // Just log it for debugging
+                }
+            }
+        };
+
+        // Only run when paymentData is set and loading is complete
+        if (!loading && paymentData) {
+            createBatteriesForVehicle();
+        }
+    }, [paymentData, loading]);
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat('vi-VN', {

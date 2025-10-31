@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Motorbike, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
-import { vehicleAPI, subscriptionAPI, swapAPI } from '../../lib/apiServices';
+import { vehicleAPI, subscriptionAPI } from '../../lib/apiServices';
 
 const UserVehicleSelection = () => {
     const { stationId, userId } = useParams();
@@ -29,11 +29,11 @@ const UserVehicleSelection = () => {
     useEffect(() => {
         const fetchVehicles = async () => {
             try {
-                // Fetch vehicles with complete model and battery information
-                const response = await vehicleAPI.getAll();
+                // Fetch vehicles by user ID with complete model and battery information
+                const response = await vehicleAPI.getByUserId(userId);
                 const vehiclesData = response.data?.vehicles || [];
 
-                // Fetch subscription data and first-time status for each vehicle
+                // Fetch subscription data for each vehicle
                 const vehiclesWithSubscriptions = await Promise.all(
                     vehiclesData.map(async (vehicle) => {
                         try {
@@ -45,19 +45,6 @@ const UserVehicleSelection = () => {
                             const hasActiveSubscription = subscriptionData?.payload?.subscription?.some(
                                 sub => sub.status === 'active'
                             ) || false;
-
-                            // Check if this is first time taking battery using new API
-                            let isFirstTimeSwap = false;
-                            let firstTimeData = null;
-                            try {
-                                const firstTimeResponse = await swapAPI.checkFirstTimePickup(vehicle.vehicle_id);
-                                firstTimeData = firstTimeResponse.data;
-                                isFirstTimeSwap = firstTimeData?.data?.is_first_time || false;
-                            } catch (firstTimeError) {
-                                console.error(`Error checking first time status for vehicle ${vehicle.vehicle_id}:`, firstTimeError);
-                                // If first time check fails, assume not first time
-                                isFirstTimeSwap = false;
-                            }
 
                             const modelName = vehicle.model?.name || 'Unknown Model';
                             const batteryTypeCode = vehicle.model?.batteryType?.battery_type_code || 'Unknown';
@@ -72,8 +59,6 @@ const UserVehicleSelection = () => {
                                 batteryCapacity,
                                 batterySlots,
                                 hasActiveSubscription,
-                                isFirstTimeSwap,
-                                firstTimeData,
                                 subscription: subscriptionData?.payload?.subscription || []
                             };
                         } catch (subscriptionError) {
@@ -92,8 +77,6 @@ const UserVehicleSelection = () => {
                                 batteryCapacity,
                                 batterySlots,
                                 hasActiveSubscription: false,
-                                isFirstTimeSwap: false,
-                                firstTimeData: null,
                                 subscription: []
                             };
                         }
@@ -120,9 +103,7 @@ const UserVehicleSelection = () => {
         if (!selectedVehicle || !selectedVehicle.hasActiveSubscription) return;
         navigate(`/kiosk/${stationId}/user/${userId}/battery`, {
             state: {
-                selectedVehicle,
-                isFirstTimeSwap: selectedVehicle.isFirstTimeSwap,
-                firstTimeData: selectedVehicle.firstTimeData
+                selectedVehicle
             }
         });
     };

@@ -5,6 +5,7 @@ import {
     Users,
     Battery,
     TrendingUp,
+    TrendingDown,
     AlertTriangle,
     Clock,
     DollarSign,
@@ -16,11 +17,82 @@ import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { useStation } from '../../hooks/useStation';
 import { useApi } from '../../hooks/useApi';
-import { batteryAPI } from '../../lib/apiServices';
+import { batteryAPI, analysisAPI } from '../../lib/apiServices';
+import { useState, useEffect } from 'react';
 
 const AdminDashboard = () => {
     const { stations, loading: stationsLoading, error: stationsError } = useStation();
     const { data: batteries, loading: batteriesLoading, error: batteriesError } = useApi(batteryAPI.getAll, []);
+    
+    // Fetch monthly revenue
+    const [monthlyRevenue, setMonthlyRevenue] = useState(null);
+    const [previousMonthRevenue, setPreviousMonthRevenue] = useState(null);
+    const [revenueLoading, setRevenueLoading] = useState(true);
+    const [revenueChange, setRevenueChange] = useState(null);
+    
+    useEffect(() => {
+        const fetchMonthlyRevenue = async () => {
+            try {
+                setRevenueLoading(true);
+                const now = new Date();
+
+                // Get date range covering current and previous month
+                const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+                const startDateStr = startDate.toISOString().split('T')[0];
+                const endDateStr = endDate.toISOString().split('T')[0];
+
+                // Fetch revenue data grouped by month
+                const response = await analysisAPI.getRevenue({
+                    startDate: startDateStr,
+                    endDate: endDateStr,
+                    groupDate: 'month'
+                });
+
+                let currentRevenue = 0;
+                let previousRevenue = 0;
+
+                if (response.data?.success && response.data?.payload) {
+                    const payload = response.data.payload;
+                    
+                    // The API returns months in order, so the last item is current month
+                    // and second to last is previous month
+                    if (payload.length >= 2) {
+                        previousRevenue = parseFloat(payload[0].totalRevenue || 0);
+                        currentRevenue = parseFloat(payload[1].totalRevenue || 0);
+                    } else if (payload.length === 1) {
+                        // Only one month of data (current month)
+                        currentRevenue = parseFloat(payload[0].totalRevenue || 0);
+                    }
+                }
+
+                setMonthlyRevenue(currentRevenue);
+                setPreviousMonthRevenue(previousRevenue);
+
+                // Calculate percentage change
+                if (previousRevenue > 0) {
+                    const change = ((currentRevenue - previousRevenue) / previousRevenue) * 100;
+                    setRevenueChange(change);
+                } else if (currentRevenue > 0) {
+                    // If previous month had no revenue but current month does, it's 100% increase
+                    setRevenueChange(100);
+                } else {
+                    // Both are 0, no change
+                    setRevenueChange(0);
+                }
+            } catch (err) {
+                console.error('Error fetching revenue:', err);
+                setMonthlyRevenue(0);
+                setPreviousMonthRevenue(0);
+                setRevenueChange(0);
+            } finally {
+                setRevenueLoading(false);
+            }
+        };
+
+        fetchMonthlyRevenue();
+    }, []);
 
     const batteriesInStock = Array.isArray(batteries)
         ? batteries.filter(b => (b?.vehicle_id == null) && (b?.slot_id != null)).length
@@ -56,9 +128,12 @@ const AdminDashboard = () => {
         },
         {
             name: 'Monthly Revenue',
-            value: '$45,678',
-            change: '+23%',
-            changeType: 'positive',
+            value: revenueLoading ? '...' : `${(monthlyRevenue || 0).toLocaleString()} VND`,
+            change: revenueLoading || revenueChange === null ? '...' : 
+                revenueChange === 0 ? '0%' :
+                revenueChange > 0 ? `+${revenueChange.toFixed(1)}%` : `${revenueChange.toFixed(1)}%`,
+            changeType: revenueChange === null || revenueChange === 0 ? 'neutral' :
+                revenueChange > 0 ? 'positive' : 'negative',
             icon: DollarSign,
             color: 'text-purple-600',
             bgColor: 'bg-purple-50'
@@ -172,9 +247,26 @@ const AdminDashboard = () => {
                                 <div className={`p-3 rounded-lg ${stat.bgColor}`}>
                                     <Icon className={`h-6 w-6 ${stat.color}`} />
                                 </div>
-                                <div className="ml-4">
+                                <div className="ml-4 flex-1">
                                     <p className="text-sm font-medium text-gray-600">{stat.name}</p>
                                     <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
+                                    {stat.change && (
+                                        <div className="flex items-center mt-1">
+                                            {stat.changeType === 'positive' && (
+                                                <TrendingUp className="h-4 w-4 text-green-500" />
+                                            )}
+                                            {stat.changeType === 'negative' && (
+                                                <TrendingDown className="h-4 w-4 text-red-500" />
+                                            )}
+                                            <span className={`text-sm ml-1 ${
+                                                stat.changeType === 'positive' ? 'text-green-600' :
+                                                stat.changeType === 'negative' ? 'text-red-600' :
+                                                'text-gray-600'
+                                            }`}>
+                                                {stat.change}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

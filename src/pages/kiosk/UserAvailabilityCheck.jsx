@@ -76,9 +76,7 @@ const UserAvailabilityCheck = () => {
             state: {
                 selectedVehicle,
                 selectedBatteries,
-                availabilityData,
-                isFirstTimeSwap: location.state?.isFirstTimeSwap,
-                firstTimeData: location.state?.firstTimeData
+                availabilityData
             }
         });
     };
