@@ -21,6 +21,7 @@ import { Badge } from '../ui/badge';
 const AdminLayout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -61,14 +62,28 @@ const AdminLayout = ({ children }) => {
 
             <div className="flex">
                 {/* Sidebar */}
-                <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                    }`}>
-                    <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+                <div
+                    className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform transition-all duration-400 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
+                        }`}
+                    onMouseEnter={(e) => {
+                        if (window.innerWidth >= 1024) {
+                            setSidebarCollapsed(false);
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        if (window.innerWidth >= 1024) {
+                            setSidebarCollapsed(true);
+                        }
+                    }}
+                >
+                    <div className={`flex items-center justify-between h-16 border-b border-gray-200 transition-all duration-300 ${sidebarCollapsed ? 'px-4' : 'px-6'
+                        }`}>
                         <div className="flex items-center">
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                                 <Battery className="w-5 h-5 text-white" />
                             </div>
-                            <span className="ml-2 text-xl font-bold text-gray-900">Admin Panel</span>
+                            <span className={`ml-2 text-xl font-bold text-gray-900 transition-all duration-400 whitespace-nowrap ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'
+                                }`}>Admin Panel</span>
                         </div>
                         <button
                             onClick={() => setSidebarOpen(false)}
@@ -78,7 +93,8 @@ const AdminLayout = ({ children }) => {
                         </button>
                     </div>
 
-                    <nav className="mt-6 px-3">
+                    <nav className={`mt-6 transition-all duration-300 ${sidebarCollapsed ? 'px-2' : 'px-3'
+                        }`}>
                         <div className="space-y-1">
                             {navigation.map((item) => {
                                 const Icon = item.icon;
@@ -86,14 +102,19 @@ const AdminLayout = ({ children }) => {
                                     <Link
                                         key={item.name}
                                         to={item.href}
-                                        className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive(item.href)
-                                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                        className={`group flex items-center py-2 text-sm font-medium rounded-lg transition-all duration-300 ${sidebarCollapsed ? 'justify-center px-2' : 'px-3'
+                                            } ${isActive(item.href)
+                                                ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                                                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
+                                        title={sidebarCollapsed ? item.name : ''}
                                     >
-                                        <Icon className={`mr-3 h-5 w-5 ${isActive(item.href) ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-500'
+                                        <Icon className={`h-5 w-5 flex-shrink-0 ${isActive(item.href) ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-500'} ${sidebarCollapsed ? '' : 'mr-3'
                                             }`} />
-                                        {item.name}
+                                        <span className={`transition-all duration-300 whitespace-nowrap ${sidebarCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'
+                                            }`}>
+                                            {item.name}
+                                        </span>
                                     </Link>
                                 );
                             })}

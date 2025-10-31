@@ -13,7 +13,8 @@ import {
     Clock,
     Activity,
     Zap,
-    AlertTriangle
+    AlertTriangle,
+    Loader2
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -21,7 +22,7 @@ import { Badge } from '../../components/ui/badge';
 import { analysisAPI } from '../../lib/apiServices';
 
 // Simple Line Chart Component
-const LineChart = ({ data, width = 400, height = 200, color = '#3B82F6' }) => {
+const LineChart = ({ data, width = 400, height = 200, color = '#3B82F6', labelInterval = 1 }) => {
     if (!data || data.length === 0) return null;
 
     const maxValue = Math.max(...data.map(d => d.value));
@@ -100,8 +101,18 @@ const LineChart = ({ data, width = 400, height = 200, color = '#3B82F6' }) => {
                     );
                 })}
 
-                {/* X-axis labels */}
+                {/* X-axis labels - only show every nth label based on labelInterval */}
                 {data.map((d, index) => {
+                    // Show label if:
+                    // 1. Index is divisible by labelInterval, OR
+                    // 2. It's the first item (index === 0), OR
+                    // 3. It's the last item (index === data.length - 1)
+                    const isIntervalLabel = index % labelInterval === 0;
+                    const isFirst = index === 0;
+                    const isLast = index === data.length - 1;
+
+                    if (!isIntervalLabel && !isFirst && !isLast) return null;
+
                     const x = (index / (data.length - 1)) * (width - 40) + 20;
                     return (
                         <text
@@ -126,12 +137,14 @@ const AnalyticsReports = () => {
     const [selectedStation, setSelectedStation] = useState('all');
     const [revenueData, setRevenueData] = useState([]);
     const [revenueLoading, setRevenueLoading] = useState(true);
+    const [peakHoursData, setPeakHoursData] = useState([]);
+    const [peakHoursLoading, setPeakHoursLoading] = useState(true);
 
     // Calculate date range based on selected period
     const getDateRange = (period) => {
         const endDate = new Date();
         const startDate = new Date();
-        
+
         switch (period) {
             case '7d':
                 startDate.setDate(endDate.getDate() - 7);
@@ -157,22 +170,22 @@ const AnalyticsReports = () => {
             try {
                 setRevenueLoading(true);
                 const { startDate, endDate, groupDate } = getDateRange(selectedPeriod);
-                
+
                 const startDateStr = startDate.toISOString().split('T')[0];
                 const endDateStr = endDate.toISOString().split('T')[0];
-                
+
                 const response = await analysisAPI.getRevenue({
                     startDate: startDateStr,
                     endDate: endDateStr,
                     groupDate: groupDate
                 });
-                
+
                 if (response.data?.success && response.data?.payload) {
                     // Transform API data to match component format
                     const transformedData = response.data.payload.map((item, index) => {
                         const periodDate = new Date(item.period);
                         let label = '';
-                        
+
                         if (groupDate === 'month') {
                             label = periodDate.toLocaleDateString('en-US', { month: 'short' });
                         } else if (groupDate === 'week') {
@@ -180,7 +193,7 @@ const AnalyticsReports = () => {
                         } else {
                             label = periodDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                         }
-                        
+
                         return {
                             period: item.period,
                             label: label,
@@ -190,7 +203,7 @@ const AnalyticsReports = () => {
                             totalPenaltyFee: parseFloat(item.totalPenaltyFee || 0)
                         };
                     });
-                    
+
                     setRevenueData(transformedData);
                 } else {
                     setRevenueData([]);
@@ -202,9 +215,86 @@ const AnalyticsReports = () => {
                 setRevenueLoading(false);
             }
         };
-        
+
         fetchRevenueData();
     }, [selectedPeriod]);
+
+    // Fetch swaps data for peak hours analysis
+    useEffect(() => {
+        const fetchSwapsData = async () => {
+            try {
+                setPeakHoursLoading(true);
+                // For peak hours, we want hourly data, so we'll use a shorter period
+                // Let's use the last 7 days to get a good sample of hourly patterns
+                const endDate = new Date();
+                const startDate = new Date();
+
+                // Use last 7 days for peak hours analysis
+                startDate.setDate(endDate.getDate() - 7);
+
+                const startDateStr = startDate.toISOString().split('T')[0];
+                const endDateStr = endDate.toISOString().split('T')[0];
+
+                const response = await analysisAPI.getSwaps({
+                    startDate: startDateStr,
+                    endDate: endDateStr,
+                    groupDate: 'hour'
+                });
+
+                if (response.data?.success && response.data?.payload) {
+                    // Initialize hour buckets (0-23 hours)
+                    const hourBuckets = {};
+                    for (let i = 0; i < 24; i++) {
+                        hourBuckets[i] = 0;
+                    }
+
+                    // Aggregate swaps by hour across all stations (or filter by selected station)
+                    response.data.payload.forEach((item) => {
+                        // Filter by station if selected (assuming selectedStation matches station_id or station name)
+                        if (selectedStation !== 'all') {
+                            // Check if station_id matches or if we need to compare station_name
+                            // For now, process all stations if 'all' is selected
+                            // You can add more sophisticated filtering here if needed
+                            const stationIdStr = String(item.station_id);
+                            if (stationIdStr !== selectedStation && item.station_name !== selectedStation) {
+                                return; // Skip this item if it doesn't match the selected station
+                            }
+                        }
+
+                        const periodDate = new Date(item.period);
+                        const hour = periodDate.getHours();
+                        const swaps = parseInt(item.totalSwaps || 0);
+
+                        // Aggregate swaps for each hour
+                        hourBuckets[hour] = (hourBuckets[hour] || 0) + swaps;
+                    });
+
+                    // Convert to array format for display, only including hours from 7 AM (7) to 10 PM (22)
+                    // Generate all hours from 7 to 22 to ensure all hours are displayed even with 0 swaps
+                    const formattedPeakHours = Array.from({ length: 16 }, (_, i) => {
+                        const hourNum = i + 7; // Start from 7 (7 AM) to 22 (10 PM)
+                        const hour12 = hourNum % 12 || 12;
+                        const ampm = hourNum < 12 ? 'AM' : 'PM';
+                        return {
+                            hour: `${hour12}:00 ${ampm}`,
+                            swaps: hourBuckets[hourNum] || 0
+                        };
+                    });
+
+                    setPeakHoursData(formattedPeakHours);
+                } else {
+                    setPeakHoursData([]);
+                }
+            } catch (err) {
+                console.error('Error fetching swaps data:', err);
+                setPeakHoursData([]);
+            } finally {
+                setPeakHoursLoading(false);
+            }
+        };
+
+        fetchSwapsData();
+    }, [selectedPeriod, selectedStation]);
 
     // Format data for line charts
     const totalRevenueChartData = revenueData.map(item => ({
@@ -236,28 +326,8 @@ const AnalyticsReports = () => {
         { name: 'Station C1', location: 'Business District', swaps: 58, efficiency: 98, usersServed: 48, avgSwapsPerUser: 1.21 }
     ];
 
-    const peakHours = [
-        { hour: '6:00 AM', swaps: 12 },
-        { hour: '7:00 AM', swaps: 45 },
-        { hour: '8:00 AM', swaps: 78 },
-        { hour: '9:00 AM', swaps: 65 },
-        { hour: '10:00 AM', swaps: 42 },
-        { hour: '11:00 AM', swaps: 38 },
-        { hour: '12:00 PM', swaps: 55 },
-        { hour: '1:00 PM', swaps: 48 },
-        { hour: '2:00 PM', swaps: 35 },
-        { hour: '3:00 PM', swaps: 28 },
-        { hour: '4:00 PM', swaps: 32 },
-        { hour: '5:00 PM', swaps: 68 },
-        { hour: '6:00 PM', swaps: 85 },
-        { hour: '7:00 PM', swaps: 72 },
-        { hour: '8:00 PM', swaps: 45 },
-        { hour: '9:00 PM', swaps: 28 },
-        { hour: '10:00 PM', swaps: 15 }
-    ];
-
     // Format peak hours data for line chart
-    const peakHoursChartData = peakHours.map(item => ({
+    const peakHoursChartData = peakHoursData.map(item => ({
         label: item.hour,
         value: item.swaps
     }));
@@ -376,7 +446,7 @@ const AnalyticsReports = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {revenueLoading ? '...' : `$${totalRevenue.toLocaleString()}`}
+                                {revenueLoading ? '...' : `${totalRevenue.toLocaleString()} VND`}
                             </p>
                             <div className="flex items-center mt-1">
                                 <TrendingUp className="h-4 w-4 text-green-500" />
@@ -442,7 +512,7 @@ const AnalyticsReports = () => {
                         <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                            <span className="text-sm text-gray-600">Revenue ($)</span>
+                            <span className="text-sm text-gray-600">Revenue (VND)</span>
                         </div>
                     </div>
                     <div className="flex justify-center">
@@ -457,13 +527,13 @@ const AnalyticsReports = () => {
                         <div className="text-center p-3 bg-green-50 rounded-lg">
                             <p className="text-gray-600">Total Revenue</p>
                             <p className="font-semibold text-green-700">
-                                {revenueLoading ? '...' : `$${totalRevenue.toLocaleString()}`}
+                                {revenueLoading ? '...' : `${totalRevenue.toLocaleString()} VND`}
                             </p>
                         </div>
                         <div className="text-center p-3 bg-blue-50 rounded-lg">
                             <p className="text-gray-600">Avg Period</p>
                             <p className="font-semibold text-blue-700">
-                                {revenueLoading ? '...' : `$${Math.round(avgMonthlyRevenue).toLocaleString()}`}
+                                {revenueLoading ? '...' : `${Math.round(avgMonthlyRevenue).toLocaleString()} VND`}
                             </p>
                         </div>
                     </div>
@@ -477,28 +547,51 @@ const AnalyticsReports = () => {
                             <span className="text-sm text-gray-600">Swaps per Hour</span>
                         </div>
                     </div>
-                    <div className="flex justify-center">
-                        <LineChart
-                            data={peakHoursChartData}
-                            width={400}
-                            height={250}
-                            color="#3B82F6"
-                        />
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                        <div className="text-center p-3 bg-blue-50 rounded-lg">
-                            <p className="text-gray-600">Peak Hour</p>
-                            <p className="font-semibold text-blue-700">
-                                {peakHours.reduce((max, hour) => hour.swaps > max.swaps ? hour : max, peakHours[0]).hour}
-                            </p>
+                    {peakHoursLoading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <div className="flex items-center gap-2 text-gray-500">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span>Loading peak hours data...</span>
+                            </div>
                         </div>
-                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                            <p className="text-gray-600">Peak Swaps</p>
-                            <p className="font-semibold text-purple-700">
-                                {Math.max(...peakHours.map(h => h.swaps))} swaps
-                            </p>
+                    ) : peakHoursChartData.length === 0 ? (
+                        <div className="flex items-center justify-center h-64">
+                            <div className="text-center text-gray-500">
+                                <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+                                <p>No swap data available for the selected period</p>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            <div className="flex justify-center">
+                                <LineChart
+                                    data={peakHoursChartData}
+                                    width={400}
+                                    height={250}
+                                    color="#3B82F6"
+                                    labelInterval={2}
+                                />
+                            </div>
+                            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                    <p className="text-gray-600">Peak Hour</p>
+                                    <p className="font-semibold text-blue-700">
+                                        {peakHoursData.length > 0
+                                            ? peakHoursData.reduce((max, hour) => hour.swaps > max.swaps ? hour : max, peakHoursData[0]).hour
+                                            : 'N/A'}
+                                    </p>
+                                </div>
+                                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                    <p className="text-gray-600">Peak Swaps</p>
+                                    <p className="font-semibold text-purple-700">
+                                        {peakHoursData.length > 0
+                                            ? `${Math.max(...peakHoursData.map(h => h.swaps))} swaps`
+                                            : '0 swaps'}
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </Card>
             </div>
 
@@ -539,19 +632,19 @@ const AnalyticsReports = () => {
                     <div className="text-center p-4 bg-green-50 rounded-lg">
                         <p className="text-gray-600 text-sm">Total Plan Fee</p>
                         <p className="font-semibold text-green-700 text-lg">
-                            {revenueLoading ? '...' : `$${totalPlanFee.toLocaleString()}`}
+                            {revenueLoading ? '...' : `${totalPlanFee.toLocaleString()} VND`}
                         </p>
                     </div>
                     <div className="text-center p-4 bg-orange-50 rounded-lg">
                         <p className="text-gray-600 text-sm">Total Penalty Fee</p>
                         <p className="font-semibold text-orange-700 text-lg">
-                            {revenueLoading ? '...' : `$${totalPenaltyFee.toLocaleString()}`}
+                            {revenueLoading ? '...' : `${totalPenaltyFee.toLocaleString()} VND`}
                         </p>
                     </div>
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
                         <p className="text-gray-600 text-sm">Total Swap Fee</p>
                         <p className="font-semibold text-blue-700 text-lg">
-                            {revenueLoading ? '...' : `$${revenueData.reduce((sum, d) => sum + d.totalSwapFee, 0).toLocaleString()}`}
+                            {revenueLoading ? '...' : `${revenueData.reduce((sum, d) => sum + d.totalSwapFee, 0).toLocaleString()} VND`}
                         </p>
                     </div>
                 </div>
