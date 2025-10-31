@@ -134,4 +134,5 @@ export const batteryAPI = {
 // Analysis APIs
 export const analysisAPI = {
     getRevenue: (params) => api.get('/analysis/revenue', { params }),
+    getSwaps: (params) => api.get('/analysis/swaps', { params }),
 };

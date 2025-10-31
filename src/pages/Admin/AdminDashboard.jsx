@@ -23,13 +23,13 @@ import { useState, useEffect } from 'react';
 const AdminDashboard = () => {
     const { stations, loading: stationsLoading, error: stationsError } = useStation();
     const { data: batteries, loading: batteriesLoading, error: batteriesError } = useApi(batteryAPI.getAll, []);
-    
+
     // Fetch monthly revenue
     const [monthlyRevenue, setMonthlyRevenue] = useState(null);
     const [previousMonthRevenue, setPreviousMonthRevenue] = useState(null);
     const [revenueLoading, setRevenueLoading] = useState(true);
     const [revenueChange, setRevenueChange] = useState(null);
-    
+
     useEffect(() => {
         const fetchMonthlyRevenue = async () => {
             try {
@@ -55,7 +55,7 @@ const AdminDashboard = () => {
 
                 if (response.data?.success && response.data?.payload) {
                     const payload = response.data.payload;
-                    
+
                     // The API returns months in order, so the last item is current month
                     // and second to last is previous month
                     if (payload.length >= 2) {
@@ -129,9 +129,9 @@ const AdminDashboard = () => {
         {
             name: 'Monthly Revenue',
             value: revenueLoading ? '...' : `${(monthlyRevenue || 0).toLocaleString()} VND`,
-            change: revenueLoading || revenueChange === null ? '...' : 
+            change: revenueLoading || revenueChange === null ? '...' :
                 revenueChange === 0 ? '0%' :
-                revenueChange > 0 ? `+${revenueChange.toFixed(1)}%` : `${revenueChange.toFixed(1)}%`,
+                    revenueChange > 0 ? `+${revenueChange.toFixed(1)}%` : `${revenueChange.toFixed(1)}%`,
             changeType: revenueChange === null || revenueChange === 0 ? 'neutral' :
                 revenueChange > 0 ? 'positive' : 'negative',
             icon: DollarSign,
@@ -258,11 +258,10 @@ const AdminDashboard = () => {
                                             {stat.changeType === 'negative' && (
                                                 <TrendingDown className="h-4 w-4 text-red-500" />
                                             )}
-                                            <span className={`text-sm ml-1 ${
-                                                stat.changeType === 'positive' ? 'text-green-600' :
+                                            <span className={`text-sm ml-1 ${stat.changeType === 'positive' ? 'text-green-600' :
                                                 stat.changeType === 'negative' ? 'text-red-600' :
-                                                'text-gray-600'
-                                            }`}>
+                                                    'text-gray-600'
+                                                }`}>
                                                 {stat.change}
                                             </span>
                                         </div>
@@ -334,37 +333,6 @@ const AdminDashboard = () => {
                 </Card>
             </div>
 
-            {/* Quick Actions */}
-            <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Link to="/admin/stations" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <MapPin className="h-6 w-6 text-blue-600 mb-2" />
-                        <p className="font-medium text-gray-900">Add New Station</p>
-                        <p className="text-sm text-gray-500">Register a new battery swap station</p>
-                    </Link>
-                    <Link to="/admin/shifts" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <Clock className="h-6 w-6 text-blue-600 mb-2" />
-                        <p className="font-medium text-gray-900">Manage Shifts</p>
-                        <p className="text-sm text-gray-500">Schedule staff across stations</p>
-                    </Link>
-                    <Link to="/admin/users" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <Users className="h-6 w-6 text-green-600 mb-2" />
-                        <p className="font-medium text-gray-900">Manage Staff</p>
-                        <p className="text-sm text-gray-500">Add or update station staff</p>
-                    </Link>
-                    <Link to="/admin/batteries" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <Battery className="h-6 w-6 text-orange-600 mb-2" />
-                        <p className="font-medium text-gray-900">Battery Inventory</p>
-                        <p className="text-sm text-gray-500">Check and manage battery stock</p>
-                    </Link>
-                    <Link to="/admin/analytics" className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <BarChart3 className="h-6 w-6 text-purple-600 mb-2" />
-                        <p className="font-medium text-gray-900">View Reports</p>
-                        <p className="text-sm text-gray-500">Generate analytics and reports</p>
-                    </Link>
-                </div>
-            </Card>
         </div>
     );
 };

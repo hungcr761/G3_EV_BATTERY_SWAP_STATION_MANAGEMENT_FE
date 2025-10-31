@@ -185,36 +185,12 @@ const KioskHome = () => {
             {!showScanner ? (
                 // Welcome Screen
                 <div className="max-w-5xl mx-auto space-y-12">
-                    {/* Station Info Banner */}
-                    {stationInfo && (
-                        <Card className="bg-gradient-to-r from-primary to-blue-600 text-white border-0">
-                            <CardContent className="p-8">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-6">
-                                        <MapPin className="h-16 w-16" />
-                                        <div>
-                                            <h2 className="text-4xl font-bold mb-2">
-                                                {stationInfo.name}
-                                            </h2>
-                                            <p className="text-2xl opacity-90">
-                                                {stationInfo.address}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <Badge variant="secondary" className="text-xl px-6 py-3 bg-white text-primary">
-                                        <Clock className="h-5 w-5 mr-2" />
-                                        Operating 24/7
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
 
                     {/* Hero Section */}
                     <div className="text-center space-y-6">
                         <Battery className="h-32 w-32 text-primary mx-auto" />
                         <h1 className="text-6xl font-bold text-primary">
-                            Welcome to G3 Battery Swap Station
+                            Welcome to Battery Swap Station
                         </h1>
                         <p className="text-3xl text-muted-foreground max-w-3xl mx-auto">
                             Fast, safe and convenient battery swapping in minutes
@@ -325,25 +301,6 @@ const KioskHome = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Help Section */}
-                    <Card className="bg-yellow-50 border-yellow-200">
-                        <CardContent className="p-8">
-                            <div className="flex items-start space-x-4">
-                                <AlertCircle className="h-12 w-12 text-yellow-600 flex-shrink-0" />
-                                <div>
-                                    <h3 className="text-2xl font-bold text-yellow-800 mb-2">
-                                        Need Help?
-                                    </h3>
-                                    <p className="text-xl text-yellow-700 mb-4">
-                                        Please contact hotline: <strong>1900-XXXX</strong>
-                                    </p>
-                                    <p className="text-lg text-yellow-600">
-                                        Or press the "Help" button on screen for emergency support
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
                 </div>
             ) : (
                 // Scanner Screen

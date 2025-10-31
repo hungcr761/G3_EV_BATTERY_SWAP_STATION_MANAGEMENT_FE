@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Battery, CheckCircle2, AlertCircle, Clock, User, Motorbike } from 'lucide-react';
-import { bookingAPI, swapAPI, batteryAPI } from '../../lib/apiServices';
+import { bookingAPI, swapAPI, batteryAPI, userAPI } from '../../lib/apiServices';
 
 const SwapStatus = () => {
     const { stationId, bookingId, userId } = useParams();
@@ -40,9 +40,24 @@ const SwapStatus = () => {
                     setIsUserFlow(true);
                     const userFlowData = location.state;
 
+                    // Fetch user information to get full name
+                    let userFullName = 'Customer';
+                    try {
+                        const userResponse = await userAPI.getById(userId);
+                        if (userResponse.data?.success && userResponse.data?.payload?.user?.fullname) {
+                            userFullName = userResponse.data.payload.user.fullname;
+                        }
+                    } catch (userError) {
+                        console.warn('Could not fetch user information:', userError);
+                        // Fallback: try to get from location state if available
+                        if (location.state?.user?.fullname) {
+                            userFullName = location.state.user.fullname;
+                        }
+                    }
+
                     setUserData({
                         userId: userId,
-                        userName: userFlowData?.selectedVehicle?.driver?.fullname || 'Customer',
+                        userName: userFullName,
                         vehicleModel: userFlowData?.selectedVehicle?.modelName || 'Unknown Model',
                         vehiclePlate: userFlowData?.selectedVehicle?.license_plate || 'N/A',
                         batteryType: userFlowData?.selectedVehicle?.batteryTypeCode || 'Type 2',
@@ -450,7 +465,16 @@ const SwapStatus = () => {
                 // Navigate to completion page
                 setSwapComplete(true);
                 const completeId = isUserFlow ? userId : bookingId;
-                navigate(`/kiosk/${stationId}/complete/${completeId}`);
+                navigate(`/kiosk/${stationId}/complete/${completeId}`, {
+                    state: {
+                        isUserFlow,
+                        userData: isUserFlow ? userData : null,
+                        bookingData: !isUserFlow ? bookingData : null,
+                        swapResult: swapResult,
+                        vehicleBatteries: vehicleBatteries, // Pass old batteries for SOC calculation
+                        validationData: validationData // Pass validation data for booked batteries (booking flow)
+                    }
+                });
             }
         }, 1000);
     };
