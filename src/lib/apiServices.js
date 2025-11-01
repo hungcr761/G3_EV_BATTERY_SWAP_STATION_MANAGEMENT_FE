@@ -58,6 +58,9 @@ export const userAPI = {
     delete: (id) => api.delete(`/users/${id}`),
     updateProfile: (id, data) =>
         USE_MOCK_API ? mockApi.updateProfile(data) : api.put(`/users/${id}`, data),
+    updateStatus: (accountId, status) => api.put(`/users/${accountId}/status`, { status }),
+    updateProfileByAccountId: (accountId, data) => api.put(`/users/${accountId}/profile`, data),
+    createStaff: (data) => api.post('/users/staff', data),
 };
 
 
@@ -126,7 +129,7 @@ export const swapAPI = {
 
 // Battery APIs
 export const batteryAPI = {
-    getAll: () => api.get('/battery/all'),
+    getAll: () => api.get('/batteries/all'),
     getByVehicleId: (vehicleId) => api.get(`/batteries/vehicle/${vehicleId}`),
     createForVehicle: (vehicleId) => api.post(`/batteries/vehicle/${vehicleId}`),
 };

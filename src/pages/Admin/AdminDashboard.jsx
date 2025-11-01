@@ -17,7 +17,7 @@ import { Card } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { useStation } from '../../hooks/useStation';
 import { useApi } from '../../hooks/useApi';
-import { batteryAPI, analysisAPI } from '../../lib/apiServices';
+import { batteryAPI, analysisAPI, userAPI } from '../../lib/apiServices';
 import { useState, useEffect } from 'react';
 
 const AdminDashboard = () => {
@@ -29,6 +29,10 @@ const AdminDashboard = () => {
     const [previousMonthRevenue, setPreviousMonthRevenue] = useState(null);
     const [revenueLoading, setRevenueLoading] = useState(true);
     const [revenueChange, setRevenueChange] = useState(null);
+
+    // Fetch active users count
+    const [activeUsersCount, setActiveUsersCount] = useState(0);
+    const [activeUsersLoading, setActiveUsersLoading] = useState(true);
 
     useEffect(() => {
         const fetchMonthlyRevenue = async () => {
@@ -94,6 +98,52 @@ const AdminDashboard = () => {
         fetchMonthlyRevenue();
     }, []);
 
+    // Fetch active users count - fetch all pages to get accurate count
+    useEffect(() => {
+        const fetchActiveUsers = async () => {
+            try {
+                setActiveUsersLoading(true);
+                let allActiveUsers = [];
+
+                // Fetch first page to get total pages
+                const firstResponse = await userAPI.getAll({ page: 1, pageSize: 100 });
+
+                if (firstResponse.data?.success && firstResponse.data?.payload) {
+                    const firstPageUsers = firstResponse.data.payload.data || [];
+                    // Filter active users from first page
+                    const activeFromFirstPage = firstPageUsers.filter(user => user.status === 'active');
+                    allActiveUsers = [...allActiveUsers, ...activeFromFirstPage];
+
+                    const total = firstResponse.data.payload.total || 0;
+                    const pageSize = firstResponse.data.payload.pageSize || 100;
+                    const totalPages = Math.ceil(total / pageSize);
+
+                    // Fetch remaining pages
+                    for (let page = 2; page <= totalPages; page++) {
+                        const response = await userAPI.getAll({ page, pageSize });
+
+                        if (response.data?.success && response.data?.payload) {
+                            const users = response.data.payload.data || [];
+                            const activeUsers = users.filter(user => user.status === 'active');
+                            allActiveUsers = [...allActiveUsers, ...activeUsers];
+                        }
+                    }
+
+                    setActiveUsersCount(allActiveUsers.length);
+                } else {
+                    setActiveUsersCount(0);
+                }
+            } catch (err) {
+                console.error('Error fetching active users:', err);
+                setActiveUsersCount(0);
+            } finally {
+                setActiveUsersLoading(false);
+            }
+        };
+
+        fetchActiveUsers();
+    }, []);
+
     const batteriesInStock = Array.isArray(batteries)
         ? batteries.filter(b => (b?.vehicle_id == null) && (b?.slot_id != null)).length
         : 0;
@@ -110,8 +160,8 @@ const AdminDashboard = () => {
         },
         {
             name: 'Active Users',
-            value: '1,234',
-            change: '+12%',
+            value: activeUsersLoading ? '...' : activeUsersCount.toLocaleString(),
+            // change: '+12%',
             changeType: 'positive',
             icon: Users,
             color: 'text-green-600',
@@ -120,7 +170,7 @@ const AdminDashboard = () => {
         {
             name: 'Batteries in Stock',
             value: batteriesLoading ? '...' : batteriesInStock.toString(),
-            change: '-8',
+            // change: '-8',
             changeType: 'negative',
             icon: Battery,
             color: 'text-orange-600',

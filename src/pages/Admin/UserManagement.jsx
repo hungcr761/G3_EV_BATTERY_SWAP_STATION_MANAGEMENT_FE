@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Users,
     Plus,
     Search,
-    Filter,
-    MoreVertical,
     Edit,
     Trash2,
     Eye,
@@ -12,104 +10,93 @@ import {
     UserX,
     Mail,
     Phone,
-    Calendar,
-    MapPin,
     Battery,
-    DollarSign
+    ChevronLeft,
+    ChevronRight,
+    Loader2,
+    AlertTriangle
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
+import { useUser } from '../../hooks/useUser';
 
 const UserManagement = () => {
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchEmail, setSearchEmail] = useState('');
+    const [searchFullname, setSearchFullname] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
 
-    // Mock data - will be replaced with real API calls
-    const users = [
-        {
-            id: 1,
-            name: 'John Doe',
-            email: 'john.doe@email.com',
-            phone: '+84 123 456 789',
-            type: 'driver',
-            status: 'active',
-            joinDate: '2024-01-15',
-            lastActive: '2024-01-20',
-            location: 'Ho Chi Minh City',
-            vehicleCount: 1,
-            subscriptionPlan: 'Premium',
-            totalSwaps: 45,
-            totalSpent: 1250.50,
-            station: 'Station A1'
-        },
-        {
-            id: 2,
-            name: 'Jane Smith',
-            email: 'jane.smith@email.com',
-            phone: '+84 987 654 321',
-            type: 'staff',
-            status: 'active',
-            joinDate: '2024-01-10',
-            lastActive: '2024-01-20',
-            location: 'Station A1',
-            vehicleCount: 0,
-            subscriptionPlan: 'N/A',
-            totalSwaps: 0,
-            totalSpent: 0,
-            station: 'Station A1'
-        },
-        {
-            id: 3,
-            name: 'Mike Johnson',
-            email: 'mike.j@email.com',
-            phone: '+84 555 123 456',
-            type: 'driver',
-            status: 'inactive',
-            joinDate: '2023-12-01',
-            lastActive: '2024-01-05',
-            location: 'Hanoi',
-            vehicleCount: 2,
-            subscriptionPlan: 'Basic',
-            totalSwaps: 23,
-            totalSpent: 650.25,
-            station: 'Station B1'
-        },
-        {
-            id: 4,
-            name: 'Sarah Wilson',
-            email: 'sarah.w@email.com',
-            phone: '+84 444 777 888',
-            type: 'staff',
-            status: 'active',
-            joinDate: '2024-01-05',
-            lastActive: '2024-01-20',
-            location: 'Station B2',
-            vehicleCount: 0,
-            subscriptionPlan: 'N/A',
-            totalSwaps: 0,
-            totalSpent: 0,
-            station: 'Station B2'
-        },
-        {
-            id: 5,
-            name: 'David Brown',
-            email: 'david.brown@email.com',
-            phone: '+84 333 999 111',
-            type: 'driver',
-            status: 'active',
-            joinDate: '2024-01-12',
-            lastActive: '2024-01-19',
-            location: 'Da Nang',
-            vehicleCount: 1,
-            subscriptionPlan: 'Premium',
-            totalSwaps: 67,
-            totalSpent: 1890.75,
-            station: 'Station C1'
+    // Use the useUser hook with initial pagination
+    const {
+        users,
+        loading,
+        error,
+        pagination,
+        params,
+        updateParams,
+        updateStatus,
+        updateProfile,
+        createStaff,
+        deleteUser,
+        refetch
+    } = useUser({
+        page: 1,
+        pageSize: 10,
+        role: 'all',
+        email: '',
+        fullname: ''
+    });
+
+    // Update search params when search term changes
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            updateParams({
+                email: searchEmail,
+                fullname: searchFullname,
+                role: filterType === 'all' ? 'all' : filterType,
+                page: 1 // Reset to first page when search changes
+            });
+        }, 500); // Debounce search
+
+        return () => clearTimeout(timeoutId);
+    }, [searchEmail, searchFullname, filterType, updateParams]);
+
+    // Handle pagination
+    const handlePageChange = (newPage) => {
+        updateParams({ page: newPage });
+    };
+
+    // Handle status update
+    const handleStatusUpdate = async (accountId, newStatus) => {
+        try {
+            await updateStatus(accountId, newStatus);
+            // Optionally show success message
+        } catch (err) {
+            console.error('Failed to update status:', err);
+            // Optionally show error message
         }
-    ];
+    };
+
+    // Handle delete user
+    const handleDeleteUser = async (accountId) => {
+        if (window.confirm('Are you sure you want to delete this user?')) {
+            try {
+                await deleteUser(accountId);
+                // Optionally show success message
+            } catch (err) {
+                console.error('Failed to delete user:', err);
+                // Optionally show error message
+            }
+        }
+    };
+
+    // Filter users by status (client-side filter since API might not support it)
+    const filteredUsers = users.filter(user => {
+        const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
+        return matchesStatus;
+    });
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -120,8 +107,8 @@ const UserManagement = () => {
         }
     };
 
-    const getTypeColor = (type) => {
-        switch (type) {
+    const getTypeColor = (role) => {
+        switch (role) {
             case 'driver': return 'bg-blue-100 text-blue-800';
             case 'staff': return 'bg-purple-100 text-purple-800';
             case 'admin': return 'bg-orange-100 text-orange-800';
@@ -129,23 +116,14 @@ const UserManagement = () => {
         }
     };
 
-    const getTypeIcon = (type) => {
-        switch (type) {
+    const getTypeIcon = (role) => {
+        switch (role) {
             case 'driver': return <Battery className="h-4 w-4" />;
             case 'staff': return <Users className="h-4 w-4" />;
             case 'admin': return <UserCheck className="h-4 w-4" />;
             default: return <Users className="h-4 w-4" />;
         }
     };
-
-    const filteredUsers = users.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.phone.includes(searchTerm);
-        const matchesType = filterType === 'all' || user.type === filterType;
-        const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-        return matchesSearch && matchesType && matchesStatus;
-    });
 
     return (
         <div className="space-y-6">
@@ -163,16 +141,29 @@ const UserManagement = () => {
 
             {/* Filters and Search */}
             <Card className="p-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                                placeholder="Search users..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10"
-                            />
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Search by fullname..."
+                                    value={searchFullname}
+                                    onChange={(e) => setSearchFullname(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Search by email..."
+                                    value={searchEmail}
+                                    onChange={(e) => setSearchEmail(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className="flex gap-2">
@@ -181,7 +172,7 @@ const UserManagement = () => {
                             onChange={(e) => setFilterType(e.target.value)}
                             className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                         >
-                            <option value="all">All Types</option>
+                            <option value="all">All Roles</option>
                             <option value="driver">Drivers</option>
                             <option value="staff">Staff</option>
                             <option value="admin">Admins</option>
@@ -196,118 +187,200 @@ const UserManagement = () => {
                             <option value="inactive">Inactive</option>
                             <option value="pending">Pending</option>
                         </select>
-                        <Button variant="outline" className="flex items-center gap-2">
-                            <Filter className="h-4 w-4" />
-                            More Filters
-                        </Button>
+                        <select
+                            value={params.pageSize}
+                            onChange={(e) => updateParams({ pageSize: parseInt(e.target.value), page: 1 })}
+                            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        >
+                            <option value="10">10 per page</option>
+                            <option value="25">25 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
                     </div>
                 </div>
             </Card>
 
             {/* Users Table */}
             <Card className="overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    User
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Type
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Location
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Activity
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredUsers.map((user) => (
-                                <tr key={user.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-10 w-10">
-                                                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                                    <Users className="h-5 w-5 text-gray-600" />
-                                                </div>
-                                            </div>
-                                            <div className="ml-4">
-                                                <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                                <div className="text-sm text-gray-500">{user.email}</div>
-                                                <div className="text-sm text-gray-500">{user.phone}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <Badge className={getTypeColor(user.type)}>
-                                            <div className="flex items-center gap-1">
-                                                {getTypeIcon(user.type)}
-                                                {user.type.charAt(0).toUpperCase() + user.type.slice(1)}
-                                            </div>
-                                        </Badge>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <Badge className={getStatusColor(user.status)}>
-                                            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                                        </Badge>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center text-sm text-gray-900">
-                                            <MapPin className="h-4 w-4 text-gray-400 mr-1" />
-                                            {user.location}
-                                        </div>
-                                        {user.station && (
-                                            <div className="text-sm text-gray-500">Station: {user.station}</div>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {user.type === 'driver' ? (
-                                            <div className="space-y-1">
+                {error && (
+                    <div className="p-4 bg-red-50 border-l-4 border-red-400 mb-4">
+                        <div className="flex items-center">
+                            <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+                            <p className="text-sm text-red-700">{error}</p>
+                        </div>
+                    </div>
+                )}
+                {loading ? (
+                    <div className="flex items-center justify-center p-12">
+                        <div className="flex items-center gap-2 text-gray-500">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                            <span>Loading users...</span>
+                        </div>
+                    </div>
+                ) : filteredUsers.length === 0 ? (
+                    <div className="flex items-center justify-center p-12">
+                        <div className="text-center text-gray-500">
+                            <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                            <p>No users found</p>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            User
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Role
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Contact
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Additional Info
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {filteredUsers.map((user) => (
+                                        <tr key={user.account_id || user.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    <Battery className="h-4 w-4 text-orange-500 mr-1" />
-                                                    {user.totalSwaps} swaps
+                                                    <div className="flex-shrink-0 h-10 w-10">
+                                                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                                            <Users className="h-5 w-5 text-gray-600" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="ml-4">
+                                                        <div className="text-sm font-medium text-gray-900">
+                                                            {user.fullname || 'N/A'}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500">{user.email || 'N/A'}</div>
+                                                        {user.citizen_id && (
+                                                            <div className="text-xs text-gray-400">ID: {user.citizen_id}</div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center">
-                                                    <DollarSign className="h-4 w-4 text-green-500 mr-1" />
-                                                    ${user.totalSpent.toFixed(2)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <Badge className={getTypeColor(user.role)}>
+                                                    <div className="flex items-center gap-1">
+                                                        {getTypeIcon(user.role)}
+                                                        {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A'}
+                                                    </div>
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <Badge className={getStatusColor(user.status)}>
+                                                    {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'N/A'}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">
+                                                    {user.phone_number ? (
+                                                        <div className="flex items-center">
+                                                            <Phone className="h-4 w-4 text-gray-400 mr-1" />
+                                                            {user.phone_number}
+                                                        </div>
+                                                    ) : (
+                                                        'N/A'
+                                                    )}
                                                 </div>
-                                                <div className="text-xs text-gray-500">
-                                                    Last active: {user.lastActive}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {user.driving_license && (
+                                                    <div className="text-xs">License: {user.driving_license}</div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleStatusUpdate(
+                                                            user.account_id,
+                                                            user.status === 'active' ? 'inactive' : 'active'
+                                                        )}
+                                                        title={user.status === 'active' ? 'Deactivate' : 'Activate'}
+                                                    >
+                                                        {user.status === 'active' ? (
+                                                            <UserX className="h-4 w-4 text-red-600" />
+                                                        ) : (
+                                                            <UserCheck className="h-4 w-4 text-green-600" />
+                                                        )}
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" title="View">
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" title="Edit">
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="text-red-600 hover:text-red-700"
+                                                        onClick={() => handleDeleteUser(user.account_id)}
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
-                                            </div>
-                                        ) : (
-                                            <div className="text-sm text-gray-500">
-                                                Joined: {user.joinDate}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div className="flex items-center gap-2">
-                                            <Button variant="ghost" size="sm">
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="sm">
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {/* Pagination */}
+                        {pagination.totalPages > 1 && (
+                            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-sm text-gray-700">
+                                        Showing <span className="font-medium">{(pagination.page - 1) * pagination.pageSize + 1}</span> to{' '}
+                                        <span className="font-medium">
+                                            {Math.min(pagination.page * pagination.pageSize, pagination.total)}
+                                        </span> of{' '}
+                                        <span className="font-medium">{pagination.total}</span> results
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handlePageChange(pagination.page - 1)}
+                                            disabled={pagination.page === 1}
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                            Previous
+                                        </Button>
+                                        <div className="text-sm text-gray-700">
+                                            Page <span className="font-medium">{pagination.page}</span> of{' '}
+                                            <span className="font-medium">{pagination.totalPages}</span>
                                         </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handlePageChange(pagination.page + 1)}
+                                            disabled={pagination.page >= pagination.totalPages}
+                                        >
+                                            Next
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
             </Card>
 
             {/* Summary Stats */}
@@ -319,7 +392,9 @@ const UserManagement = () => {
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Users</p>
-                            <p className="text-2xl font-semibold text-gray-900">{users.length}</p>
+                            <p className="text-2xl font-semibold text-gray-900">
+                                {loading ? '...' : pagination.total}
+                            </p>
                         </div>
                     </div>
                 </Card>
@@ -332,7 +407,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Active Users</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {users.filter(u => u.status === 'active').length}
+                                {loading ? '...' : users.filter(u => u.status === 'active').length}
                             </p>
                         </div>
                     </div>
@@ -346,7 +421,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Drivers</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {users.filter(u => u.type === 'driver').length}
+                                {loading ? '...' : users.filter(u => u.role === 'driver').length}
                             </p>
                         </div>
                     </div>
@@ -360,7 +435,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Staff Members</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {users.filter(u => u.type === 'staff').length}
+                                {loading ? '...' : users.filter(u => u.role === 'staff').length}
                             </p>
                         </div>
                     </div>

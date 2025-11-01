@@ -19,7 +19,7 @@ import {
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { analysisAPI } from '../../lib/apiServices';
+import { analysisAPI, userAPI } from '../../lib/apiServices';
 
 // Simple Line Chart Component
 const LineChart = ({ data, width = 400, height = 200, color = '#3B82F6', labelInterval = 1 }) => {
@@ -139,6 +139,8 @@ const AnalyticsReports = () => {
     const [revenueLoading, setRevenueLoading] = useState(true);
     const [peakHoursData, setPeakHoursData] = useState([]);
     const [peakHoursLoading, setPeakHoursLoading] = useState(true);
+    const [activeUsersCount, setActiveUsersCount] = useState(0);
+    const [activeUsersLoading, setActiveUsersLoading] = useState(true);
 
     // Calculate date range based on selected period
     const getDateRange = (period) => {
@@ -296,6 +298,52 @@ const AnalyticsReports = () => {
         fetchSwapsData();
     }, [selectedPeriod, selectedStation]);
 
+    // Fetch active users count - fetch all pages to get accurate count
+    useEffect(() => {
+        const fetchActiveUsers = async () => {
+            try {
+                setActiveUsersLoading(true);
+                let allActiveUsers = [];
+
+                // Fetch first page to get total pages
+                const firstResponse = await userAPI.getAll({ page: 1, pageSize: 100 });
+
+                if (firstResponse.data?.success && firstResponse.data?.payload) {
+                    const firstPageUsers = firstResponse.data.payload.data || [];
+                    // Filter active users from first page
+                    const activeFromFirstPage = firstPageUsers.filter(user => user.status === 'active');
+                    allActiveUsers = [...allActiveUsers, ...activeFromFirstPage];
+
+                    const total = firstResponse.data.payload.total || 0;
+                    const pageSize = firstResponse.data.payload.pageSize || 100;
+                    const totalPages = Math.ceil(total / pageSize);
+
+                    // Fetch remaining pages
+                    for (let page = 2; page <= totalPages; page++) {
+                        const response = await userAPI.getAll({ page, pageSize });
+
+                        if (response.data?.success && response.data?.payload) {
+                            const users = response.data.payload.data || [];
+                            const activeUsers = users.filter(user => user.status === 'active');
+                            allActiveUsers = [...allActiveUsers, ...activeUsers];
+                        }
+                    }
+
+                    setActiveUsersCount(allActiveUsers.length);
+                } else {
+                    setActiveUsersCount(0);
+                }
+            } catch (err) {
+                console.error('Error fetching active users:', err);
+                setActiveUsersCount(0);
+            } finally {
+                setActiveUsersLoading(false);
+            }
+        };
+
+        fetchActiveUsers();
+    }, []);
+
     // Format data for line charts
     const totalRevenueChartData = revenueData.map(item => ({
         label: item.label,
@@ -416,18 +464,6 @@ const AnalyticsReports = () => {
                             <option value="90d">Last 90 days</option>
                             <option value="1y">Last year</option>
                         </select>
-                        <select
-                            value={selectedStation}
-                            onChange={(e) => setSelectedStation(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        >
-                            <option value="all">All Stations</option>
-                            <option value="A1">Station A1</option>
-                            <option value="A2">Station A2</option>
-                            <option value="B1">Station B1</option>
-                            <option value="B2">Station B2</option>
-                            <option value="C1">Station C1</option>
-                        </select>
                         <Button variant="outline" className="flex items-center gap-2">
                             <Filter className="h-4 w-4" />
                             More Filters
@@ -479,7 +515,9 @@ const AnalyticsReports = () => {
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Active Users</p>
-                            <p className="text-2xl font-semibold text-gray-900">1,234</p>
+                            <p className="text-2xl font-semibold text-gray-900">
+                                {activeUsersLoading ? '...' : activeUsersCount.toLocaleString()}
+                            </p>
                             <div className="flex items-center mt-1">
                                 <TrendingUp className="h-4 w-4 text-green-500" />
                                 <span className="text-sm text-green-600 ml-1">+5.2%</span>
