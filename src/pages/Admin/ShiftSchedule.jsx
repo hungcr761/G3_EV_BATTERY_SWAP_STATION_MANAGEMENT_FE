@@ -189,7 +189,7 @@ const ShiftSchedule = () => {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent onClose={() => setIsDialogOpen(false)}>
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Create shift</DialogTitle>
                         <DialogDescription>Assign a staff member to a station and time range.</DialogDescription>
