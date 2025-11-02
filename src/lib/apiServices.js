@@ -14,7 +14,7 @@ export const authAPI = {
     logout: () =>
         USE_MOCK_API ? mockApi.logout() : api.post('/auth/logout'),
     getProfile: (userId) =>
-        USE_MOCK_API ? mockApi.getProfile() : api.get(`/auth/profile/${userId}`),
+        USE_MOCK_API ? mockApi.getProfile() : api.get(`/users/id/${userId}`),
     forgotPassword: (email) =>
         USE_MOCK_API ? mockApi.forgotPassword(email) : api.post('/auth/forgot-password', email),
     resetPassword: (data) =>
@@ -56,8 +56,8 @@ export const userAPI = {
     create: (data) => api.post('/users', data),
     update: (id, data) => api.put(`/users/${id}`, data),
     delete: (id) => api.delete(`/users/${id}`),
-    updateProfile: (id, data) =>
-        USE_MOCK_API ? mockApi.updateProfile(data) : api.put(`/users/${id}`, data),
+    updateProfile: (data) =>
+        USE_MOCK_API ? mockApi.updateProfile(data) : api.put(`/users/driver/profile`, data),
     updateStatus: (accountId, status) => api.put(`/users/${accountId}/status`, { status }),
     updateProfileByAccountId: (accountId, data) => api.put(`/users/${accountId}/profile`, data),
     createStaff: (data) => api.post('/users/staff', data),
