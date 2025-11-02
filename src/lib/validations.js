@@ -53,7 +53,7 @@ export const registerSchema = z.object({
         .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
             'Invalid email format'),
     phone_number: z.string()
-        .regex(/^[0-9]{10,11}$/, 'Phone number must have 10-11 digits'),
+    // .regex(/[0-9]/, 'Phone number must contain digits'),
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Password confirmation does not match',
     path: ['confirmPassword'],

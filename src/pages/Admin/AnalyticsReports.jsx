@@ -226,13 +226,8 @@ const AnalyticsReports = () => {
         const fetchSwapsData = async () => {
             try {
                 setPeakHoursLoading(true);
-                // For peak hours, we want hourly data, so we'll use a shorter period
-                // Let's use the last 7 days to get a good sample of hourly patterns
-                const endDate = new Date();
-                const startDate = new Date();
-
-                // Use last 7 days for peak hours analysis
-                startDate.setDate(endDate.getDate() - 7);
+                // Use the same date range as revenue but always group by hour for peak hours analysis
+                const { startDate, endDate } = getDateRange(selectedPeriod);
 
                 const startDateStr = startDate.toISOString().split('T')[0];
                 const endDateStr = endDate.toISOString().split('T')[0];

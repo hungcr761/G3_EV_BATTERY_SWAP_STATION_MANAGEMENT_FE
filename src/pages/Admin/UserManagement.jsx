@@ -319,9 +319,6 @@ const UserManagement = () => {
                                                             <UserCheck className="h-4 w-4 text-green-600" />
                                                         )}
                                                     </Button>
-                                                    <Button variant="ghost" size="sm" title="View">
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
                                                     <Button variant="ghost" size="sm" title="Edit">
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
