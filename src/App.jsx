@@ -28,7 +28,6 @@ import PaymentSuccess from './pages/EVDriver/PaymentSuccess.jsx';
 import Stations from './pages/EVDriver/Booking.jsx';
 import Dashboard from './pages/EVDriver/Dashboard.jsx';
 // Admin pages
-import AdminDashboard from './pages/Admin/AdminDashboard';
 import StationManagement from './pages/Admin/StationManagement';
 import UserManagement from './pages/Admin/UserManagement';
 import BatteryManagement from './pages/Admin/BatteryManagement';
@@ -183,7 +182,7 @@ function App() {
           <Route path="/admin" element={
             <AdminProtectedRoute>
               <AdminLayout>
-                <AdminDashboard />
+                <AnalyticsReports />
               </AdminLayout>
             </AdminProtectedRoute>
           } />
@@ -212,13 +211,6 @@ function App() {
             <AdminProtectedRoute>
               <AdminLayout>
                 <BatteryManagement />
-              </AdminLayout>
-            </AdminProtectedRoute>
-          } />
-          <Route path="/admin/analytics" element={
-            <AdminProtectedRoute>
-              <AdminLayout>
-                <AnalyticsReports />
               </AdminLayout>
             </AdminProtectedRoute>
           } />

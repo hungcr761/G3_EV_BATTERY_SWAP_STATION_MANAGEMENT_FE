@@ -41,7 +41,7 @@ const ForgotPassword = () => {
                 setShowOTP(true);
             }
         } catch (err) {
-            const errorMessage = err?.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.';
+            const errorMessage = err?.response?.data?.message || 'An error occurred. Please try again.';
             setError(errorMessage);
         } finally {
             setIsLoading(false);
@@ -84,12 +84,12 @@ const ForgotPassword = () => {
                                 <Mail className="h-6 w-6 text-primary" />
                             </div>
                             <CardTitle className="text-2xl font-bold">
-                                {success ? 'Kiểm tra email của bạn' : 'Quên mật khẩu?'}
+                                {success ? 'Check Your Email' : 'Forgot Password?'}
                             </CardTitle>
                             <CardDescription>
                                 {success
-                                    ? 'Mật khẩu của bạn đã được đặt lại thành công'
-                                    : 'Nhập email của bạn và chúng tôi sẽ gửi mã OTP để đặt lại mật khẩu'
+                                    ? 'Your password has been reset successfully'
+                                    : 'Enter your email and we will send an OTP code to reset your password'
                                 }
                             </CardDescription>
                         </CardHeader>
@@ -100,22 +100,22 @@ const ForgotPassword = () => {
                                         <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
                                         <div className="flex-1">
                                             <p className="text-sm text-green-700 font-medium">
-                                                Email đã được gửi!
+                                                Email Sent!
                                             </p>
                                             <p className="text-sm text-green-600 mt-1">
-                                                Mật khẩu của bạn đã được đặt lại thành công!
+                                                Your password has been reset successfully!
                                             </p>
                                         </div>
                                     </div>
 
                                     <div className="space-y-3 text-sm text-muted-foreground">
-                                        <p>Bạn có thể đăng nhập với mật khẩu mới ngay bây giờ.</p>
+                                        <p>You can now log in with your new password.</p>
                                     </div>
 
                                     <div className="pt-4 space-y-3">
                                         <Link to="/login" className="block">
                                             <Button type="button" className="w-full">
-                                                Đăng nhập ngay
+                                                Login Now
                                             </Button>
                                         </Link>
                                     </div>
@@ -134,7 +134,7 @@ const ForgotPassword = () => {
                                         <Input
                                             id="email"
                                             type="email"
-                                            placeholder="Nhập email của bạn"
+                                            placeholder="Enter your email"
                                             {...register('email')}
                                             className={errors.email ? 'border-red-500' : ''}
                                             disabled={isLoading}
@@ -152,12 +152,12 @@ const ForgotPassword = () => {
                                         {isLoading ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Đang gửi...
+                                                Sending...
                                             </>
                                         ) : (
                                             <>
                                                 <Mail className="mr-2 h-4 w-4" />
-                                                Gửi mã OTP
+                                                Send OTP Code
                                             </>
                                         )}
                                     </Button>
@@ -168,7 +168,7 @@ const ForgotPassword = () => {
                                             className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
                                         >
                                             <ArrowLeft className="mr-2 h-4 w-4" />
-                                            Quay lại đăng nhập
+                                            Back to Login
                                         </Link>
                                     </div>
                                 </form>

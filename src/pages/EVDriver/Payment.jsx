@@ -51,20 +51,20 @@ export default function Payment() {
     }
 
     const formatPrice = (price) => {
-        return new Intl.NumberFormat('vi-VN', {
+        return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'VND'
         }).format(price);
     };
 
-    // Tính tổng tiền
+    // Calculate total amount
     const totalAmount = (parseFloat(plan.plan_fee) || 0) + (parseFloat(plan.deposit_fee) || 0);
 
     const displayModelName = vehicle.model?.name || 'N/A';
 
     const handlePayment = async () => {
         if (!plan?.plan_id || !vehicle?.vehicle_id) {
-            alert('Thiếu thông tin gói dịch vụ hoặc xe. Vui lòng quay lại chọn lại.');
+            alert('Missing subscription plan or vehicle information. Please go back and select again.');
             return;
         }
 
@@ -81,10 +81,10 @@ export default function Payment() {
             const invoiceId = createdInvoice?.invoice_id || invoicePayload?.invoice_id;
 
             if (!invoiceId) {
-                throw new Error('Không nhận được mã hóa đơn từ máy chủ');
+                throw new Error('Did not receive invoice ID from server');
             }
 
-            // 2) Tạo payment để lấy payUrl MoMo
+            // 2) Create payment to get MoMo payUrl
             const paymentRes = await paymentAPI.create({
                 invoice_id: invoiceId,
                 vehicle_id: vehicle.vehicle_id,
@@ -95,14 +95,14 @@ export default function Payment() {
             const payUrl = paymentData?.payUrl;
 
             if (!payUrl) {
-                throw new Error('Không lấy được liên kết thanh toán');
+                throw new Error('Unable to retrieve payment link');
             }
 
-            // 3) Điều hướng sang cổng MoMo
+            // 3) Redirect to MoMo payment gateway
             window.location.assign(payUrl);
         } catch (error) {
             console.error('Payment error:', error);
-            const message = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi thanh toán.';
+            const message = error?.response?.data?.message || error?.message || 'An error occurred during payment.';
             alert(message);
         } finally {
             setProcessing(false);
@@ -123,16 +123,16 @@ export default function Payment() {
                     className="mb-6"
                 >
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Quay lại
+                    Back
                 </Button>
 
                 {/* Header */}
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-foreground mb-4">
-                        Xác nhận thanh toán
+                        Confirm Payment
                     </h1>
                     <p className="text-xl text-muted-foreground">
-                        Hoàn tất thanh toán để kích hoạt gói dịch vụ
+                        Complete payment to activate your subscription plan
                     </p>
                 </div>
 
@@ -144,17 +144,17 @@ export default function Payment() {
                             <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
                                 <CardTitle className="flex items-center text-2xl">
                                     <Package className="mr-3 h-6 w-6 text-primary" />
-                                    Thông tin gói dịch vụ
+                                    Subscription Plan Information
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="pt-6 space-y-6">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                         <Badge className="mb-3 bg-primary">
-                                            {plan.plan_name || 'Gói dịch vụ'}
+                                            {plan.plan_name || 'Subscription Plan'}
                                         </Badge>
                                         <p className="text-muted-foreground mb-4">
-                                            {plan.description || 'Không có mô tả'}
+                                            {plan.description || 'No description'}
                                         </p>
 
                                         {/* Features */}
@@ -162,13 +162,13 @@ export default function Payment() {
                                             <div className="flex items-center space-x-2">
                                                 <Check className="h-5 w-5 text-green-500" />
                                                 <span className="text-sm">
-                                                    Số pin tối đa: <strong>{plan.battery_cap || 0}</strong>
+                                                    Max Batteries: <strong>{plan.battery_cap || 0}</strong>
                                                 </span>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <Check className="h-5 w-5 text-green-500" />
                                                 <span className="text-sm">
-                                                    SoH cap: <strong>{plan.soh_cap ? (parseFloat(plan.soh_cap) * 100).toFixed(0) : 0}%</strong>
+                                                    SoH Cap: <strong>{plan.soh_cap ? (parseFloat(plan.soh_cap) * 100).toFixed(0) : 0}%</strong>
                                                 </span>
                                             </div>
                                         </div>
@@ -182,21 +182,21 @@ export default function Payment() {
                             <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50">
                                 <CardTitle className="flex items-center text-2xl">
                                     <Motorbike className="mr-3 h-6 w-6 text-blue-600" />
-                                    Thông tin xe đăng ký
+                                    Registered Vehicle Information
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="pt-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <p className="text-sm text-muted-foreground mb-1">Tên xe</p>
+                                        <p className="text-sm text-muted-foreground mb-1">Vehicle Name</p>
                                         <p className="font-semibold text-lg">{displayModelName}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-muted-foreground mb-1">Biển số</p>
+                                        <p className="text-sm text-muted-foreground mb-1">License Plate</p>
                                         <p className="font-semibold text-lg">{vehicle.license_plate || 'N/A'}</p>
                                     </div>
                                     <div className="col-span-2">
-                                        <p className="text-sm text-muted-foreground mb-1">Số VIN</p>
+                                        <p className="text-sm text-muted-foreground mb-1">VIN Number</p>
                                         <p className="font-mono text-sm bg-muted p-2 rounded">{vehicle.vin || 'N/A'}</p>
                                     </div>
                                 </div>
@@ -213,15 +213,15 @@ export default function Payment() {
                                 <CardHeader className="bg-gradient-to-r from-primary to-primary/80 text-white">
                                     <CardTitle className="flex items-center text-2xl">
                                         <DollarSign className="mr-3 h-6 w-6" />
-                                        Chi tiết thanh toán
+                                        Payment Details
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="pt-6 space-y-4">
                                     {/* Plan Fee */}
                                     <div className="flex justify-between items-center py-3 border-b">
                                         <div>
-                                            <p className="font-medium">Phí gói hàng tháng</p>
-                                            <p className="text-sm text-muted-foreground">Thanh toán định kỳ</p>
+                                            <p className="font-medium">Monthly Plan Fee</p>
+                                            <p className="text-sm text-muted-foreground">Recurring payment</p>
                                         </div>
                                         <p className="font-semibold text-lg">
                                             {formatPrice(plan.plan_fee || 0)}
@@ -231,8 +231,8 @@ export default function Payment() {
                                     {/* Penalty Fee Info */}
                                     <div className="flex justify-between items-center py-3 border-b">
                                         <div>
-                                            <p className="font-medium">Phí phạt/%</p>
-                                            <p className="text-sm text-muted-foreground">Nếu vi phạm quy định</p>
+                                            <p className="font-medium">Penalty Fee/%</p>
+                                            <p className="text-sm text-muted-foreground">If violating rules</p>
                                         </div>
                                         <p className="font-semibold text-lg text-orange-600">
                                             {formatPrice(plan.penalty_fee || 0)}/%
@@ -244,11 +244,11 @@ export default function Payment() {
                                         <div className="flex justify-between items-center">
                                             <div>
                                                 <p className="text-sm text-muted-foreground mb-1">
-                                                    Tổng thanh toán lần đầu
+                                                    First Payment Total
                                                 </p>
                                                 <p className="text-xs text-muted-foreground flex items-center">
                                                     <Calendar className="h-3 w-3 mr-1" />
-                                                    Bao gồm tháng đầu + đặt cọc
+                                                    Includes first month + deposit
                                                 </p>
                                             </div>
                                             <p className="text-3xl font-bold text-primary">
@@ -267,12 +267,12 @@ export default function Payment() {
                                         {processing ? (
                                             <>
                                                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                                Đang xử lý...
+                                                Processing...
                                             </>
                                         ) : (
                                             <>
                                                 <Zap className="mr-2 h-5 w-5" />
-                                                Thanh toán ngay
+                                                Pay Now
                                             </>
                                         )}
                                     </Button>
@@ -281,14 +281,14 @@ export default function Payment() {
                                     <div className="mt-4 p-4 border rounded-lg bg-white">
                                         <h4 className="font-semibold mb-2 flex items-center">
                                             <span className="text-2xl mr-2">📱</span>
-                                            Thanh toán bằng MoMo
+                                            Pay with MoMo
                                         </h4>
                                         <p className="text-sm text-muted-foreground mb-2">
-                                            Mở ứng dụng MoMo, chọn "Quét mã" hoặc "Chuyển tiền" để tiếp tục thanh toán.
+                                            Open the MoMo app, select "Scan QR" or "Transfer" to continue payment.
                                         </p>
                                         <div className="text-sm text-muted-foreground">
-                                            <p>Phương thức được chọn: <strong className="text-foreground">{paymentMethods[0].name}</strong></p>
-                                            <p className="mt-2">Mẹo: Sử dụng QR để thanh toán nhanh.</p>
+                                            <p>Selected Method: <strong className="text-foreground">{paymentMethods[0].name}</strong></p>
+                                            <p className="mt-2">Tip: Use QR code for fast payment.</p>
                                         </div>
                                     </div>
 
@@ -298,10 +298,10 @@ export default function Payment() {
                                             <Shield className="h-5 w-5 text-green-600 mt-0.5" />
                                             <div>
                                                 <p className="text-sm font-medium text-green-800">
-                                                    Thanh toán an toàn
+                                                    Secure Payment
                                                 </p>
                                                 <p className="text-xs text-green-600 mt-1">
-                                                    Giao dịch được mã hóa SSL 256-bit
+                                                    Transaction encrypted with 256-bit SSL
                                                 </p>
                                             </div>
                                         </div>
@@ -312,15 +312,15 @@ export default function Payment() {
                             {/* Info Card */}
                             <Card className="border-blue-200 bg-blue-50/50">
                                 <CardContent className="pt-6">
-                                    <h4 className="font-semibold mb-3 text-blue-900">Lưu ý quan trọng</h4>
+                                    <h4 className="font-semibold mb-3 text-blue-900">Important Notes</h4>
                                     <ul className="space-y-2 text-sm text-blue-800">
                                         <li className="flex items-start">
                                             <Check className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />
-                                            <span>Gói sẽ được kích hoạt ngay sau khi thanh toán</span>
+                                            <span>Plan will be activated immediately after payment</span>
                                         </li>
                                         <li className="flex items-start">
                                             <Check className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />
-                                            <span>Hóa đơn điện tử sẽ được gửi qua email</span>
+                                            <span>Electronic invoice will be sent via email</span>
                                         </li>
                                     </ul>
                                 </CardContent>

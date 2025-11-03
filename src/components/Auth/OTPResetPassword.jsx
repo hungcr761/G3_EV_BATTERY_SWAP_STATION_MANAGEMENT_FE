@@ -46,7 +46,7 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
 
     const handleResetPassword = async (data) => {
         if (otp.length !== 6) {
-            setError('Mã OTP phải có 6 chữ số');
+            setError('OTP code must be 6 digits');
             return;
         }
 
@@ -68,7 +68,7 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
                 }, 2000);
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
+            setError(err.response?.data?.message || 'An error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -84,7 +84,7 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
             setCanResend(false);
             setOtp('');
         } catch (err) {
-            setError(err.response?.data?.message || 'Không thể gửi lại mã OTP. Vui lòng thử lại.');
+            setError(err.response?.data?.message || 'Unable to resend OTP code. Please try again.');
         } finally {
             setIsResending(false);
         }
@@ -107,17 +107,17 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
                             <div className="text-center">
                                 <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
                                 <h3 className="text-lg font-medium text-foreground mb-2">
-                                    Đặt lại mật khẩu thành công!
+                                    Password Reset Successful!
                                 </h3>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    Mật khẩu của bạn đã được đặt lại thành công.
-                                    Bạn có thể đăng nhập với mật khẩu mới.
+                                    Your password has been reset successfully.
+                                    You can now log in with your new password.
                                 </p>
                                 <Button
                                     onClick={() => navigate('/login')}
                                     className="w-full"
                                 >
-                                    Đăng nhập ngay
+                                    Login Now
                                 </Button>
                             </div>
                         </CardContent>
@@ -136,10 +136,10 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
                             <KeyRound className="h-6 w-6 text-primary" />
                         </div>
                         <CardTitle className="text-2xl font-bold">
-                            Đặt lại mật khẩu
+                            Reset Password
                         </CardTitle>
                         <CardDescription>
-                            Nhập mã OTP và mật khẩu mới để đặt lại mật khẩu
+                            Enter the OTP code and new password to reset your password
                         </CardDescription>
                         <p className="text-sm text-muted-foreground mt-2">
                             Email: <span className="font-medium">{email}</span>
@@ -155,28 +155,28 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
                             )}
 
                             <div className="space-y-2">
-                                <Label htmlFor="otp">Mã xác thực (OTP) *</Label>
+                                <Label htmlFor="otp">Verification Code (OTP) *</Label>
                                 <Input
                                     id="otp"
                                     type="text"
-                                    placeholder="Nhập mã 6 chữ số"
+                                    placeholder="Enter 6-digit code"
                                     value={otp}
                                     onChange={handleOtpChange}
                                     maxLength={6}
                                     className="text-center text-lg tracking-widest"
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Nhập mã 6 chữ số đã được gửi đến email của bạn
+                                    Enter the 6-digit code sent to your email
                                 </p>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="newPassword">Mật khẩu mới *</Label>
+                                <Label htmlFor="newPassword">New Password *</Label>
                                 <div className="relative">
                                     <Input
                                         id="newPassword"
                                         type={showPassword ? 'text' : 'password'}
-                                        placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
+                                        placeholder="Enter new password (minimum 8 characters)"
                                         {...register('newPassword')}
                                         className={errors.newPassword ? 'border-red-500 pr-10' : 'pr-10'}
                                         disabled={isLoading}
@@ -199,12 +199,12 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới *</Label>
+                                <Label htmlFor="confirmPassword">Confirm New Password *</Label>
                                 <div className="relative">
                                     <Input
                                         id="confirmPassword"
                                         type={showConfirmPassword ? 'text' : 'password'}
-                                        placeholder="Nhập lại mật khẩu mới"
+                                        placeholder="Re-enter new password"
                                         {...register('confirmPassword')}
                                         className={errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
                                         disabled={isLoading}
@@ -234,19 +234,19 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
                                 {isLoading ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Đang xử lý...
+                                        Processing...
                                     </>
                                 ) : (
                                     <>
                                         <KeyRound className="mr-2 h-4 w-4" />
-                                        Đặt lại mật khẩu
+                                        Reset Password
                                     </>
                                 )}
                             </Button>
 
                             <div className="text-center">
                                 <p className="text-sm text-muted-foreground mb-2">
-                                    Không nhận được mã?
+                                    Didn't receive the code?
                                 </p>
                                 <Button
                                     type="button"
@@ -258,12 +258,12 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
                                     {isResending ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Đang gửi lại...
+                                            Resending...
                                         </>
                                     ) : canResend ? (
-                                        'Gửi lại mã'
+                                        'Resend Code'
                                     ) : (
-                                        `Gửi lại sau ${countdown}s`
+                                        `Resend in ${countdown}s`
                                     )}
                                 </Button>
                             </div>
@@ -276,7 +276,7 @@ const OTPResetPassword = ({ email, onBack, onSuccess }) => {
                                     className="text-sm"
                                 >
                                     <ArrowLeft className="mr-2 h-4 w-4" />
-                                    Quay lại
+                                    Back
                                 </Button>
                             </div>
                         </form>
