@@ -31,7 +31,7 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
     const handleVerifyOTP = async (e) => {
         e.preventDefault();
         if (otp.length !== 6) {
-            setError('Mã OTP phải có 6 chữ số');
+            setError('OTP code must be 6 digits');
             return;
         }
 
@@ -53,10 +53,10 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
                     }, 2000);
                 }
             } else {
-                setError(verifyResponse.data.message || 'Mã OTP không đúng');
+                setError(verifyResponse.data.message || 'Incorrect OTP code');
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.');
+            setError(err.response?.data?.message || 'Incorrect or expired OTP code. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -72,7 +72,7 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
             setCanResend(false);
             setOtp('');
         } catch (err) {
-            setError(err.response?.data?.message || 'Không thể gửi lại mã OTP. Vui lòng thử lại.');
+            setError(err.response?.data?.message || 'Unable to resend OTP code. Please try again.');
         } finally {
             setIsResending(false);
         }
@@ -95,17 +95,17 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
                             <div className="text-center">
                                 <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
                                 <h3 className="text-lg font-medium text-foreground mb-2">
-                                    Đăng ký thành công!
+                                    Registration Successful!
                                 </h3>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    Tài khoản của bạn đã được tạo thành công.
-                                    Bạn sẽ được chuyển đến trang đăng nhập.
+                                    Your account has been created successfully.
+                                    You will be redirected to the login page.
                                 </p>
                                 <Button
                                     onClick={() => navigate('/login')}
                                     className="w-full"
                                 >
-                                    Đi đến trang đăng nhập
+                                    Go to Login Page
                                 </Button>
                             </div>
                         </CardContent>
@@ -120,9 +120,9 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
             <div className="max-w-md w-full space-y-8">
                 <Card>
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl font-bold">Xác thực Email</CardTitle>
+                        <CardTitle className="text-2xl font-bold">Email Verification</CardTitle>
                         <CardDescription>
-                            Chúng tôi đã gửi mã xác thực 6 chữ số đến email của bạn
+                            We've sent a 6-digit verification code to your email
                         </CardDescription>
                         <p className="text-sm text-muted-foreground mt-2">
                             Email: <span className="font-medium">{email}</span>
@@ -138,18 +138,18 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
                             )}
 
                             <div className="space-y-2">
-                                <Label htmlFor="otp">Mã xác thực (OTP) *</Label>
+                                <Label htmlFor="otp">Verification Code (OTP) *</Label>
                                 <Input
                                     id="otp"
                                     type="text"
-                                    placeholder="Nhập mã 6 chữ số"
+                                    placeholder="Enter 6-digit code"
                                     value={otp}
                                     onChange={handleOtpChange}
                                     maxLength={6}
                                     className="text-center text-lg tracking-widest"
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    Nhập mã 6 chữ số đã được gửi đến email của bạn
+                                    Enter the 6-digit code sent to your email
                                 </p>
                             </div>
 
@@ -161,16 +161,16 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
                                 {isLoading ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Đang xác thực...
+                                        Verifying...
                                     </>
                                 ) : (
-                                    'Xác thực'
+                                    'Verify'
                                 )}
                             </Button>
 
                             <div className="text-center">
                                 <p className="text-sm text-muted-foreground mb-2">
-                                    Không nhận được mã?
+                                    Didn't receive the code?
                                 </p>
                                 <Button
                                     type="button"
@@ -182,12 +182,12 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
                                     {isResending ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Đang gửi lại...
+                                            Resending...
                                         </>
                                     ) : canResend ? (
-                                        'Gửi lại mã'
+                                        'Resend Code'
                                     ) : (
-                                        `Gửi lại sau ${countdown}s`
+                                        `Resend in ${countdown}s`
                                     )}
                                 </Button>
                             </div>
@@ -200,7 +200,7 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
                                     className="text-sm"
                                 >
                                     <ArrowLeft className="mr-2 h-4 w-4" />
-                                    Quay lại đăng ký
+                                    Back to Registration
                                 </Button>
                             </div>
                         </form>

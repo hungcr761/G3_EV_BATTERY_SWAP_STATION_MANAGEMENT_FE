@@ -33,8 +33,8 @@ const KioskLayout = ({ children }) => {
                 console.error('Error fetching station:', error);
                 setStationInfo({
                     id: stationId,
-                    name: `Trạm #${stationId}`,
-                    address: 'Đang tải...',
+                    name: `Station #${stationId}`,
+                    address: 'Loading...',
                     status: 'operational'
                 });
             } finally {
@@ -103,7 +103,7 @@ const KioskLayout = ({ children }) => {
                             <Battery className="h-12 w-12 text-primary" />
                             <div>
                                 <h1 className="text-3xl font-bold text-primary">
-                                    {loadingStation ? 'Đang tải...' : stationInfo?.name || 'G3 Battery Swap Station'}
+                                    {loadingStation ? 'Loading...' : stationInfo?.name || 'G3 Battery Swap Station'}
                                 </h1>
                                 <div className="flex items-center space-x-2">
                                     {stationInfo?.address && (
@@ -124,7 +124,7 @@ const KioskLayout = ({ children }) => {
                                 className="flex items-center space-x-2 px-6 py-4 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
                             >
                                 <Home className="h-6 w-6" />
-                                <span className="text-xl font-medium">Trang chủ</span>
+                                <span className="text-xl font-medium">Home</span>
                             </button>
                         )}
                     </div>
@@ -141,7 +141,7 @@ const KioskLayout = ({ children }) => {
                 <div className="container mx-auto px-8">
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <p>© 2025 G3 Battery Swap Station. All rights reserved.</p>
-                        <p>Cần trợ giúp? Gọi: 1900-XXXX</p>
+                        <p>Need help? Call: 1900-XXXX</p>
                     </div>
                 </div>
             </footer>

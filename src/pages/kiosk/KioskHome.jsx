@@ -158,6 +158,17 @@ const KioskHome = () => {
 
             const user = userData.payload.user;
 
+            // VALIDATION: Check if account is active
+            if (user.status && user.status.toLowerCase() !== 'active') {
+                setError(
+                    `❌ Account Suspended!\n\n` +
+                    `Please contact customer support to activate your account.\n\n` +
+                    `You cannot proceed with battery swap until your account is activated.`
+                );
+                setValidating(false);
+                return;
+            }
+
             // Navigate to user flow
             console.log('✅ User validated:', user);
             navigate(`/kiosk/${stationId}/user/${accountId}`, {

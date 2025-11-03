@@ -338,6 +338,116 @@ const SwapStatus = () => {
         return shuffled.slice(0, quantity);
     };
 
+    // Generate random UUID format battery ID for testing
+    const generateRandomBatteryId = () => {
+        const chars = '0123456789abcdef';
+        const segments = [8, 4, 4, 4, 12]; // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        return segments.map(len =>
+            Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+        ).join('-');
+    };
+
+    // Test handler for invalid battery insertion
+    const handleInvalidBatteryTest = async () => {
+        setCurrentAction(prev => ({
+            ...prev,
+            showButton: false,
+            status: 'completed'
+        }));
+
+        // Move to validation step
+        setTimeout(async () => {
+            try {
+                setCurrentAction({
+                    title: 'Validate and Prepare',
+                    description: 'System is validating and preparing new batteries',
+                    progress: 66,
+                    status: 'in_progress',
+                    showButton: false
+                });
+
+                // Generate invalid battery data with random battery IDs
+                const invalidBatteryData = selectedSlots.map((slot) => ({
+                    slot_id: slot.slot_id,
+                    battery_id: generateRandomBatteryId() // Random invalid battery ID
+                }));
+
+                let validationResponse;
+                try {
+                    if (isUserFlow) {
+                        // User flow: use validateAndPrepare
+                        validationResponse = await validateAndPrepareSwap(invalidBatteryData);
+                    } else {
+                        // Booking flow: use validateWithBooking
+                        validationResponse = await validateSwapWithBooking(invalidBatteryData);
+                    }
+                } catch (apiError) {
+                    // Handle API error response
+                    const errorData = apiError?.response?.data || {};
+                    const errorMessage = errorData?.data?.invalid_batteries_in?.error ||
+                        errorData?.invalid_batteries_in?.error ||
+                        errorData?.message ||
+                        apiError?.message ||
+                        'Battery validation failed. The inserted batteries do not match your vehicle.';
+
+                    setCurrentAction(prev => ({
+                        ...prev,
+                        title: 'Validation Failed',
+                        description: errorMessage,
+                        status: 'error'
+                    }));
+
+                    // Return to kiosk home after 10 seconds
+                    setTimeout(() => {
+                        navigate(`/kiosk/${stationId}`);
+                    }, 10000);
+                    return;
+                }
+
+                setValidationData(validationResponse);
+
+                // Check if validation passed (should fail with invalid batteries)
+                if (!validationResponse.ready_to_execute) {
+                    const errorMessage = validationResponse.data?.invalid_batteries_in?.error ||
+                        validationResponse.message ||
+                        'Unable to proceed with swap';
+
+                    setCurrentAction(prev => ({
+                        ...prev,
+                        title: 'Validation Failed',
+                        description: errorMessage,
+                        status: 'error'
+                    }));
+
+                    // Return to kiosk home after 10 seconds
+                    setTimeout(() => {
+                        navigate(`/kiosk/${stationId}`);
+                    }, 10000);
+                    return;
+                }
+
+            } catch (error) {
+                console.error('Error testing invalid battery:', error);
+                const errorMessage = error?.response?.data?.data?.invalid_batteries_in?.error ||
+                    error?.response?.data?.invalid_batteries_in?.error ||
+                    error?.message ||
+                    'Unable to validate batteries. Please check the inserted batteries and try again.';
+
+                setCurrentAction(prev => ({
+                    ...prev,
+                    title: 'Validation Error',
+                    description: errorMessage,
+                    status: 'error'
+                }));
+
+                // Return to kiosk home after 10 seconds
+                setTimeout(() => {
+                    navigate(`/kiosk/${stationId}`);
+                }, 10000);
+            }
+        }, 1000);
+    };
+
     const handleActionComplete = async () => {
         setCurrentAction(prev => ({
             ...prev,
@@ -380,12 +490,22 @@ const SwapStatus = () => {
 
                     // Check if validation passed
                     if (!validationResponse.ready_to_execute) {
+                        // Check for invalid batteries error message
+                        const errorMessage = validationResponse.data?.invalid_batteries_in?.error ||
+                            validationResponse.message ||
+                            'Unable to proceed with swap';
+
                         setCurrentAction(prev => ({
                             ...prev,
                             title: 'Validation Failed',
-                            description: validationResponse.message || 'Unable to proceed with swap',
+                            description: errorMessage,
                             status: 'error'
                         }));
+
+                        // Return to kiosk home after 10 seconds (user likely doesn't have correct batteries)
+                        setTimeout(() => {
+                            navigate(`/kiosk/${stationId}`);
+                        }, 10000);
                         return;
                     }
 
@@ -442,12 +562,42 @@ const SwapStatus = () => {
 
                 } catch (error) {
                     console.error('Error in swap process:', error);
+
+                    // Check for invalid batteries error in response
+                    const errorMessage = error?.response?.data?.data?.invalid_batteries_in?.error ||
+                        error?.response?.data?.invalid_batteries_in?.error ||
+                        error?.response?.data?.message ||
+                        error?.message ||
+                        'Unable to complete battery swap';
+
                     setCurrentAction(prev => ({
                         ...prev,
                         title: 'Error',
-                        description: error.message || 'Unable to complete battery swap',
+                        description: errorMessage,
                         status: 'error'
                     }));
+
+                    // If it's a validation error (invalid batteries), return to kiosk home
+                    if (errorMessage.includes('battery') || errorMessage.includes('Battery') ||
+                        error?.response?.data?.data?.invalid_batteries_in?.error ||
+                        error?.response?.data?.invalid_batteries_in?.error) {
+                        // Return to kiosk home after 10 seconds
+                        setTimeout(() => {
+                            navigate(`/kiosk/${stationId}`);
+                        }, 10000);
+                    } else {
+                        // For other errors, allow retry
+                        setTimeout(() => {
+                            setCurrentAction({
+                                title: 'Insert Old Batteries',
+                                description: `Please insert the correct batteries into slots: ${selectedSlots.map(s => s.slot_number).join(', ')}`,
+                                progress: 50,
+                                status: 'in_progress',
+                                showButton: true,
+                                buttonText: 'Batteries Inserted'
+                            });
+                        }, 3000);
+                    }
                 }
             } else if (currentAction.title === 'Get New Batteries') {
                 // Step 6: Complete swap
@@ -574,7 +724,7 @@ const SwapStatus = () => {
 
                             {/* Action Button */}
                             {currentAction.showButton && (
-                                <div className="text-center">
+                                <div className="text-center space-y-4">
                                     <Button
                                         size="lg"
                                         onClick={handleActionComplete}
@@ -582,6 +732,18 @@ const SwapStatus = () => {
                                     >
                                         {currentAction.buttonText}
                                     </Button>
+
+                                    {/* Test Button for Invalid Battery - Only show at Insert Old Batteries step */}
+                                    {currentAction.title === 'Insert Old Batteries' && (
+                                        <Button
+                                            variant="outline"
+                                            size="lg"
+                                            onClick={handleInvalidBatteryTest}
+                                            className="text-xl px-8 py-6 h-auto border-orange-500 text-orange-600 hover:bg-orange-50"
+                                        >
+                                            🧪 Test: Invalid Battery ID
+                                        </Button>
+                                    )}
                                 </div>
                             )}
 
