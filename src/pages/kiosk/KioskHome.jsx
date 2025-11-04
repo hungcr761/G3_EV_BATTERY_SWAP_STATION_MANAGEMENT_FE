@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import QRScanner from '../../components/Kiosk/QRScanner';
-import { stationAPI, bookingAPI, userAPI } from '../../lib/apiServices';
+import { bookingAPI, userAPI } from '../../lib/apiServices';
+import { useStation } from '../../hooks/useStation';
 
 const KioskHome = () => {
     const navigate = useNavigate();
@@ -15,21 +16,19 @@ const KioskHome = () => {
     const [error, setError] = useState(null);
     const [validating, setValidating] = useState(false);
     const [stationInfo, setStationInfo] = useState(null);
+    const { getStationById } = useStation();
 
     // Fetch station info on mount
     useEffect(() => {
         const fetchStation = async () => {
             try {
-                const response = await stationAPI.getById(stationId);
-                if (response.data && response.data.success) {
-                    const station = response.data.payload.station;
-                    setStationInfo({
-                        id: station.station_id,
-                        name: station.station_name,
-                        address: station.address,
-                        status: station.status
-                    });
-                }
+                const station = await getStationById(stationId);
+                setStationInfo({
+                    id: station.id,
+                    name: station.name,
+                    address: station.address,
+                    status: station.status
+                });
             } catch (error) {
                 console.error('Error fetching station:', error);
             }
@@ -38,9 +37,24 @@ const KioskHome = () => {
         if (stationId) {
             fetchStation();
         }
-    }, [stationId]);
+    }, [stationId, getStationById]);
+
+    // Check if station is operational
+    const isStationOperational = () => {
+        if (!stationInfo || !stationInfo.status) {
+            return false; // If status is unknown, block access
+        }
+        return stationInfo.status.toLowerCase() === 'operational';
+    };
 
     const handleQRScan = async (qrCode) => {
+        // Check station status before proceeding
+        if (!isStationOperational()) {
+            setError('Station is not operational. Please contact support or visit another station.');
+            setValidating(false);
+            return;
+        }
+
         setValidating(true);
         setError(null);
 
@@ -191,8 +205,33 @@ const KioskHome = () => {
         handleQRScan(qrCode);
     };
 
+    const isOperational = isStationOperational();
+    const stationStatusMessage = stationInfo?.status
+        ? stationInfo.status.charAt(0).toUpperCase() + stationInfo.status.slice(1).replace('_', ' ')
+        : 'Unknown';
+
     return (
         <div className="container mx-auto px-8 py-12">
+            {/* Station Status Warning */}
+            {stationInfo && !isOperational && (
+                <Card className="mb-8 bg-red-50 border-red-500 border-4 shadow-xl">
+                    <CardContent className="p-8">
+                        <div className="flex items-start space-x-4">
+                            <AlertCircle className="h-16 w-16 text-red-600 flex-shrink-0" />
+                            <div className="flex-1">
+                                <p className="text-3xl font-bold text-red-800 mb-3">Station Not Operational</p>
+                                <p className="text-2xl text-red-700 mb-2">
+                                    Current Status: <span className="font-semibold">{stationStatusMessage}</span>
+                                </p>
+                                <p className="text-xl text-red-600">
+                                    This station is currently unavailable for battery swaps. Please visit another station.
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {!showScanner ? (
                 // Welcome Screen
                 <div className="max-w-5xl mx-auto space-y-12">
@@ -221,9 +260,14 @@ const KioskHome = () => {
                             <Button
                                 size="lg"
                                 onClick={() => {
+                                    if (!isOperational) {
+                                        setError('Station is not operational. Please contact support or visit another station.');
+                                        return;
+                                    }
                                     setScanMode('booking');
                                     setShowScanner(true);
                                 }}
+                                disabled={!isOperational}
                                 className="w-full text-3xl py-12 h-auto"
                             >
                                 <QrCode className="mr-4 h-10 w-10" />
@@ -235,9 +279,14 @@ const KioskHome = () => {
                                 size="lg"
                                 variant="outline"
                                 onClick={() => {
+                                    if (!isOperational) {
+                                        setError('Station is not operational. Please contact support or visit another station.');
+                                        return;
+                                    }
                                     setScanMode('user');
                                     setShowScanner(true);
                                 }}
+                                disabled={!isOperational}
                                 className="w-full text-3xl py-12 h-auto"
                             >
                                 <QrCode className="mr-4 h-10 w-10" />

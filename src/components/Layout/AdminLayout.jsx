@@ -61,7 +61,7 @@ const AdminLayout = ({ children }) => {
             <div className="flex">
                 {/* Sidebar */}
                 <div
-                    className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform transition-all duration-400 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
+                    className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform transition-all duration-400 ease-in-out lg:translate-x-0 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
                         }`}
                     onMouseEnter={(e) => {
                         if (window.innerWidth >= 1024) {
@@ -74,7 +74,8 @@ const AdminLayout = ({ children }) => {
                         }
                     }}
                 >
-                    <div className={`flex items-center justify-between h-16 border-b border-gray-200 transition-all duration-300 ${sidebarCollapsed ? 'px-4' : 'px-6'
+                    {/* Fixed Header */}
+                    <div className={`flex items-center justify-between h-16 border-b border-gray-200 transition-all duration-300 flex-shrink-0 ${sidebarCollapsed ? 'px-4' : 'px-6'
                         }`}>
                         <div className="flex items-center">
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -91,9 +92,10 @@ const AdminLayout = ({ children }) => {
                         </button>
                     </div>
 
-                    <nav className={`mt-6 transition-all duration-300 ${sidebarCollapsed ? 'px-2' : 'px-3'
+                    {/* Scrollable Navigation */}
+                    <nav className={`flex-1 overflow-y-auto mt-6 transition-all duration-300 ${sidebarCollapsed ? 'px-2' : 'px-3'
                         }`}>
-                        <div className="space-y-1">
+                        <div className="space-y-1 pb-6">
                             {navigation.map((item) => {
                                 const Icon = item.icon;
                                 return (
@@ -121,7 +123,7 @@ const AdminLayout = ({ children }) => {
                 </div>
 
                 {/* Main content */}
-                <div className="flex-1 flex flex-col min-w-0">
+                <div className={`flex-1 flex flex-col min-w-0 transition-all duration-400 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
                     {/* Top navigation */}
                     <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
                         <button

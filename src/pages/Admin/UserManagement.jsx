@@ -14,19 +14,36 @@ import {
     ChevronLeft,
     ChevronRight,
     Loader2,
-    AlertTriangle
+    AlertTriangle,
+    EyeOff
 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '../../components/ui/dialog';
 import { useUser } from '../../hooks/useUser';
+import { createStaffSchema } from '../../lib/validations';
 
 const UserManagement = () => {
     const [searchEmail, setSearchEmail] = useState('');
     const [searchFullname, setSearchFullname] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+    const [submitSuccess, setSubmitSuccess] = useState(false);
 
     // Use the useUser hook with initial pagination
     const {
@@ -48,6 +65,26 @@ const UserManagement = () => {
         email: '',
         fullname: ''
     });
+
+    // Form setup for creating staff
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        reset,
+    } = useForm({
+        resolver: zodResolver(createStaffSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+            confirmPassword: '',
+            fullname: '',
+            phone_number: '',
+        },
+    });
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Update search params when search term changes
     useEffect(() => {
@@ -92,6 +129,49 @@ const UserManagement = () => {
         }
     };
 
+    // Handle create staff form submission
+    const onSubmitStaff = async (data) => {
+        setIsSubmitting(true);
+        setSubmitError('');
+        setSubmitSuccess(false);
+
+        try {
+            // Prepare data - remove confirmPassword and only include phone_number if it's not empty
+            const { confirmPassword, ...restData } = data;
+            const staffData = {
+                email: restData.email,
+                password: restData.password,
+                fullname: restData.fullname,
+                ...(restData.phone_number && restData.phone_number.trim() !== '' && { phone_number: restData.phone_number }),
+            };
+
+            await createStaff(staffData);
+            setSubmitSuccess(true);
+            reset();
+
+            // Close dialog after a short delay
+            setTimeout(() => {
+                setIsDialogOpen(false);
+                setSubmitSuccess(false);
+            }, 1500);
+        } catch (err) {
+            console.error('Failed to create staff:', err);
+            setSubmitError(err.response?.data?.message || err.message || 'Failed to create staff account. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Handle dialog close
+    const handleDialogClose = () => {
+        if (!isSubmitting) {
+            setIsDialogOpen(false);
+            reset();
+            setSubmitError('');
+            setSubmitSuccess(false);
+        }
+    };
+
     // Filter users by status (client-side filter since API might not support it)
     const filteredUsers = users.filter(user => {
         const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
@@ -133,9 +213,12 @@ const UserManagement = () => {
                     <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
                     <p className="mt-2 text-gray-600">Manage drivers, staff, and admin accounts</p>
                 </div>
-                <Button className="flex items-center gap-2">
+                <Button
+                    className="flex items-center gap-2"
+                    onClick={() => setIsDialogOpen(true)}
+                >
                     <Plus className="h-4 w-4" />
-                    Add New User
+                    Add New Staff
                 </Button>
             </div>
 
@@ -438,6 +521,166 @@ const UserManagement = () => {
                     </div>
                 </Card>
             </div>
+
+            {/* Add New Staff Dialog */}
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>Add New Staff</DialogTitle>
+                        <DialogDescription>
+                            Create a new staff account. Fill in the required information below.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit(onSubmitStaff)}>
+                        <div className="space-y-4 py-4">
+                            {/* Email */}
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="staff@example.com"
+                                    {...register('email')}
+                                    disabled={isSubmitting}
+                                />
+                                {errors.email && (
+                                    <p className="text-sm text-red-600">{errors.email.message}</p>
+                                )}
+                            </div>
+
+                            {/* Password */}
+                            <div className="space-y-2">
+                                <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
+                                <div className="relative">
+                                    <Input
+                                        id="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="At least 8 characters"
+                                        {...register('password')}
+                                        disabled={isSubmitting}
+                                        className="pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                        disabled={isSubmitting}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                </div>
+                                {errors.password && (
+                                    <p className="text-sm text-red-600">{errors.password.message}</p>
+                                )}
+                            </div>
+
+                            {/* Confirm Password */}
+                            <div className="space-y-2">
+                                <Label htmlFor="confirmPassword">Confirm Password <span className="text-red-500">*</span></Label>
+                                <div className="relative">
+                                    <Input
+                                        id="confirmPassword"
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        placeholder="Confirm your password"
+                                        {...register('confirmPassword')}
+                                        disabled={isSubmitting}
+                                        className="pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                        disabled={isSubmitting}
+                                    >
+                                        {showConfirmPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                </div>
+                                {errors.confirmPassword && (
+                                    <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
+                                )}
+                            </div>
+
+                            {/* Fullname */}
+                            <div className="space-y-2">
+                                <Label htmlFor="fullname">Full Name <span className="text-red-500">*</span></Label>
+                                <Input
+                                    id="fullname"
+                                    type="text"
+                                    placeholder="John Doe"
+                                    {...register('fullname')}
+                                    disabled={isSubmitting}
+                                />
+                                {errors.fullname && (
+                                    <p className="text-sm text-red-600">{errors.fullname.message}</p>
+                                )}
+                            </div>
+
+                            {/* Phone Number */}
+                            <div className="space-y-2">
+                                <Label htmlFor="phone_number">Phone Number (Optional)</Label>
+                                <Input
+                                    id="phone_number"
+                                    type="tel"
+                                    placeholder="0912345678"
+                                    {...register('phone_number')}
+                                    disabled={isSubmitting}
+                                />
+                                {errors.phone_number && (
+                                    <p className="text-sm text-red-600">{errors.phone_number.message}</p>
+                                )}
+                            </div>
+
+                            {/* Error Message */}
+                            {submitError && (
+                                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                                    <div className="flex items-center">
+                                        <AlertTriangle className="h-4 w-4 text-red-600 mr-2" />
+                                        <p className="text-sm text-red-700">{submitError}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Success Message */}
+                            {submitSuccess && (
+                                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                                    <div className="flex items-center">
+                                        <UserCheck className="h-4 w-4 text-green-600 mr-2" />
+                                        <p className="text-sm text-green-700">Staff account created successfully!</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleDialogClose}
+                                disabled={isSubmitting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    'Create Staff'
+                                )}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
