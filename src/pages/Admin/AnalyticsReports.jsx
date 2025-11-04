@@ -24,7 +24,8 @@ import { ChartContainer, ChartTooltip } from '../../components/ui/chart';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 import { Calendar } from '../../components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { analysisAPI, userAPI, batteryAPI, stationAPI } from '../../lib/apiServices';
+import { analysisAPI, userAPI, batteryAPI } from '../../lib/apiServices';
+import { useStation } from '../../hooks/useStation';
 import { cn } from '../../lib/utils';
 
 // Format large numbers to abbreviated format
@@ -90,7 +91,7 @@ const LineChart = ({ data, height = 250, color = '#3B82F6', name = 'Value' }) =>
     const minValue = Math.min(...data.map(d => d.value));
     const range = maxValue - minValue;
     const yAxisDomain = [
-        Math.max(0, minValue - range * 0.1),
+        Math.max(0, minValue - range),
         maxValue + range * 0.1
     ];
 
@@ -154,6 +155,9 @@ const AnalyticsReports = () => {
     const [stationPerformance, setStationPerformance] = useState([]);
     const [stationPerformanceLoading, setStationPerformanceLoading] = useState(true);
 
+    // Use station hook
+    const { stations } = useStation();
+
     // Helper function to format date to YYYY-MM-DD in local timezone
     const formatDateLocal = (date) => {
         const year = date.getFullYear();
@@ -178,10 +182,15 @@ const AnalyticsReports = () => {
                 daysAgo = 30;
                 groupDate = 'day';
                 break;
-            case 'last3Months':
-                daysAgo = 90;
+            case 'last6Months':
+                daysAgo = 180;
                 groupDate = 'week';
                 break;
+            case 'allTime':
+                // For all time, set dates to null and group by month
+                setCustomDateRange(null);
+                setCustomGroupDate('month');
+                return;
             case 'lastYear':
                 daysAgo = 365;
                 groupDate = 'month';
@@ -199,6 +208,11 @@ const AnalyticsReports = () => {
 
     // Calculate date range based on selected period or custom date range
     const getDateRange = (period) => {
+        // If custom date range is null (all time), return null dates with month grouping
+        if (customDateRange === null && customGroupDate === 'month') {
+            return { startDate: null, endDate: null, groupDate: 'month' };
+        }
+
         // If custom date range is set, use it
         if (customDateRange?.from && customDateRange?.to) {
             const startDate = new Date(customDateRange.from);
@@ -250,14 +264,17 @@ const AnalyticsReports = () => {
                 setRevenueLoading(true);
                 const { startDate, endDate, groupDate } = getDateRange(selectedPeriod);
 
-                const startDateStr = formatDateLocal(startDate);
-                const endDateStr = formatDateLocal(endDate);
-
-                const response = await analysisAPI.getRevenue({
-                    startDate: startDateStr,
-                    endDate: endDateStr,
+                // For all time, send null dates
+                const requestParams = {
                     groupDate: groupDate
-                });
+                };
+
+                if (startDate && endDate) {
+                    requestParams.startDate = formatDateLocal(startDate);
+                    requestParams.endDate = formatDateLocal(endDate);
+                }
+
+                const response = await analysisAPI.getRevenue(requestParams);
 
                 if (response.data?.success && response.data?.payload) {
                     // Transform API data to match component format
@@ -304,14 +321,17 @@ const AnalyticsReports = () => {
                 // Use the same date range as revenue but always group by hour for peak hours analysis
                 const { startDate, endDate } = getDateRange(selectedPeriod);
 
-                const startDateStr = formatDateLocal(startDate);
-                const endDateStr = formatDateLocal(endDate);
-
-                const response = await analysisAPI.getSwaps({
-                    startDate: startDateStr,
-                    endDate: endDateStr,
+                // For all time, send null dates
+                const requestParams = {
                     groupDate: 'hour'
-                });
+                };
+
+                if (startDate && endDate) {
+                    requestParams.startDate = formatDateLocal(startDate);
+                    requestParams.endDate = formatDateLocal(endDate);
+                }
+
+                const response = await analysisAPI.getSwaps(requestParams);
 
                 if (response.data?.success && response.data?.payload) {
                     // Initialize hour buckets (0-23 hours)
@@ -455,24 +475,21 @@ const AnalyticsReports = () => {
                 setStationPerformanceLoading(true);
                 const { startDate, endDate } = getDateRange(selectedPeriod);
 
-                const startDateStr = formatDateLocal(startDate);
-                const endDateStr = formatDateLocal(endDate);
+                // For all time, send null dates
+                const requestParams = {
+                    groupDate: 'day' // Group by day to get totals, we'll aggregate by station
+                };
 
-                // Fetch stations and swaps data in parallel
-                const [stationsResponse, swapsResponse] = await Promise.all([
-                    stationAPI.getAll(),
-                    analysisAPI.getSwaps({
-                        startDate: startDateStr,
-                        endDate: endDateStr,
-                        groupDate: 'day' // Group by day to get totals, we'll aggregate by station
-                    })
-                ]);
+                if (startDate && endDate) {
+                    requestParams.startDate = formatDateLocal(startDate);
+                    requestParams.endDate = formatDateLocal(endDate);
+                }
 
-                // Extract stations data
-                const stationsData = stationsResponse.data?.payload?.stations ||
-                    stationsResponse.data?.stations ||
-                    stationsResponse.data?.payload ||
-                    [];
+                // Fetch swaps data
+                const swapsResponse = await analysisAPI.getSwaps(requestParams);
+
+                // Use stations from hook
+                const stationsData = stations || [];
 
                 // Extract swaps data
                 const swapsData = swapsResponse.data?.success && swapsResponse.data?.payload
@@ -636,9 +653,11 @@ const AnalyticsReports = () => {
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="flex items-center gap-2">
                                 <CalendarIcon className="h-4 w-4" />
-                                {customDateRange?.from && customDateRange?.to
-                                    ? `${customDateRange.from.toLocaleDateString('vi-VN')} - ${customDateRange.to.toLocaleDateString('vi-VN')}`
-                                    : 'Date Range'}
+                                {customDateRange === null && customGroupDate === 'month'
+                                    ? 'All Time'
+                                    : customDateRange?.from && customDateRange?.to
+                                        ? `${customDateRange.from.toLocaleDateString('vi-VN')} - ${customDateRange.to.toLocaleDateString('vi-VN')}`
+                                        : 'Date Range'}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="end">
@@ -664,17 +683,17 @@ const AnalyticsReports = () => {
                                         variant="outline"
                                         size="sm"
                                         className="text-xs"
-                                        onClick={() => setPresetDateRange('last3Months')}
+                                        onClick={() => setPresetDateRange('last6Months')}
                                     >
-                                        Last 3 Months
+                                        Last 6 Months
                                     </Button>
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         className="text-xs"
-                                        onClick={() => setPresetDateRange('lastYear')}
+                                        onClick={() => setPresetDateRange('allTime')}
                                     >
-                                        Last Year
+                                        All Time
                                     </Button>
                                 </div>
                             </div>

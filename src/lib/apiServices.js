@@ -86,6 +86,7 @@ export const stationAPI = {
     getById: (id) => api.get(`/station/${id}`),
     create: (data) => api.post('/station', data),
     update: (id, data) => api.put(`/station/${id}`, data),
+    updateStatus: (id, status) => api.put(`/station/${id}/status`, { status }),
     delete: (id) => api.delete(`/station/${id}`),
 };
 
@@ -138,4 +139,9 @@ export const batteryAPI = {
 export const analysisAPI = {
     getRevenue: (params) => api.get('/analysis/revenue', { params }),
     getSwaps: (params) => api.get('/analysis/swaps', { params }),
+};
+
+// Shift APIs
+export const shiftAPI = {
+    getAll: () => api.get('/shifts'),
 };

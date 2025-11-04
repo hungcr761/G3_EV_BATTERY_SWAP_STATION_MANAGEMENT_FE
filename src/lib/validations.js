@@ -53,7 +53,33 @@ export const registerSchema = z.object({
         .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
             'Invalid email format'),
     phone_number: z.string()
-    // .regex(/[0-9]/, 'Phone number must contain digits'),
+        .optional()
+        .refine((val) => {
+            // Allow blank/empty
+            if (!val || val.trim() === '') {
+                return true;
+            }
+            // Must contain only digits
+            if (!/^\d+$/.test(val)) {
+                return false;
+            }
+            // Must be 9-10 digits
+            if (val.length < 9 || val.length > 10) {
+                return false;
+            }
+            // Normalize: if 9 digits, assume missing leading 0
+            const normalized = val.length === 9 ? '0' + val : val;
+            // Must start with valid Vietnam phone provider prefix
+            // Viettel: 032-039, 086, 096-098
+            // Vinaphone: 081-085, 088, 091, 094
+            // Mobifone: 070, 076-079, 089, 090, 093
+            // Vietnamobile: 052, 056, 058, 092
+            // Gmobile: 059, 099
+            const validPrefixes = /^0(3[2-9]|5[2689]|7[06789]|8[1-689]|9[0-46-9])\d{7}$/;
+            return validPrefixes.test(normalized);
+        }, {
+            message: 'Phone number must be 9-10 digits and start with a valid Vietnam provider prefix (Vinaphone, Viettel, Mobifone, etc.)'
+        }),
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Password confirmation does not match',
     path: ['confirmPassword'],
@@ -132,8 +158,33 @@ export const profileUpdateSchema = z.object({
             message: 'Part before @ cannot exceed 64 characters'
         }),
     phone: z.string()
-        .regex(/^[0-9]{10,11}$/, 'Phone number must have 10-11 digits')
-        .min(10, 'Phone number must have at least 10 digits'),
+        .optional()
+        .refine((val) => {
+            // Allow blank/empty
+            if (!val || val.trim() === '') {
+                return true;
+            }
+            // Must contain only digits
+            if (!/^\d+$/.test(val)) {
+                return false;
+            }
+            // Must be 9-10 digits
+            if (val.length < 9 || val.length > 10) {
+                return false;
+            }
+            // Normalize: if 9 digits, assume missing leading 0
+            const normalized = val.length === 9 ? '0' + val : val;
+            // Must start with valid Vietnam phone provider prefix
+            // Viettel: 032-039, 086, 096-098
+            // Vinaphone: 081-085, 088, 091, 094
+            // Mobifone: 070, 076-079, 089, 090, 093
+            // Vietnamobile: 052, 056, 058, 092
+            // Gmobile: 059, 099
+            const validPrefixes = /^0(3[2-9]|5[2689]|7[06789]|8[1-689]|9[0-46-9])\d{7}$/;
+            return validPrefixes.test(normalized);
+        }, {
+            message: 'Phone number must be 9-10 digits and start with a valid Vietnam provider prefix (Vinaphone, Viettel, Mobifone, etc.)'
+        }),
     citizen_id: z.string()
         .min(1, 'Citizen ID is required')
         .regex(/^[0-9]{12}$/, 'Citizen ID must have exactly 12 digits')
@@ -185,6 +236,57 @@ export const bookingSchema = z.object({
     vehicleId: z.string().min(1, 'Please select a vehicle'),
 });
 
+// Staff creation schema
+export const createStaffSchema = z.object({
+    email: z.string()
+        .min(1, 'Email is required')
+        .email('Invalid email format')
+        .max(100, 'Email cannot exceed 100 characters')
+        .regex(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            'Invalid email format'),
+    password: z.string()
+        .min(8, 'Password must be at least 8 characters')
+        .max(50, 'Password cannot exceed 50 characters'),
+    confirmPassword: z.string(),
+    fullname: z.string()
+        .min(2, 'Full name must be at least 2 characters')
+        .max(50, 'Full name cannot exceed 50 characters')
+        .regex(/^[a-zA-ZÀ-ỹĂĐĨŨƠàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ\s]+$/,
+            'Full name can only contain letters and spaces')
+        .refine((val) => val.trim().length >= 2, {
+            message: 'Full name cannot contain only spaces'
+        })
+        .refine((val) => !/\s{2,}/.test(val), {
+            message: 'Full name cannot contain consecutive spaces'
+        }),
+    phone_number: z.string()
+        .optional()
+        .refine((val) => {
+            // Allow blank/empty
+            if (!val || val.trim() === '') {
+                return true;
+            }
+            // Must contain only digits
+            if (!/^\d+$/.test(val)) {
+                return false;
+            }
+            // Must be 9-10 digits
+            if (val.length < 9 || val.length > 10) {
+                return false;
+            }
+            // Normalize: if 9 digits, assume missing leading 0
+            const normalized = val.length === 9 ? '0' + val : val;
+            // Must start with valid Vietnam phone provider prefix
+            const validPrefixes = /^0(3[2-9]|5[2689]|7[06789]|8[1-689]|9[0-46-9])\d{7}$/;
+            return validPrefixes.test(normalized);
+        }, {
+            message: 'Phone number must be 9-10 digits and start with a valid Vietnam provider prefix (Vinaphone, Viettel, Mobifone, etc.)'
+        }),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: 'Password confirmation does not match',
+    path: ['confirmPassword'],
+});
+
 export default {
     loginSchema,
     registerSchema,
@@ -196,4 +298,5 @@ export default {
     passwordChangeSchema,
     stationSearchSchema,
     bookingSchema,
+    createStaffSchema,
 };

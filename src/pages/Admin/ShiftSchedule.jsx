@@ -20,8 +20,8 @@ import { userAPI } from '../../lib/apiServices';
 const ShiftSchedule = () => {
     const { stations = [], loading: stationsLoading } = useStation();
     const { items: users = [], loading: usersLoading } = useCrud(userAPI);
-
-    const staffList = useMemo(() => (users || []).filter(u => (u.role || u.account_type || '').toString().toLowerCase() === 'staff'), [users]);
+    const staffList = []
+    // const staffList = useMemo(() => (users || []).filter(u => (u.role || u.account_type || '').toString().toLowerCase() === 'staff'), [users]);
 
     const [view, setView] = useState('week'); // 'day' | 'week' | 'month'
     const [filters, setFilters] = useState({ stationId: 'all', staffId: 'all' });

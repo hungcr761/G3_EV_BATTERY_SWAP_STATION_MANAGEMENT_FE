@@ -8,7 +8,8 @@ import GoongMap from '@/components/Map/GoongMap';
 import BookingFlow from '@/components/Booking/BookingFlow';
 import VehicleSelector from '@/components/Booking/VehicleSelector';
 import NoVehicleSelected from '@/components/Booking/NoVehicleSelected';
-import { stationAPI, bookingAPI, vehicleAPI, modelAPI, batteryTypeAPI } from '@/lib/apiServices';
+import { bookingAPI, vehicleAPI, modelAPI, batteryTypeAPI } from '@/lib/apiServices';
+import { useStation } from '@/hooks/useStation';
 import {
     MapPin,
     Battery,
@@ -26,8 +27,6 @@ const Stations = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [batteryType, setBatteryType] = useState('');
     const [stations, setStations] = useState([]);
-    const [stationsLoading, setStationsLoading] = useState(false);
-    const [stationsError, setStationsError] = useState(null);
     const [userLocation, setUserLocation] = useState(null);
     const [nearestStation, setNearestStation] = useState(null);
     const [showBookingFlow, setShowBookingFlow] = useState(false);
@@ -40,34 +39,20 @@ const Stations = () => {
     const [vehiclesLoading, setVehiclesLoading] = useState(true);
     const [showVehiclePrompt, setShowVehiclePrompt] = useState(false);
 
-    // Fetch stations from API
-    useEffect(() => {
-        const fetchStations = async () => {
-            setStationsLoading(true);
-            setStationsError(null);
-            try {
-                const response = await stationAPI.getAll();
-                if (response.data && response.data.success && response.data.payload && response.data.payload.stations) {
-                    const processedStations = response.data.payload.stations.map(station => ({
-                        id: station.station_id,
-                        name: station.station_name,
-                        address: station.address,
-                        latitude: parseFloat(station.latitude),
-                        longitude: parseFloat(station.longitude),
-                        status: station.status === 'operational' ? 'available' : 'limited'
-                    }));
-                    setStations(processedStations);
-                }
-            } catch (error) {
-                setStationsError(error);
-                console.error('Error fetching stations:', error);
-            } finally {
-                setStationsLoading(false);
-            }
-        };
+    // Use station hook
+    const { stations: stationsData, loading: stationsLoading, error: stationsError } = useStation();
 
-        fetchStations();
-    }, []);
+    // Process stations for booking (convert status for booking display)
+    useEffect(() => {
+        const processedStations = stationsData.map(station => ({
+            ...station,
+            latitude: parseFloat(station.latitude),
+            longitude: parseFloat(station.longitude),
+            status: station.status === 'operational' ? 'available' : 'limited'
+        }));
+        setStations(processedStations);
+        // setStationsError(stationsError || null);
+    }, [stationsData, stationsError]);
 
     // Fetch user vehicles and auto-select if only one vehicle
     useEffect(() => {
