@@ -83,7 +83,7 @@ const HeroSection = () => {
                                 </Link>
                             </Button>
                             <Button size="lg" variant="outline" asChild className="text-lg px-8 py-6">
-                                <Link to="/stations">
+                                <Link to="/booking">
                                     <MapPin className="mr-2 h-5 w-5" />
                                     Find Nearest Station
                                 </Link>

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     BarChart3,
     TrendingUp,
     TrendingDown,
     Download,
-    Calendar,
+    Calendar as CalendarIcon,
     Filter,
     DollarSign,
     Battery,
@@ -13,178 +13,562 @@ import {
     Clock,
     Activity,
     Zap,
-    AlertTriangle
+    AlertTriangle,
+    Loader2
 } from 'lucide-react';
+import { Line, LineChart as RechartsLineChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
+import { ChartContainer, ChartTooltip } from '../../components/ui/chart';
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
+import { Calendar } from '../../components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { analysisAPI, userAPI, batteryAPI, stationAPI } from '../../lib/apiServices';
+import { cn } from '../../lib/utils';
 
-// Simple Line Chart Component
-const LineChart = ({ data, width = 400, height = 200, color = '#3B82F6' }) => {
-    if (!data || data.length === 0) return null;
+// Format large numbers to abbreviated format
+const formatNumber = (value) => {
+    if (value >= 1000000000) {
+        // Billions
+        return `${(value / 1000000000).toFixed(1)} bn`;
+    } else if (value >= 1000000) {
+        // Millions (Tr)
+        return `${(value / 1000000).toFixed(1)} tr`;
+    } else if (value >= 1000) {
+        // Thousands
+        return `${(value / 1000)} k`;
+    }
+    return value.toString();
+};
 
-    const maxValue = Math.max(...data.map(d => d.value));
-    const minValue = Math.min(...data.map(d => d.value));
-    const range = maxValue - minValue || 1;
+// Custom Tooltip Component to show date label
+const CustomLineChartTooltip = ({ active, payload, className }) => {
+    if (!active || !payload || !payload.length) {
+        return null;
+    }
 
-    const points = data.map((d, index) => {
-        const x = (index / (data.length - 1)) * (width - 40) + 20;
-        const y = height - 20 - ((d.value - minValue) / range) * (height - 40);
-        return `${x},${y}`;
-    }).join(' ');
-
-    const pathData = `M ${points}`;
+    const data = payload[0].payload;
+    const item = payload[0];
 
     return (
-        <div className="relative">
-            <svg width={width} height={height} className="overflow-visible">
-                {/* Grid lines */}
-                {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => (
-                    <g key={index}>
-                        <line
-                            x1="20"
-                            y1={20 + ratio * (height - 40)}
-                            x2={width - 20}
-                            y2={20 + ratio * (height - 40)}
-                            stroke="#E5E7EB"
-                            strokeWidth="1"
-                        />
-                        <text
-                            x="10"
-                            y={20 + ratio * (height - 40) + 4}
-                            fontSize="10"
-                            fill="#6B7280"
-                            textAnchor="end"
-                        >
-                            {Math.round(minValue + (1 - ratio) * range).toLocaleString()}
-                        </text>
-                    </g>
-                ))}
-
-                {/* Chart line */}
-                <path
-                    d={pathData}
-                    fill="none"
-                    stroke={color}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+        <div
+            className={cn(
+                "rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl",
+                className
+            )}
+        >
+            <div className="font-semibold mb-2">{data.label}</div>
+            <div className="flex items-center gap-2">
+                <div
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{
+                        backgroundColor: item.color,
+                    }}
                 />
-
-                {/* Data points */}
-                {data.map((d, index) => {
-                    const x = (index / (data.length - 1)) * (width - 40) + 20;
-                    const y = height - 20 - ((d.value - minValue) / range) * (height - 40);
-                    return (
-                        <g key={index}>
-                            <circle
-                                cx={x}
-                                cy={y}
-                                r="4"
-                                fill={color}
-                                stroke="white"
-                                strokeWidth="2"
-                            />
-                            <text
-                                x={x}
-                                y={y - 8}
-                                fontSize="10"
-                                fill="#374151"
-                                textAnchor="middle"
-                                className="font-medium"
-                            >
-                                {d.value.toLocaleString()}
-                            </text>
-                        </g>
-                    );
-                })}
-
-                {/* X-axis labels */}
-                {data.map((d, index) => {
-                    const x = (index / (data.length - 1)) * (width - 40) + 20;
-                    return (
-                        <text
-                            key={index}
-                            x={x}
-                            y={height - 5}
-                            fontSize="10"
-                            fill="#6B7280"
-                            textAnchor="middle"
-                        >
-                            {d.label}
-                        </text>
-                    );
-                })}
-            </svg>
+                <div className="flex items-baseline gap-2">
+                    <span className="text-muted-foreground">
+                        {item.name || item.dataKey}
+                    </span>
+                    <span className="font-mono font-semibold tabular-nums text-foreground">
+                        {typeof item.value === "number"
+                            ? item.value.toLocaleString()
+                            : item.value}
+                    </span>
+                </div>
+            </div>
         </div>
+    );
+};
+
+// Line Chart Component using shadcn/ui and Recharts
+const LineChart = ({ data, height = 250, color = '#3B82F6', name = 'Value' }) => {
+    if (!data || data.length === 0) return null;
+
+    // Calculate domain for Y-axis
+    const maxValue = Math.max(...data.map(d => d.value));
+    const minValue = Math.min(...data.map(d => d.value));
+    const range = maxValue - minValue;
+    const yAxisDomain = [
+        Math.max(0, minValue - range * 0.1),
+        maxValue + range * 0.1
+    ];
+
+    const chartConfig = {
+        value: {
+            label: name,
+            color: color,
+        }
+    };
+
+    return (
+        <ChartContainer config={chartConfig} className="w-full" style={{ height: `${height}px` }}>
+            <RechartsLineChart
+                data={data}
+                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+            >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                    dataKey="label"
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                />
+                <YAxis
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    domain={yAxisDomain}
+                    tickFormatter={(value) => formatNumber(value)}
+                />
+                <ChartTooltip content={<CustomLineChartTooltip />} />
+                <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke={color}
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: color }}
+                    activeDot={{ r: 6 }}
+                    name={name}
+                />
+            </RechartsLineChart>
+        </ChartContainer>
     );
 };
 
 const AnalyticsReports = () => {
     const [selectedPeriod, setSelectedPeriod] = useState('30d');
     const [selectedStation, setSelectedStation] = useState('all');
+    const [customDateRange, setCustomDateRange] = useState(null); // { from: Date, to: Date }
+    const [customGroupDate, setCustomGroupDate] = useState(null); // 'day' | 'week' | 'month'
+    const [revenueData, setRevenueData] = useState([]);
+    const [revenueLoading, setRevenueLoading] = useState(true);
+    const [peakHoursData, setPeakHoursData] = useState([]);
+    const [peakHoursLoading, setPeakHoursLoading] = useState(true);
+    const [activeUsersCount, setActiveUsersCount] = useState(0);
+    const [activeUsersLoading, setActiveUsersLoading] = useState(true);
+    const [avgBatterySoh, setAvgBatterySoh] = useState(0);
+    const [batterySohLoading, setBatterySohLoading] = useState(true);
+    const [stationPerformance, setStationPerformance] = useState([]);
+    const [stationPerformanceLoading, setStationPerformanceLoading] = useState(true);
 
-    // Mock data - will be replaced with real API calls
-    const subscriptionData = [
-        { month: 'Jan', subscriptionRevenue: 45000, exceedFees: 3200, totalRevenue: 48200, swaps: 1200, activeSubscriptions: 150 },
-        { month: 'Feb', subscriptionRevenue: 52000, exceedFees: 4100, totalRevenue: 56100, swaps: 1350, activeSubscriptions: 165 },
-        { month: 'Mar', subscriptionRevenue: 48000, exceedFees: 2800, totalRevenue: 50800, swaps: 1280, activeSubscriptions: 160 },
-        { month: 'Apr', subscriptionRevenue: 61000, exceedFees: 5200, totalRevenue: 66200, swaps: 1620, activeSubscriptions: 180 },
-        { month: 'May', subscriptionRevenue: 58000, exceedFees: 4500, totalRevenue: 62500, swaps: 1540, activeSubscriptions: 175 },
-        { month: 'Jun', subscriptionRevenue: 67000, exceedFees: 6800, totalRevenue: 73800, swaps: 1780, activeSubscriptions: 195 }
-    ];
+    // Helper function to format date to YYYY-MM-DD in local timezone
+    const formatDateLocal = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    // Helper function to set preset date ranges
+    const setPresetDateRange = (preset) => {
+        const today = new Date();
+        let startDate = new Date();
+        let daysAgo = 0;
+        let groupDate = 'day';
+
+        switch (preset) {
+            case 'lastWeek':
+                daysAgo = 7;
+                groupDate = 'day';
+                break;
+            case 'lastMonth':
+                daysAgo = 30;
+                groupDate = 'day';
+                break;
+            case 'last3Months':
+                daysAgo = 90;
+                groupDate = 'week';
+                break;
+            case 'lastYear':
+                daysAgo = 365;
+                groupDate = 'month';
+                break;
+            default:
+                return;
+        }
+
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - daysAgo);
+
+        setCustomDateRange({ from: startDate, to: today });
+        setCustomGroupDate(groupDate);
+    };
+
+    // Calculate date range based on selected period or custom date range
+    const getDateRange = (period) => {
+        // If custom date range is set, use it
+        if (customDateRange?.from && customDateRange?.to) {
+            const startDate = new Date(customDateRange.from);
+            const endDate = new Date(customDateRange.to);
+
+            // Use custom groupDate if provided, otherwise determine based on date range length
+            let groupDate = customGroupDate;
+            if (!groupDate) {
+                const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+                if (daysDiff > 90) {
+                    groupDate = 'month';
+                } else if (daysDiff > 30) {
+                    groupDate = 'week';
+                } else {
+                    groupDate = 'day';
+                }
+            }
+
+            return { startDate, endDate, groupDate };
+        }
+
+        // Otherwise use period-based range
+        const endDate = new Date();
+        const startDate = new Date();
+
+        switch (period) {
+            case '7d':
+                startDate.setDate(endDate.getDate() - 7);
+                return { startDate, endDate, groupDate: 'day' };
+            case '30d':
+                startDate.setDate(endDate.getDate() - 30);
+                return { startDate, endDate, groupDate: 'day' };
+            case '90d':
+                startDate.setDate(endDate.getDate() - 90);
+                return { startDate, endDate, groupDate: 'week' };
+            case '1y':
+                startDate.setFullYear(endDate.getFullYear() - 1);
+                return { startDate, endDate, groupDate: 'month' };
+            default:
+                startDate.setDate(endDate.getDate() - 30);
+                return { startDate, endDate, groupDate: 'day' };
+        }
+    };
+
+    // Fetch revenue data
+    useEffect(() => {
+        const fetchRevenueData = async () => {
+            try {
+                setRevenueLoading(true);
+                const { startDate, endDate, groupDate } = getDateRange(selectedPeriod);
+
+                const startDateStr = formatDateLocal(startDate);
+                const endDateStr = formatDateLocal(endDate);
+
+                const response = await analysisAPI.getRevenue({
+                    startDate: startDateStr,
+                    endDate: endDateStr,
+                    groupDate: groupDate
+                });
+
+                if (response.data?.success && response.data?.payload) {
+                    // Transform API data to match component format
+                    const transformedData = response.data.payload.map((item, index) => {
+                        const periodDate = new Date(item.period);
+                        let label = '';
+
+                        if (groupDate === 'month') {
+                            label = periodDate.toLocaleDateString('en-US', { month: 'short' });
+                        } else {
+                            label = periodDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }
+
+                        return {
+                            period: item.period,
+                            label: label,
+                            totalRevenue: parseFloat(item.totalRevenue || 0),
+                            totalPlanFee: parseFloat(item.totalPlanFee || 0),
+                            totalSwapFee: parseFloat(item.totalSwapFee || 0),
+                            totalPenaltyFee: parseFloat(item.totalPenaltyFee || 0)
+                        };
+                    });
+
+                    setRevenueData(transformedData);
+                } else {
+                    setRevenueData([]);
+                }
+            } catch (err) {
+                console.error('Error fetching revenue data:', err);
+                setRevenueData([]);
+            } finally {
+                setRevenueLoading(false);
+            }
+        };
+
+        fetchRevenueData();
+    }, [selectedPeriod, customDateRange, customGroupDate]);
+
+    // Fetch swaps data for peak hours analysis
+    useEffect(() => {
+        const fetchSwapsData = async () => {
+            try {
+                setPeakHoursLoading(true);
+                // Use the same date range as revenue but always group by hour for peak hours analysis
+                const { startDate, endDate } = getDateRange(selectedPeriod);
+
+                const startDateStr = formatDateLocal(startDate);
+                const endDateStr = formatDateLocal(endDate);
+
+                const response = await analysisAPI.getSwaps({
+                    startDate: startDateStr,
+                    endDate: endDateStr,
+                    groupDate: 'hour'
+                });
+
+                if (response.data?.success && response.data?.payload) {
+                    // Initialize hour buckets (0-23 hours)
+                    const hourBuckets = {};
+                    for (let i = 0; i < 24; i++) {
+                        hourBuckets[i] = 0;
+                    }
+
+                    // Aggregate swaps by hour across all stations (or filter by selected station)
+                    response.data.payload.forEach((item) => {
+                        // Filter by station if selected (assuming selectedStation matches station_id or station name)
+                        if (selectedStation !== 'all') {
+                            // Check if station_id matches or if we need to compare station_name
+                            // For now, process all stations if 'all' is selected
+                            // You can add more sophisticated filtering here if needed
+                            const stationIdStr = String(item.station_id);
+                            if (stationIdStr !== selectedStation && item.station_name !== selectedStation) {
+                                return; // Skip this item if it doesn't match the selected station
+                            }
+                        }
+
+                        const periodDate = new Date(item.period);
+                        const hour = periodDate.getHours();
+                        const swaps = parseInt(item.totalSwaps || 0);
+
+                        // Aggregate swaps for each hour
+                        hourBuckets[hour] = (hourBuckets[hour] || 0) + swaps;
+                    });
+
+                    // Convert to array format for display, only including hours from 7 AM (7) to 10 PM (22)
+                    // Generate all hours from 7 to 22 to ensure all hours are displayed even with 0 swaps
+                    const formattedPeakHours = Array.from({ length: 16 }, (_, i) => {
+                        const hourNum = i + 7; // Start from 7 (7 AM) to 22 (10 PM)
+                        const hour12 = hourNum % 12 || 12;
+                        const ampm = hourNum < 12 ? 'AM' : 'PM';
+                        return {
+                            hour: `${hour12} ${ampm}`,
+                            swaps: hourBuckets[hourNum] || 0
+                        };
+                    });
+
+                    setPeakHoursData(formattedPeakHours);
+                } else {
+                    setPeakHoursData([]);
+                }
+            } catch (err) {
+                console.error('Error fetching swaps data:', err);
+                setPeakHoursData([]);
+            } finally {
+                setPeakHoursLoading(false);
+            }
+        };
+
+        fetchSwapsData();
+    }, [selectedPeriod, selectedStation, customDateRange]);
+
+    // Fetch active users count - fetch all pages to get accurate count
+    useEffect(() => {
+        const fetchActiveUsers = async () => {
+            try {
+                setActiveUsersLoading(true);
+                let allActiveUsers = [];
+
+                // Fetch first page to get total pages
+                const firstResponse = await userAPI.getAll({ page: 1, pageSize: 100 });
+
+                if (firstResponse.data?.success && firstResponse.data?.payload) {
+                    const firstPageUsers = firstResponse.data.payload.data || [];
+                    // Filter active users from first page
+                    const activeFromFirstPage = firstPageUsers.filter(user => user.status === 'active');
+                    allActiveUsers = [...allActiveUsers, ...activeFromFirstPage];
+
+                    const total = firstResponse.data.payload.total || 0;
+                    const pageSize = firstResponse.data.payload.pageSize || 100;
+                    const totalPages = Math.ceil(total / pageSize);
+
+                    // Fetch remaining pages
+                    for (let page = 2; page <= totalPages; page++) {
+                        const response = await userAPI.getAll({ page, pageSize });
+
+                        if (response.data?.success && response.data?.payload) {
+                            const users = response.data.payload.data || [];
+                            const activeUsers = users.filter(user => user.status === 'active');
+                            allActiveUsers = [...allActiveUsers, ...activeUsers];
+                        }
+                    }
+
+                    setActiveUsersCount(allActiveUsers.length);
+                } else {
+                    setActiveUsersCount(0);
+                }
+            } catch (err) {
+                console.error('Error fetching active users:', err);
+                setActiveUsersCount(0);
+            } finally {
+                setActiveUsersLoading(false);
+            }
+        };
+
+        fetchActiveUsers();
+    }, []);
+
+    // Fetch batteries and calculate average SOH
+    useEffect(() => {
+        const fetchBatterySoh = async () => {
+            try {
+                setBatterySohLoading(true);
+                const response = await batteryAPI.getAll();
+
+                if (response.data && Array.isArray(response.data)) {
+                    const batteries = response.data;
+                    // Filter batteries that have current_soh and calculate average
+                    const sohValues = batteries
+                        .map(b => b?.current_soh != null ? parseFloat(b.current_soh) : null)
+                        .filter(soh => soh !== null && !isNaN(soh));
+
+                    if (sohValues.length > 0) {
+                        const avgSoh = sohValues.reduce((sum, soh) => sum + soh, 0) / sohValues.length;
+                        setAvgBatterySoh(avgSoh);
+                    } else {
+                        setAvgBatterySoh(0);
+                    }
+                } else {
+                    setAvgBatterySoh(0);
+                }
+            } catch (err) {
+                console.error('Error fetching battery SOH data:', err);
+                setAvgBatterySoh(0);
+            } finally {
+                setBatterySohLoading(false);
+            }
+        };
+
+        fetchBatterySoh();
+    }, []);
+
+    // Fetch station performance data
+    useEffect(() => {
+        const fetchStationPerformance = async () => {
+            try {
+                setStationPerformanceLoading(true);
+                const { startDate, endDate } = getDateRange(selectedPeriod);
+
+                const startDateStr = formatDateLocal(startDate);
+                const endDateStr = formatDateLocal(endDate);
+
+                // Fetch stations and swaps data in parallel
+                const [stationsResponse, swapsResponse] = await Promise.all([
+                    stationAPI.getAll(),
+                    analysisAPI.getSwaps({
+                        startDate: startDateStr,
+                        endDate: endDateStr,
+                        groupDate: 'day' // Group by day to get totals, we'll aggregate by station
+                    })
+                ]);
+
+                // Extract stations data
+                const stationsData = stationsResponse.data?.payload?.stations ||
+                    stationsResponse.data?.stations ||
+                    stationsResponse.data?.payload ||
+                    [];
+
+                // Extract swaps data
+                const swapsData = swapsResponse.data?.success && swapsResponse.data?.payload
+                    ? swapsResponse.data.payload
+                    : swapsResponse.data?.payload || [];
+
+                // Aggregate swaps by station_id
+                const swapsByStation = {};
+                swapsData.forEach((item) => {
+                    const stationId = item.station_id;
+                    if (stationId != null) {
+                        if (!swapsByStation[stationId]) {
+                            swapsByStation[stationId] = {
+                                stationId: stationId,
+                                stationName: item.station_name || '',
+                                totalSwaps: 0,
+                                uniqueUsers: new Set()
+                            };
+                        }
+                        // Parse totalSwaps (can be string or number from API)
+                        const swapsCount = typeof item.totalSwaps === 'string'
+                            ? parseInt(item.totalSwaps, 10)
+                            : parseInt(item.totalSwaps || 0, 10);
+                        swapsByStation[stationId].totalSwaps += isNaN(swapsCount) ? 0 : swapsCount;
+                        // If there's user information in the swap data, track unique users
+                        if (item.user_id) {
+                            swapsByStation[stationId].uniqueUsers.add(item.user_id);
+                        }
+                    }
+                });
+
+                // Combine station info with swaps data
+                const performanceData = stationsData.map(station => {
+                    const stationId = station.station_id || station.id;
+                    const swapData = swapsByStation[stationId] || {
+                        totalSwaps: 0,
+                        uniqueUsers: new Set()
+                    };
+
+                    const uniqueUsersCount = swapData.uniqueUsers.size || 0;
+                    const totalSwaps = swapData.totalSwaps || 0;
+                    const avgSwapsPerUser = uniqueUsersCount > 0 ? (totalSwaps / uniqueUsersCount).toFixed(2) : 0;
+
+                    return {
+                        name: station.station_name || station.name || 'Unknown Station',
+                        location: station.address || 'N/A',
+                        swaps: totalSwaps,
+                        usersServed: uniqueUsersCount,
+                        avgSwapsPerUser: parseFloat(avgSwapsPerUser)
+                    };
+                });
+
+                // Sort by swaps (descending)
+                performanceData.sort((a, b) => b.swaps - a.swaps);
+
+                setStationPerformance(performanceData);
+            } catch (err) {
+                console.error('Error fetching station performance data:', err);
+                setStationPerformance([]);
+            } finally {
+                setStationPerformanceLoading(false);
+            }
+        };
+
+        fetchStationPerformance();
+    }, [selectedPeriod, customDateRange]);
 
     // Format data for line charts
-    const totalRevenueChartData = subscriptionData.map(item => ({
-        label: item.month,
+    const totalRevenueChartData = revenueData.map(item => ({
+        label: item.label,
         value: item.totalRevenue
     }));
 
-    const subscriptionRevenueChartData = subscriptionData.map(item => ({
-        label: item.month,
-        value: item.subscriptionRevenue
+    const subscriptionRevenueChartData = revenueData.map(item => ({
+        label: item.label,
+        value: item.totalPlanFee
     }));
 
-    const exceedFeesChartData = subscriptionData.map(item => ({
-        label: item.month,
-        value: item.exceedFees
+    const exceedFeesChartData = revenueData.map(item => ({
+        label: item.label,
+        value: item.totalPenaltyFee
     }));
 
-    const swapsChartData = subscriptionData.map(item => ({
-        label: item.month,
-        value: item.swaps
-    }));
-
-    const stationPerformance = [
-        { name: 'Station A1', location: 'Downtown', swaps: 45, efficiency: 95, usersServed: 38, avgSwapsPerUser: 1.18 },
-        { name: 'Station A2', location: 'Mall Area', swaps: 32, efficiency: 88, usersServed: 28, avgSwapsPerUser: 1.14 },
-        { name: 'Station B1', location: 'Airport', swaps: 52, efficiency: 92, usersServed: 45, avgSwapsPerUser: 1.16 },
-        { name: 'Station B2', location: 'University', swaps: 28, efficiency: 85, usersServed: 25, avgSwapsPerUser: 1.12 },
-        { name: 'Station C1', location: 'Business District', swaps: 58, efficiency: 98, usersServed: 48, avgSwapsPerUser: 1.21 }
-    ];
-
-    const peakHours = [
-        { hour: '6:00 AM', swaps: 12 },
-        { hour: '7:00 AM', swaps: 45 },
-        { hour: '8:00 AM', swaps: 78 },
-        { hour: '9:00 AM', swaps: 65 },
-        { hour: '10:00 AM', swaps: 42 },
-        { hour: '11:00 AM', swaps: 38 },
-        { hour: '12:00 PM', swaps: 55 },
-        { hour: '1:00 PM', swaps: 48 },
-        { hour: '2:00 PM', swaps: 35 },
-        { hour: '3:00 PM', swaps: 28 },
-        { hour: '4:00 PM', swaps: 32 },
-        { hour: '5:00 PM', swaps: 68 },
-        { hour: '6:00 PM', swaps: 85 },
-        { hour: '7:00 PM', swaps: 72 },
-        { hour: '8:00 PM', swaps: 45 },
-        { hour: '9:00 PM', swaps: 28 },
-        { hour: '10:00 PM', swaps: 15 }
-    ];
+    // Calculate totals
+    const totalRevenue = revenueData.reduce((sum, item) => sum + item.totalRevenue, 0);
+    const totalPlanFee = revenueData.reduce((sum, item) => sum + item.totalPlanFee, 0);
+    const totalPenaltyFee = revenueData.reduce((sum, item) => sum + item.totalPenaltyFee, 0);
+    const avgMonthlyRevenue = revenueData.length > 0 ? totalRevenue / revenueData.length : 0;
+    // Calculate total swaps from station performance (includes all swaps across all hours)
+    // This ensures total swaps matches the sum of all stations
+    const totalSwaps = stationPerformanceLoading
+        ? 0
+        : stationPerformance.reduce((sum, station) => sum + station.swaps, 0);
 
     // Format peak hours data for line chart
-    const peakHoursChartData = peakHours.map(item => ({
+    const peakHoursChartData = peakHoursData.map(item => ({
         label: item.hour,
         value: item.swaps
     }));
@@ -248,10 +632,94 @@ const AnalyticsReports = () => {
                     <p className="mt-2 text-gray-600">Comprehensive insights and AI-powered recommendations</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        Date Range
-                    </Button>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="flex items-center gap-2">
+                                <CalendarIcon className="h-4 w-4" />
+                                {customDateRange?.from && customDateRange?.to
+                                    ? `${customDateRange.from.toLocaleDateString('vi-VN')} - ${customDateRange.to.toLocaleDateString('vi-VN')}`
+                                    : 'Date Range'}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                            <div className="p-3 border-b">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs"
+                                        onClick={() => setPresetDateRange('lastWeek')}
+                                    >
+                                        Last Week
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs"
+                                        onClick={() => setPresetDateRange('lastMonth')}
+                                    >
+                                        Last Month
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs"
+                                        onClick={() => setPresetDateRange('last3Months')}
+                                    >
+                                        Last 3 Months
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs"
+                                        onClick={() => setPresetDateRange('lastYear')}
+                                    >
+                                        Last Year
+                                    </Button>
+                                </div>
+                            </div>
+                            <Calendar
+                                mode="range"
+                                date={customDateRange}
+                                onDateSelect={setCustomDateRange}
+                            />
+                            {customDateRange?.from && customDateRange?.to && (
+                                <div className="p-3 border-t space-y-3">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700">Group By</label>
+                                        <Select
+                                            value={customGroupDate || 'auto'}
+                                            onValueChange={(value) => {
+                                                setCustomGroupDate(value === 'auto' ? null : value);
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select grouping" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="auto">Auto (Based on range)</SelectItem>
+                                                <SelectItem value="day">Day</SelectItem>
+                                                <SelectItem value="week">Week</SelectItem>
+                                                <SelectItem value="month">Month</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full"
+                                        onClick={() => {
+                                            setCustomDateRange(null);
+                                            setCustomGroupDate(null);
+                                            setSelectedPeriod('30d');
+                                        }}
+                                    >
+                                        Clear
+                                    </Button>
+                                </div>
+                            )}
+                        </PopoverContent>
+                    </Popover>
                     <Button className="flex items-center gap-2">
                         <Download className="h-4 w-4" />
                         Export Report
@@ -259,7 +727,7 @@ const AnalyticsReports = () => {
                 </div>
             </div>
 
-            {/* Filters */}
+            {/* Filters
             <Card className="p-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex gap-2">
@@ -273,29 +741,17 @@ const AnalyticsReports = () => {
                             <option value="90d">Last 90 days</option>
                             <option value="1y">Last year</option>
                         </select>
-                        <select
-                            value={selectedStation}
-                            onChange={(e) => setSelectedStation(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        >
-                            <option value="all">All Stations</option>
-                            <option value="A1">Station A1</option>
-                            <option value="A2">Station A2</option>
-                            <option value="B1">Station B1</option>
-                            <option value="B2">Station B2</option>
-                            <option value="C1">Station C1</option>
-                        </select>
                         <Button variant="outline" className="flex items-center gap-2">
                             <Filter className="h-4 w-4" />
                             More Filters
                         </Button>
                     </div>
                 </div>
-            </Card>
+            </Card> */}
 
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <Card className="p-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-12">
+                <Card className="p-4 lg:col-span-3">
                     <div className="flex items-center">
                         <div className="p-3 bg-green-50 rounded-lg">
                             <DollarSign className="h-6 w-6 text-green-600" />
@@ -303,94 +759,95 @@ const AnalyticsReports = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                ${subscriptionData.reduce((sum, d) => sum + d.totalRevenue, 0).toLocaleString()}
+                                {revenueLoading ? '...' : `${totalRevenue.toLocaleString()} VND`}
                             </p>
-                            <div className="flex items-center mt-1">
+                            {/* <div className="flex items-center mt-1">
                                 <TrendingUp className="h-4 w-4 text-green-500" />
                                 <span className="text-sm text-green-600 ml-1">+12.5%</span>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </Card>
 
-                <Card className="p-6">
+                <Card className="p-6 lg:col-span-3">
                     <div className="flex items-center">
                         <div className="p-3 bg-blue-50 rounded-lg">
                             <Battery className="h-6 w-6 text-blue-600" />
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Swaps</p>
-                            <p className="text-2xl font-semibold text-gray-900">1,780</p>
-                            <div className="flex items-center mt-1">
+                            <p className="text-2xl font-semibold text-gray-900">
+                                {stationPerformanceLoading ? '...' : totalSwaps.toLocaleString()}
+                            </p>
+                            {/* <div className="flex items-center mt-1">
                                 <TrendingUp className="h-4 w-4 text-green-500" />
                                 <span className="text-sm text-green-600 ml-1">+8.3%</span>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </Card>
 
-                <Card className="p-6">
+                <Card className="p-6 lg:col-span-3">
                     <div className="flex items-center">
                         <div className="p-3 bg-purple-50 rounded-lg">
                             <Users className="h-6 w-6 text-purple-600" />
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Active Users</p>
-                            <p className="text-2xl font-semibold text-gray-900">1,234</p>
-                            <div className="flex items-center mt-1">
+                            <p className="text-2xl font-semibold text-gray-900">
+                                {activeUsersLoading ? '...' : activeUsersCount.toLocaleString()}
+                            </p>
+                            {/* <div className="flex items-center mt-1">
                                 <TrendingUp className="h-4 w-4 text-green-500" />
                                 <span className="text-sm text-green-600 ml-1">+5.2%</span>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </Card>
 
-                <Card className="p-6">
+                <Card className="p-6 lg:col-span-3">
                     <div className="flex items-center">
                         <div className="p-3 bg-orange-50 rounded-lg">
-                            <Zap className="h-6 w-6 text-orange-600" />
+                            <Battery className="h-6 w-6 text-orange-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Avg Efficiency</p>
-                            <p className="text-2xl font-semibold text-gray-900">91.6%</p>
-                            <div className="flex items-center mt-1">
-                                <TrendingDown className="h-4 w-4 text-red-500" />
-                                <span className="text-sm text-red-600 ml-1">-2.1%</span>
-                            </div>
+                            <p className="text-sm font-medium text-gray-600">Avg Battery SOH</p>
+                            <p className="text-2xl font-semibold text-gray-900">
+                                {batterySohLoading ? '...' : `${avgBatterySoh.toFixed(1)}%`}
+                            </p>
                         </div>
                     </div>
                 </Card>
+
             </div>
 
             {/* Revenue and Swaps Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Subscription Revenue Trend</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                            <span className="text-sm text-gray-600">Revenue ($)</span>
+                            <span className="text-sm text-gray-600">Revenue (VND)</span>
                         </div>
                     </div>
-                    <div className="flex justify-center">
-                        <LineChart
-                            data={totalRevenueChartData}
-                            width={400}
-                            height={250}
-                            color="#10B981"
-                        />
-                    </div>
+                    <LineChart
+                        data={totalRevenueChartData}
+                        height={250}
+                        color="#10B981"
+                        name="Revenue"
+                    />
                     <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
                         <div className="text-center p-3 bg-green-50 rounded-lg">
                             <p className="text-gray-600">Total Revenue</p>
                             <p className="font-semibold text-green-700">
-                                ${subscriptionData.reduce((sum, d) => sum + d.totalRevenue, 0).toLocaleString()}
+                                {revenueLoading ? '...' : `${totalRevenue.toLocaleString()} VND`}
                             </p>
                         </div>
                         <div className="text-center p-3 bg-blue-50 rounded-lg">
-                            <p className="text-gray-600">Avg Monthly</p>
+                            <p className="text-gray-600">Avg Period</p>
                             <p className="font-semibold text-blue-700">
-                                ${Math.round(subscriptionData.reduce((sum, d) => sum + d.totalRevenue, 0) / subscriptionData.length).toLocaleString()}
+                                {revenueLoading ? '...' : `${Math.round(avgMonthlyRevenue).toLocaleString()} VND`}
                             </p>
                         </div>
                     </div>
@@ -404,28 +861,48 @@ const AnalyticsReports = () => {
                             <span className="text-sm text-gray-600">Swaps per Hour</span>
                         </div>
                     </div>
-                    <div className="flex justify-center">
-                        <LineChart
-                            data={peakHoursChartData}
-                            width={400}
-                            height={250}
-                            color="#3B82F6"
-                        />
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                        <div className="text-center p-3 bg-blue-50 rounded-lg">
-                            <p className="text-gray-600">Peak Hour</p>
-                            <p className="font-semibold text-blue-700">
-                                {peakHours.reduce((max, hour) => hour.swaps > max.swaps ? hour : max, peakHours[0]).hour}
-                            </p>
+                    {peakHoursLoading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <div className="flex items-center gap-2 text-gray-500">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span>Loading peak hours data...</span>
+                            </div>
                         </div>
-                        <div className="text-center p-3 bg-purple-50 rounded-lg">
-                            <p className="text-gray-600">Peak Swaps</p>
-                            <p className="font-semibold text-purple-700">
-                                {Math.max(...peakHours.map(h => h.swaps))} swaps
-                            </p>
+                    ) : peakHoursChartData.length === 0 ? (
+                        <div className="flex items-center justify-center h-64">
+                            <div className="text-center text-gray-500">
+                                <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+                                <p>No swap data available for the selected period</p>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            <LineChart
+                                data={peakHoursChartData}
+                                height={250}
+                                color="#3B82F6"
+                                name="Swaps"
+                            />
+                            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                    <p className="text-gray-600">Peak Hour</p>
+                                    <p className="font-semibold text-blue-700">
+                                        {peakHoursData.length > 0
+                                            ? peakHoursData.reduce((max, hour) => hour.swaps > max.swaps ? hour : max, peakHoursData[0]).hour
+                                            : 'N/A'}
+                                    </p>
+                                </div>
+                                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                    <p className="text-gray-600">Peak Swaps</p>
+                                    <p className="font-semibold text-purple-700">
+                                        {peakHoursData.length > 0
+                                            ? `${Math.max(...peakHoursData.map(h => h.swaps))} swaps`
+                                            : '0 swaps'}
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </Card>
             </div>
 
@@ -434,51 +911,47 @@ const AnalyticsReports = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Breakdown</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                        <h4 className="text-md font-medium text-gray-700 mb-3">Subscription Revenue vs Exceed Fees</h4>
-                        <div className="flex justify-center">
-                            <LineChart
-                                data={subscriptionRevenueChartData}
-                                width={350}
-                                height={200}
-                                color="#10B981"
-                            />
-                        </div>
+                        <h4 className="text-md font-medium text-gray-700 mb-3">Plan Fee Trend</h4>
+                        <LineChart
+                            data={subscriptionRevenueChartData}
+                            height={200}
+                            color="#10B981"
+                            name="Plan Fee"
+                        />
                         <div className="mt-2 text-center">
-                            <span className="text-sm text-gray-600">Subscription Revenue (Green)</span>
+                            <span className="text-sm text-gray-600">Plan Fee (Green)</span>
                         </div>
                     </div>
                     <div>
-                        <h4 className="text-md font-medium text-gray-700 mb-3">Exceed Fees Trend</h4>
-                        <div className="flex justify-center">
-                            <LineChart
-                                data={exceedFeesChartData}
-                                width={350}
-                                height={200}
-                                color="#F59E0B"
-                            />
-                        </div>
+                        <h4 className="text-md font-medium text-gray-700 mb-3">Penalty Fee Trend</h4>
+                        <LineChart
+                            data={exceedFeesChartData}
+                            height={200}
+                            color="#F59E0B"
+                            name="Penalty Fee"
+                        />
                         <div className="mt-2 text-center">
-                            <span className="text-sm text-gray-600">Exceed Fees (Orange)</span>
+                            <span className="text-sm text-gray-600">Penalty Fee (Orange)</span>
                         </div>
                     </div>
                 </div>
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Total Subscription Revenue</p>
+                        <p className="text-gray-600 text-sm">Total Plan Fee</p>
                         <p className="font-semibold text-green-700 text-lg">
-                            ${subscriptionData.reduce((sum, d) => sum + d.subscriptionRevenue, 0).toLocaleString()}
+                            {revenueLoading ? '...' : `${totalPlanFee.toLocaleString()} VND`}
                         </p>
                     </div>
                     <div className="text-center p-4 bg-orange-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Total Exceed Fees</p>
+                        <p className="text-gray-600 text-sm">Total Penalty Fee</p>
                         <p className="font-semibold text-orange-700 text-lg">
-                            ${subscriptionData.reduce((sum, d) => sum + d.exceedFees, 0).toLocaleString()}
+                            {revenueLoading ? '...' : `${totalPenaltyFee.toLocaleString()} VND`}
                         </p>
                     </div>
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Active Subscriptions</p>
+                        <p className="text-gray-600 text-sm">Total Swap Fee</p>
                         <p className="font-semibold text-blue-700 text-lg">
-                            {subscriptionData[subscriptionData.length - 1].activeSubscriptions}
+                            {revenueLoading ? '...' : `${revenueData.reduce((sum, d) => sum + d.totalSwapFee, 0).toLocaleString()} VND`}
                         </p>
                     </div>
                 </div>
@@ -487,70 +960,63 @@ const AnalyticsReports = () => {
             {/* Station Performance */}
             <Card className="p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Station Performance</h3>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Station
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Swaps
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Users Served
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Avg Swaps/User
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Efficiency
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Trend
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {stationPerformance.map((station, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div>
-                                            <div className="text-sm font-medium text-gray-900">{station.name}</div>
-                                            <div className="text-sm text-gray-500">{station.location}</div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {station.swaps}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {station.usersServed}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {station.avgSwapsPerUser}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                                                <div
-                                                    className="bg-green-500 h-2 rounded-full"
-                                                    style={{ width: `${station.efficiency}%` }}
-                                                ></div>
-                                            </div>
-                                            <span className="text-sm font-medium">{station.efficiency}%</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <TrendingUp className="h-4 w-4 text-green-500" />
-                                            <span className="text-sm text-green-600 ml-1">+5.2%</span>
-                                        </div>
-                                    </td>
+                {stationPerformanceLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                        <div className="flex items-center gap-2 text-gray-500">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <span>Loading station performance data...</span>
+                        </div>
+                    </div>
+                ) : stationPerformance.length === 0 ? (
+                    <div className="flex items-center justify-center h-64">
+                        <div className="text-center text-gray-500">
+                            <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+                            <p>No station performance data available</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Station
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Swaps
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Unique Users
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Avg Swaps/User
+                                    </th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {stationPerformance.map((station, index) => (
+                                    <tr key={index} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-900">{station.name}</div>
+                                                <div className="text-sm text-gray-500">{station.location}</div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {station.swaps.toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {station.usersServed.toLocaleString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {station.avgSwapsPerUser.toFixed(2)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </Card>
 
             {/* AI Insights */}
@@ -590,44 +1056,6 @@ const AnalyticsReports = () => {
                 </div>
             </Card>
 
-            {/* Battery Health Trends */}
-            <Card className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Battery Health Trends</h3>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                        <span className="text-sm text-gray-600">Health %</span>
-                    </div>
-                </div>
-                <div className="flex justify-center mb-6">
-                    <LineChart
-                        data={batteryHealthChartData}
-                        width={500}
-                        height={200}
-                        color="#F59E0B"
-                    />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-3 bg-orange-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Current Health</p>
-                        <p className="font-semibold text-orange-700 text-lg">
-                            {batteryHealthTrends[batteryHealthTrends.length - 1].avgHealth}%
-                        </p>
-                    </div>
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Total Batteries</p>
-                        <p className="font-semibold text-blue-700 text-lg">
-                            {batteryHealthTrends[batteryHealthTrends.length - 1].totalBatteries}
-                        </p>
-                    </div>
-                    <div className="text-center p-3 bg-red-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Health Decline</p>
-                        <p className="font-semibold text-red-700 text-lg">
-                            -{Math.round(batteryHealthTrends[0].avgHealth - batteryHealthTrends[batteryHealthTrends.length - 1].avgHealth)}%
-                        </p>
-                    </div>
-                </div>
-            </Card>
         </div>
     );
 };

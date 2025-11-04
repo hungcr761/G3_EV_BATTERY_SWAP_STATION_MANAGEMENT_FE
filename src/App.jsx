@@ -21,21 +21,20 @@ import UserBatterySelection from './pages/kiosk/UserBatterySelection';
 import UserAvailabilityCheck from './pages/kiosk/UserAvailabilityCheck';
 import './App.css';
 import VehicleManagement from './pages/EVDriver/VehicleManagement.jsx';
-import SubscriptionManagement from './pages/EVDriver/subscriptionManagement.jsx';
+import SubscriptionManagement from './pages/EVDriver/SubscriptionManagement.jsx';
 import Services from './pages/EVDriver/Services.jsx';
 import Payment from './pages/EVDriver/Payment.jsx';
 import PaymentSuccess from './pages/EVDriver/PaymentSuccess.jsx';
 import Stations from './pages/EVDriver/Booking.jsx';
 import Dashboard from './pages/EVDriver/Dashboard.jsx';
 // Admin pages
-import AdminLogin from './pages/Admin/AdminLogin';
-import AdminDashboard from './pages/Admin/AdminDashboard';
 import StationManagement from './pages/Admin/StationManagement';
 import UserManagement from './pages/Admin/UserManagement';
 import BatteryManagement from './pages/Admin/BatteryManagement';
 import AnalyticsReports from './pages/Admin/AnalyticsReports';
 import SystemSettings from './pages/Admin/SystemSettings';
 import PaymentHistory from './pages/EVDriver/PaymentHistory.jsx';
+import ShiftSchedule from './pages/Admin/ShiftSchedule';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -119,7 +118,6 @@ function App() {
 
           {/* Auth routes without layout */}
           <Route path="/login" element={<Login />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
@@ -159,7 +157,7 @@ function App() {
                 <PaymentHistory />
               </Layout>
             </ProtectedRoute>
-          }/>
+          } />
           <Route path="/settings" element={
             <ProtectedRoute>
               <Layout>
@@ -184,7 +182,14 @@ function App() {
           <Route path="/admin" element={
             <AdminProtectedRoute>
               <AdminLayout>
-                <AdminDashboard />
+                <AnalyticsReports />
+              </AdminLayout>
+            </AdminProtectedRoute>
+          } />
+          <Route path="/admin/shifts" element={
+            <AdminProtectedRoute>
+              <AdminLayout>
+                <ShiftSchedule />
               </AdminLayout>
             </AdminProtectedRoute>
           } />
@@ -206,13 +211,6 @@ function App() {
             <AdminProtectedRoute>
               <AdminLayout>
                 <BatteryManagement />
-              </AdminLayout>
-            </AdminProtectedRoute>
-          } />
-          <Route path="/admin/analytics" element={
-            <AdminProtectedRoute>
-              <AdminLayout>
-                <AnalyticsReports />
               </AdminLayout>
             </AdminProtectedRoute>
           } />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -9,50 +9,167 @@ import { bookingAPI } from '../../lib/apiServices';
 const SwapComplete = () => {
     const { stationId, bookingId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [countdown, setCountdown] = useState(30);
     const [swapData, setSwapData] = useState(null);
+    const [isUserFlow, setIsUserFlow] = useState(false);
+
+    // Helper function to calculate average SOC from batteries
+    const calculateAverageSOC = (batteries) => {
+        if (!batteries || batteries.length === 0) return null;
+
+        const validSOCs = batteries
+            .map(b => b.current_soc || b.soc || null)
+            .filter(soc => soc !== null && soc !== undefined);
+
+        if (validSOCs.length === 0) return null;
+
+        const sum = validSOCs.reduce((acc, soc) => acc + (typeof soc === 'number' ? soc : parseFloat(soc)), 0);
+        return Math.round(sum / validSOCs.length);
+    };
 
     // Fetch swap data
     useEffect(() => {
         const fetchSwapData = async () => {
-            try {
-                const response = await bookingAPI.getById(bookingId);
-                const booking = response.data.booking;
+            // Check if data is passed from previous page (location.state)
+            const stateData = location.state;
 
+            // Determine if this is user flow (no booking) or booking flow
+            // User flow: has userData or userId in state, no bookingId in URL params that matches booking format
+            // Booking flow: has bookingId that we can fetch from API
+
+            const hasStateData = stateData && (stateData.userData || stateData.bookingData || stateData.swapResult);
+            const isUserFlowRoute = stateData?.isUserFlow || (stateData?.userData && !stateData?.bookingData);
+
+            // Calculate battery levels from swap result
+            let oldBatteryLevel = 'N/A';
+            let newBatteryLevel = 'N/A';
+
+            if (stateData?.swapResult) {
+                const swapResult = stateData.swapResult;
+
+                // Get old battery levels (from vehicle batteries that were removed)
+                if (stateData.vehicleBatteries && stateData.vehicleBatteries.length > 0) {
+                    const avgOldSOC = calculateAverageSOC(stateData.vehicleBatteries);
+                    oldBatteryLevel = avgOldSOC !== null ? `${avgOldSOC}%` : 'N/A';
+                } else if (swapResult.data?.batteries_in_info) {
+                    // Fallback: try to get from batteries_in_info if available
+                    const avgOldSOC = calculateAverageSOC(swapResult.data.batteries_in_info);
+                    oldBatteryLevel = avgOldSOC !== null ? `${avgOldSOC}%` : 'N/A';
+                }
+
+                // Get new battery levels (from batteries given to user)
+                let newBatteries = [];
+                if (swapResult.data?.batteries_out_info && swapResult.data.batteries_out_info.length > 0) {
+                    newBatteries = swapResult.data.batteries_out_info;
+                } else if (stateData.validationData?.data?.booked_batteries_out && stateData.validationData.data.booked_batteries_out.length > 0) {
+                    newBatteries = stateData.validationData.data.booked_batteries_out;
+                } else if (swapResult.data?.booked_batteries_out && swapResult.data.booked_batteries_out.length > 0) {
+                    newBatteries = swapResult.data.booked_batteries_out;
+                }
+
+                if (newBatteries.length > 0) {
+                    const avgNewSOC = calculateAverageSOC(newBatteries);
+                    newBatteryLevel = avgNewSOC !== null ? `${avgNewSOC}%` : 'N/A';
+                }
+            }
+
+            if (hasStateData && isUserFlowRoute) {
+                // User flow (no booking) - use data from location.state
+                setIsUserFlow(true);
+                const userData = stateData.userData || {};
+                const swapResult = stateData.swapResult || {};
+                console.log(userData)
                 setSwapData({
-                    bookingId: booking.booking_id,
-                    userName: booking.driver?.fullname || 'Customer',
-                    vehicleModel: booking.vehicle?.model?.name || 'Unknown Model',
-                    vehiclePlate: booking.vehicle?.license_plate || 'N/A',
-                    oldBatteryLevel: '15%', // Would come from battery data
-                    newBatteryLevel: '100%',
-                    swapDuration: '4 phút 32 giây', // Would be calculated
+                    bookingId: null, // No booking ID for user flow
+                    userName: userData.userName || 'Customer',
+                    vehicleModel: userData.vehicleModel || 'Unknown Model',
+                    vehiclePlate: userData.vehiclePlate || 'N/A',
+                    oldBatteryLevel: oldBatteryLevel,
+                    newBatteryLevel: newBatteryLevel,
+                    swapDuration: '4 phút 32 giây', // Would be calculated from swapResult
                     completedTime: new Date().toLocaleString('en-US'),
-                    stationName: booking.station?.station_name || `Station #${stationId}`,
-                    cost: '50,000 VNĐ', // Would come from pricing
+                    stationName: userData.stationName || `Station #${stationId}`,
+                    // cost: swapResult.data?.cost || '50,000 VNĐ', // Would come from swapResult
                     nextServiceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US')
                 });
-            } catch (error) {
-                console.error('Error fetching swap data:', error);
-                // Fallback to mock data
+            } else if (bookingId) {
+                // Booking flow - try to fetch from API
+                setIsUserFlow(false);
+                try {
+                    // Try to get from state first (faster, avoids API call)
+                    if (stateData?.bookingData) {
+                        const booking = stateData.bookingData;
+                        console.log(booking)
+                        setSwapData({
+                            bookingId: booking.booking_id || bookingId,
+                            userName: booking.driver?.fullname || booking.userName || 'Customer',
+                            vehicleModel: booking.vehicle?.model?.name || booking.vehicleModel || 'Unknown Model',
+                            vehiclePlate: booking.vehicle?.license_plate || booking.vehiclePlate || 'N/A',
+                            oldBatteryLevel: oldBatteryLevel,
+                            newBatteryLevel: newBatteryLevel,
+                            swapDuration: '4 phút 32 giây', // Would be calculated
+                            completedTime: new Date().toLocaleString('en-US'),
+                            stationName: booking.station?.station_name || booking.stationName || `Station #${stationId}`,
+                            // cost: stateData.swapResult?.data?.cost || '50,000 VNĐ', // Would come from pricing
+                            nextServiceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US')
+                        });
+                    } else {
+
+                        // Fetch from API if not in state
+                        const response = await bookingAPI.getById(bookingId);
+                        const booking = response.data.booking;
+                        console.log(booking)
+                        setSwapData({
+                            bookingId: booking.booking_id,
+                            userName: booking.driver?.fullname || 'Customer',
+                            vehicleModel: booking.vehicle?.model?.name || 'Unknown Model',
+                            vehiclePlate: booking.vehicle?.license_plate || 'N/A',
+                            oldBatteryLevel: oldBatteryLevel,
+                            newBatteryLevel: newBatteryLevel,
+                            swapDuration: '4 phút 32 giây', // Would be calculated
+                            completedTime: new Date().toLocaleString('en-US'),
+                            stationName: booking.station?.station_name,
+                            // cost: '50,000 VNĐ', // Would come from pricing
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching swap data:', error);
+                    // If API call fails, try to use state data as fallback
+                    if (stateData?.bookingData) {
+                        const booking = stateData.bookingData;
+                        setSwapData({
+                            bookingId: booking.booking_id || bookingId,
+                            userName: booking.driver?.fullname || booking.userName || 'Customer',
+                            vehicleModel: booking.vehicle?.model?.name || booking.vehicleModel || 'Unknown Model',
+                            vehiclePlate: booking.vehicle?.license_plate || booking.vehiclePlate || 'N/A',
+                            oldBatteryLevel: oldBatteryLevel,
+                            newBatteryLevel: newBatteryLevel,
+                            swapDuration: '4 phút 32 giây',
+                            completedTime: new Date().toLocaleString('en-US'),
+                            stationName: booking.station?.station_name || booking.stationName || `Station #${stationId}`
+                        });
+                    }
+                }
+            } else {
+                // No data available - should not happen, but handle gracefully
+                console.warn('No swap data available');
                 setSwapData({
-                    bookingId: bookingId,
-                    userName: 'hung le',
-                    vehicleModel: 'VinFast Klara S',
-                    vehiclePlate: '30B-98761',
-                    oldBatteryLevel: '15%',
-                    newBatteryLevel: '100%',
+                    bookingId: null,
+                    userName: 'Customer',
+                    vehicleModel: 'Unknown Model',
+                    vehiclePlate: 'N/A',
+                    oldBatteryLevel: oldBatteryLevel !== 'N/A' ? oldBatteryLevel : 'N/A',
+                    newBatteryLevel: newBatteryLevel !== 'N/A' ? newBatteryLevel : 'N/A',
                     swapDuration: '4 phút 32 giây',
                     completedTime: new Date().toLocaleString('en-US'),
-                    stationName: `Trạm #${stationId}`,
-                    cost: '50,000 VNĐ',
-                    nextServiceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US')
+                    stationName: `Station #${stationId}`
                 });
             }
         };
 
         fetchSwapData();
-    }, [bookingId, stationId]);
+    }, [bookingId, stationId, location.state]);
 
     // Auto redirect countdown
     useEffect(() => {
@@ -102,7 +219,6 @@ const SwapComplete = () => {
                         Your vehicle is ready to continue your journey
                     </p>
                 </div>
-
                 {/* Swap Summary Card */}
                 <Card className="border-4 border-green-500 shadow-2xl">
                     <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white">
@@ -112,10 +228,12 @@ const SwapComplete = () => {
                         <div className="grid grid-cols-2 gap-8">
                             {/* Left Column */}
                             <div className="space-y-6 text-xl">
-                                <div>
-                                    <p className="text-muted-foreground mb-1">Booking ID</p>
-                                    <p className="font-bold text-2xl">{swapData.bookingId}</p>
-                                </div>
+                                {!isUserFlow && swapData.bookingId && (
+                                    <div>
+                                        <p className="text-muted-foreground mb-1">Booking ID</p>
+                                        <p className="font-bold text-2xl">{swapData.bookingId}</p>
+                                    </div>
+                                )}
                                 <div>
                                     <p className="text-muted-foreground mb-1">Customer</p>
                                     <p className="font-semibold text-2xl">{swapData.userName}</p>
@@ -155,10 +273,10 @@ const SwapComplete = () => {
                                         </Badge>
                                     </div>
                                 </div>
-                                <div>
+                                {/* <div>
                                     <p className="text-muted-foreground mb-1">Cost</p>
                                     <p className="font-bold text-3xl text-green-600">{swapData.cost}</p>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </CardContent>
@@ -172,25 +290,8 @@ const SwapComplete = () => {
                             <div className="flex-1">
                                 <h3 className="text-2xl font-bold mb-2">New Batteries Installed</h3>
                                 <p className="text-xl text-muted-foreground">
-                                    Your batteries are now at <strong className="text-green-600">100%</strong> and ready
-                                    for approximately <strong>200km</strong> of travel
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Next Service Reminder */}
-                <Card className="bg-blue-50 border-blue-200">
-                    <CardContent className="p-8">
-                        <div className="flex items-center space-x-6">
-                            <Clock className="h-12 w-12 text-blue-600" />
-                            <div>
-                                <h3 className="text-2xl font-bold text-blue-800 mb-2">
-                                    Next Maintenance Schedule
-                                </h3>
-                                <p className="text-xl text-blue-700">
-                                    Recommended vehicle maintenance on: <strong>{swapData.nextServiceDate}</strong>
+                                    Your batteries are now at <strong className="text-green-600">{swapData.newBatteryLevel}</strong> and ready
+                                    for your journey
                                 </p>
                             </div>
                         </div>
@@ -208,26 +309,6 @@ const SwapComplete = () => {
                         Complete ({countdown}s)
                     </Button>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="text-xl py-6 h-auto"
-                            onClick={() => alert('Email functionality will be implemented soon')}
-                        >
-                            <Mail className="mr-2 h-6 w-6" />
-                            Send Invoice via Email
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="text-xl py-6 h-auto"
-                            onClick={() => alert('Print invoice functionality will be implemented soon')}
-                        >
-                            <Download className="mr-2 h-6 w-6" />
-                            Print Invoice
-                        </Button>
-                    </div>
                 </div>
 
                 {/* Rating Section */}

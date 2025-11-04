@@ -44,36 +44,6 @@ const BatterySelection = ({
                 </p>
             </div>
 
-            {/* Vehicle Info */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                        <Battery className="h-5 w-5" />
-                        <span>Thông tin xe</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Mẫu xe:</span>
-                            <span className="font-medium">{selectedVehicle?.modelName}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Số khe pin:</span>
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                {maxBatteries} khe
-                            </Badge>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Loại pin:</span>
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                {selectedVehicle?.batteryName}
-                            </Badge>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* Battery Quantity Selection */}
             <Card>
                 <CardHeader>
@@ -133,15 +103,6 @@ const BatterySelection = ({
                             ))}
                         </div>
 
-                        {/* Selection Summary */}
-                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="flex items-center space-x-2">
-                                <CheckCircle className="h-4 w-4 text-blue-600" />
-                                <span className="text-sm font-medium text-blue-800">
-                                    Bạn sẽ đổi {batteryQuantity} {batteryQuantity === 1 ? 'pin' : 'pin'} cho xe {selectedVehicle?.modelName}
-                                </span>
-                            </div>
-                        </div>
                     </div>
                 </CardContent>
             </Card>

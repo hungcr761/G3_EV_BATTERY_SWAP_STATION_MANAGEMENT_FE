@@ -29,14 +29,14 @@ const QRScanner = ({ onScan, onManualEntry }) => {
             })
             .catch(err => {
                 console.error('Error getting cameras:', err);
-                setCameraError('Không tìm thấy camera. Vui lòng kiểm tra kết nối camera.');
+                setCameraError('Camera not found. Please check camera connection.');
             });
     }, []);
 
     // Start camera scanning
     const handleStartScan = async () => {
         if (!selectedCamera) {
-            setCameraError('Không tìm thấy camera khả dụng.');
+            setCameraError('No available camera found.');
             return;
         }
 
@@ -75,7 +75,7 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                 );
             } catch (err) {
                 console.error('Error starting scanner:', err);
-                setCameraError(`Không thể khởi động camera: ${err.message || 'Vui lòng cho phép truy cập camera.'}`);
+                setCameraError(`Unable to start camera: ${err.message || 'Please allow camera access.'}`);
                 setScanning(false);
             }
         }, 100); // Small delay to ensure DOM is ready
@@ -133,7 +133,7 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                                     <div className="flex items-start space-x-3">
                                         <AlertCircle className="h-8 w-8 text-red-600 flex-shrink-0" />
                                         <div>
-                                            <p className="text-xl font-semibold text-red-800">Lỗi Camera</p>
+                                            <p className="text-xl font-semibold text-red-800">Camera Error</p>
                                             <p className="text-lg text-red-600">{cameraError}</p>
                                         </div>
                                     </div>
@@ -155,7 +155,7 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                                         {!scanning && (
                                             <div className="text-center">
                                                 <Camera className="h-32 w-32 text-gray-400 mx-auto mb-4" />
-                                                <p className="text-xl text-gray-500">Camera chưa được kích hoạt</p>
+                                                <p className="text-xl text-gray-500">Camera not activated</p>
                                             </div>
                                         )}
                                     </div>
@@ -169,7 +169,7 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                                             className="absolute top-4 right-4 text-lg px-6 py-3 z-10"
                                         >
                                             <X className="mr-2 h-5 w-5" />
-                                            Dừng
+                                            Stop
                                         </Button>
                                     )}
                                 </div>
@@ -178,12 +178,12 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                             {/* Instructions */}
                             <div className="text-center space-y-4">
                                 <h3 className="text-3xl font-bold">
-                                    {scanning ? 'Đang quét mã QR...' : 'Quét mã QR code'}
+                                    {scanning ? 'Scanning QR Code...' : 'Scan QR Code'}
                                 </h3>
                                 <p className="text-xl text-muted-foreground max-w-md">
                                     {scanning
-                                        ? 'Đưa mã QR vào khung hình để quét'
-                                        : 'Nhấn nút bên dưới để bật camera'
+                                        ? 'Position QR code within the frame to scan'
+                                        : 'Click the button below to activate camera'
                                     }
                                 </p>
                             </div>
@@ -197,14 +197,14 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                                     className="text-xl px-12 py-8 h-auto"
                                 >
                                     <Camera className="mr-3 h-6 w-6" />
-                                    Bật Camera
+                                    Activate Camera
                                 </Button>
                             )}
 
                             {/* Camera Selection (if multiple cameras) */}
                             {cameras.length > 1 && !scanning && (
                                 <div className="w-full max-w-md">
-                                    <label className="block text-lg font-medium mb-2">Chọn Camera:</label>
+                                    <label className="block text-lg font-medium mb-2">Select Camera:</label>
                                     <select
                                         value={selectedCamera || ''}
                                         onChange={(e) => setSelectedCamera(e.target.value)}
@@ -231,7 +231,7 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                                     className="w-full text-xl px-8 py-6 h-auto"
                                 >
                                     <Keyboard className="mr-3 h-6 w-6" />
-                                    Nhập mã thủ công
+                                    Manual Entry
                                 </Button>
                             </div>
                         </div>
@@ -244,9 +244,9 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                         <div className="space-y-8">
                             <div className="text-center">
                                 <Keyboard className="h-24 w-24 text-primary mx-auto mb-4" />
-                                <h3 className="text-3xl font-bold mb-2">Nhập mã code</h3>
+                                <h3 className="text-3xl font-bold mb-2">Enter Code</h3>
                                 <p className="text-xl text-muted-foreground">
-                                    Nhập mã từ app của bạn
+                                    Enter the code from your app
                                 </p>
                             </div>
 
@@ -273,7 +273,7 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                                         }}
                                         className="flex-1 text-xl px-8 py-6 h-auto"
                                     >
-                                        Quay lại
+                                        Back
                                     </Button>
                                     <Button
                                         type="submit"
@@ -281,7 +281,7 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                                         disabled={!bookingId.trim()}
                                         className="flex-1 text-xl px-8 py-6 h-auto"
                                     >
-                                        Xác nhận
+                                        Confirm
                                     </Button>
                                 </div>
                             </form>

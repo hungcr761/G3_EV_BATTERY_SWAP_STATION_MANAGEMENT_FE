@@ -86,9 +86,9 @@ const ProfileUpdate = ({ onBack }) => {
             // Validate form data
             const validatedData = profileUpdateSchema.parse(formData);
 
-            const response = await userAPI.updateProfile(user.account_id, validatedData);
+            const response = await userAPI.updateProfile(validatedData);
 
-            if (response.data.success || response.data.account) {
+            if (response.data.success === true || response.data.success || response.data.account) {
                 // Update user in AuthContext - response format: account or payload.account
                 const updatedAccount = response.data.account || response.data.payload?.account;
                 if (updateUser && updatedAccount) {
@@ -104,6 +104,11 @@ const ProfileUpdate = ({ onBack }) => {
                 setTimeout(() => {
                     setMessage({ type: '', text: '' });
                 }, 6000);
+            } else {
+                setMessage({
+                    type: 'error',
+                    text: 'Failed to update profile. Please try again.'
+                });
             }
         } catch (error) {
             if (error.name === 'ZodError') {

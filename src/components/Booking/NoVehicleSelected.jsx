@@ -10,14 +10,14 @@ const NoVehicleSelected = ({ onSelectVehicle }) => {
                 <Motorbike className="h-8 w-8 text-yellow-600" />
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
-                Chưa chọn xe
+                No Vehicle Selected
             </h3>
             <p className="text-muted-foreground mb-6">
-                Vui lòng chọn xe trước để xem số lượng pin có sẵn tại các trạm
+                Please select a vehicle first to view available batteries at stations
             </p>
             <Button onClick={onSelectVehicle} size="lg">
                 <Motorbike className="mr-2 h-4 w-4" />
-                Chọn xe
+                Select Vehicle
             </Button>
         </div>
     );

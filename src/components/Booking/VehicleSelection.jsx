@@ -71,7 +71,7 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
                 setVehicles(mappedVehicles);
             } catch (error) {
                 console.error('Error fetching vehicles:', error);
-                setError('Không thể tải danh sách xe');
+                setError('Unable to load vehicle list');
             } finally {
                 setLoading(false);
             }
@@ -101,7 +101,7 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
             <div className="flex items-center justify-center py-8">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Đang tải danh sách xe...</p>
+                    <p className="text-muted-foreground">Loading vehicle list...</p>
                 </div>
             </div>
         );
@@ -110,7 +110,7 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
     if (error) {
         return (
             <div className="text-center py-8">
-                <p className="text-red-500 mb-2">Lỗi tải dữ liệu</p>
+                <p className="text-red-500 mb-2">Data loading error</p>
                 <p className="text-sm text-muted-foreground">{error}</p>
             </div>
         );
@@ -120,8 +120,8 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
         return (
             <div className="text-center py-8">
                 <Motorbike className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">Bạn chưa có xe nào được đăng ký</p>
-                <Button variant="outline">Thêm xe mới</Button>
+                <p className="text-muted-foreground mb-4">You don't have any registered vehicles</p>
+                <Button variant="outline">Add New Vehicle</Button>
             </div>
         );
     }
@@ -130,10 +130,10 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
         <div className="space-y-4">
             <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                    Chọn xe để đặt lịch
+                    Select Vehicle to Book
                 </h2>
                 <p className="text-muted-foreground">
-                    Vui lòng chọn xe mà bạn muốn đặt lịch đổi pin
+                    Please select a vehicle to book a battery swap
                 </p>
             </div>
 
@@ -161,7 +161,7 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
                                     <div className="space-y-2 text-sm text-muted-foreground">
                                         <div className="flex items-center space-x-4">
                                             <span>VIN: {vehicle.vin}</span>
-                                            <span>Biển số: {vehicle.license_plate}</span>
+                                            <span>License Plate: {vehicle.license_plate}</span>
                                         </div>
 
                                         <div className="flex items-center space-x-4">
@@ -174,7 +174,7 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
                                             </Badge>
                                             {vehicle.batterySlot > 0 && (
                                                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                                    {vehicle.batterySlot} khe pin
+                                                    {vehicle.batterySlot} battery slots
                                                 </Badge>
                                             )}
                                         </div>
@@ -189,7 +189,7 @@ const VehicleSelection = ({ onVehicleSelect, selectedVehicle, onNext }) => {
             {selectedVehicle && (
                 <div className="flex justify-end pt-4">
                     <Button onClick={onNext} size="lg">
-                        Tiếp tục
+                        Continue
                     </Button>
                 </div>
             )}

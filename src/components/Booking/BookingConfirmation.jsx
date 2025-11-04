@@ -25,7 +25,7 @@ const BookingConfirmation = ({
     const [bookingStartTime] = useState(new Date());
 
     React.useEffect(() => {
-        if (selectedTime) {
+        if (selectedTime && selectedTime.time) {
             const now = new Date();
             const selectedDateTime = new Date(selectedTime.time);
             const timeDiff = selectedDateTime.getTime() - now.getTime();
@@ -54,7 +54,8 @@ const BookingConfirmation = ({
     };
 
     const formatTime = (time) => {
-        return time.toLocaleTimeString('vi-VN', {
+        if (!time) return '';
+        return time.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
@@ -62,7 +63,8 @@ const BookingConfirmation = ({
     };
 
     const formatDate = (date) => {
-        return date.toLocaleDateString('vi-VN', {
+        if (!date) return '';
+        return date.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -72,7 +74,7 @@ const BookingConfirmation = ({
 
     const isTimeExpired = countdown <= 0;
     const getActiveTimeRange = () => {
-        if (!selectedTime) return { start: '', end: '' };
+        if (!selectedTime || !selectedTime.time) return { start: '', end: '' };
         const startTime = bookingStartTime;
         const endTime = new Date(selectedTime.time);
         return {
@@ -85,10 +87,10 @@ const BookingConfirmation = ({
         <div className="space-y-6">
             <div className="text-center">
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                    Xác nhận đặt lịch
+                    Confirm Booking
                 </h2>
                 <p className="text-muted-foreground">
-                    Vui lòng kiểm tra thông tin trước khi xác nhận
+                    Please review the information before confirming
                 </p>
             </div>
 
@@ -101,12 +103,12 @@ const BookingConfirmation = ({
                     </span>
                 </div>
                 <p className="text-center text-sm mt-1 text-blue-600">
-                    Thời gian lệnh đặt sẽ active
+                    Booking command active time
                 </p>
                 {countdown > 0 && (
                     <div className="mt-2 text-center">
                         <p className="text-sm text-blue-600">
-                            Còn lại: {formatCountdown(countdown)} để đến trạm
+                            Time remaining: {formatCountdown(countdown)} to reach station
                         </p>
                     </div>
                 )}
@@ -117,13 +119,13 @@ const BookingConfirmation = ({
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <Motorbike className="h-5 w-5" />
-                        <span>Thông tin xe</span>
+                        <span>Vehicle Information</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Mẫu xe:</span>
+                            <span className="text-muted-foreground">Model:</span>
                             <span className="font-medium">{selectedVehicle?.modelName}</span>
                         </div>
                         <div className="flex justify-between">
@@ -131,19 +133,19 @@ const BookingConfirmation = ({
                             <span className="font-medium">{selectedVehicle?.vin}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Biển số:</span>
+                            <span className="text-muted-foreground">License Plate:</span>
                             <span className="font-medium">{selectedVehicle?.license_plate}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Loại pin:</span>
+                            <span className="text-muted-foreground">Battery Type:</span>
                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                                 {selectedVehicle?.batteryType}
                             </Badge>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Số lượng pin:</span>
+                            <span className="text-muted-foreground">Number of Batteries:</span>
                             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                {selectedBatteries.length} {selectedBatteries.length === 1 ? 'pin' : 'pin'}
+                                {selectedBatteries.length} {selectedBatteries.length === 1 ? 'battery' : 'batteries'}
                             </Badge>
                         </div>
                     </div>
@@ -155,23 +157,23 @@ const BookingConfirmation = ({
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <MapPin className="h-5 w-5" />
-                        <span>Thông tin trạm</span>
+                        <span>Station Information</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Tên trạm:</span>
+                            <span className="text-muted-foreground">Station Name:</span>
                             <span className="font-medium">{selectedStation?.name}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Địa chỉ:</span>
+                            <span className="text-muted-foreground">Address:</span>
                             <span className="font-medium text-right max-w-xs">{selectedStation?.address}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Trạng thái:</span>
+                            <span className="text-muted-foreground">Status:</span>
                             <Badge variant={selectedStation?.status === 'available' ? 'default' : 'secondary'}>
-                                {selectedStation?.status === 'available' ? 'Sẵn sàng' : 'Hạn chế'}
+                                {selectedStation?.status === 'available' ? 'Available' : 'Limited'}
                             </Badge>
                         </div>
                     </div>
@@ -183,49 +185,34 @@ const BookingConfirmation = ({
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <Clock className="h-5 w-5" />
-                        <span>Thời gian đặt lịch</span>
+                        <span>Booking Time</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Ngày:</span>
-                            <span className="font-medium">{formatDate(selectedTime?.time)}</span>
+                            <span className="text-muted-foreground">Date:</span>
+                            <span className="font-medium">{selectedTime?.time ? formatDate(selectedTime.time) : 'Loading...'}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Giờ đến:</span>
-                            <span className="font-medium">{formatTime(selectedTime?.time)}</span>
+                            <span className="text-muted-foreground">Arrival Time:</span>
+                            <span className="font-medium">{selectedTime?.time ? formatTime(selectedTime.time) : 'Loading...'}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Thời gian active:</span>
+                            <span className="text-muted-foreground">Active Time:</span>
                             <span className="font-medium">
-                                {getActiveTimeRange().start} - {getActiveTimeRange().end}
+                                {getActiveTimeRange().start || 'Loading...'} {getActiveTimeRange().end ? `- ${getActiveTimeRange().end}` : ''}
                             </span>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Important Notice */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                    <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                        <p className="font-medium mb-1">Lưu ý quan trọng:</p>
-                        <ul className="list-disc list-inside space-y-1">
-                            <li>Lệnh đặt lịch sẽ active ngay từ khi bạn xác nhận</li>
-                            <li>Lệnh đặt sẽ kết thúc vào thời gian bạn chọn đến trạm</li>
-                            <li>Nếu không đến trạm trong thời gian quy định, lệnh đặt sẽ tự động bị hủy</li>
-                            <li>Vui lòng đến trạm đúng giờ để đảm bảo có pin sẵn sàng</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
 
             {/* Action Buttons */}
             <div className="flex justify-between pt-4">
                 <Button variant="outline" onClick={onBack} disabled={isSubmitting}>
-                    Quay lại
+                    Back
                 </Button>
                 <Button
                     onClick={onConfirm}
@@ -236,12 +223,12 @@ const BookingConfirmation = ({
                     {isSubmitting ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Đang xử lý...
+                            Processing...
                         </>
                     ) : (
                         <>
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Xác nhận đặt lịch
+                            Confirm Booking
                         </>
                     )}
                 </Button>
@@ -250,7 +237,7 @@ const BookingConfirmation = ({
             {isTimeExpired && (
                 <div className="text-center py-4">
                     <p className="text-red-600 font-medium">
-                        Thời gian đặt lịch đã hết hạn. Vui lòng chọn lại thời gian.
+                        Booking time has expired. Please select a new time.
                     </p>
                 </div>
             )}

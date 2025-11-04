@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Battery, CheckCircle2, AlertCircle, Clock, User, Motorbike } from 'lucide-react';
-import { bookingAPI, swapAPI } from '../../lib/apiServices';
+import { bookingAPI, swapAPI, batteryAPI, userAPI } from '../../lib/apiServices';
 
 const SwapStatus = () => {
     const { stationId, bookingId, userId } = useParams();
@@ -16,12 +16,11 @@ const SwapStatus = () => {
     const [userData, setUserData] = useState(null);
     const [emptySlots, setEmptySlots] = useState([]);
     const [selectedSlots, setSelectedSlots] = useState([]);
+    const [vehicleBatteries, setVehicleBatteries] = useState([]);
+    const [bookedBatteries, setBookedBatteries] = useState([]);
+    const [validationData, setValidationData] = useState(null);
+    const [swapResult, setSwapResult] = useState(null);
     const [isUserFlow, setIsUserFlow] = useState(false);
-    const [isFirstTimeSwap, setIsFirstTimeSwap] = useState(false);
-    const [firstTimePickupData, setFirstTimePickupData] = useState(null);
-    const [bookingValidationData, setBookingValidationData] = useState(null);
-    const [isFirstTimeWithBooking, setIsFirstTimeWithBooking] = useState(false);
-    const [firstTimeValidationData, setFirstTimeValidationData] = useState(null);
     const [currentAction, setCurrentAction] = useState({
         title: 'Verification',
         description: 'Checking information',
@@ -40,23 +39,25 @@ const SwapStatus = () => {
                 if (userId && !bookingId) {
                     setIsUserFlow(true);
                     const userFlowData = location.state;
-                    // Check first-time status from API data if available, otherwise use passed state
-                    console.log('Full userFlowData:', userFlowData);
-                    console.log('selectedVehicle:', userFlowData?.selectedVehicle);
-                    console.log('firstTimeData from state:', userFlowData?.firstTimeData);
-                    console.log('isFirstTimeSwap from state:', userFlowData?.isFirstTimeSwap);
 
-                    const isFirstTime = userFlowData?.firstTimeData?.data?.is_first_time || userFlowData?.isFirstTimeSwap || false;
-                    console.log('First-time detection:', {
-                        firstTimeData: userFlowData?.firstTimeData?.data?.is_first_time,
-                        isFirstTimeSwap: userFlowData?.isFirstTimeSwap,
-                        finalIsFirstTime: isFirstTime
-                    });
-                    setIsFirstTimeSwap(isFirstTime);
+                    // Fetch user information to get full name
+                    let userFullName = 'Customer';
+                    try {
+                        const userResponse = await userAPI.getById(userId);
+                        if (userResponse.data?.success && userResponse.data?.payload?.user?.fullname) {
+                            userFullName = userResponse.data.payload.user.fullname;
+                        }
+                    } catch (userError) {
+                        console.warn('Could not fetch user information:', userError);
+                        // Fallback: try to get from location state if available
+                        if (location.state?.user?.fullname) {
+                            userFullName = location.state.user.fullname;
+                        }
+                    }
 
                     setUserData({
                         userId: userId,
-                        userName: userFlowData?.selectedVehicle?.driver?.fullname || 'Customer',
+                        userName: userFullName,
                         vehicleModel: userFlowData?.selectedVehicle?.modelName || 'Unknown Model',
                         vehiclePlate: userFlowData?.selectedVehicle?.license_plate || 'N/A',
                         batteryType: userFlowData?.selectedVehicle?.batteryTypeCode || 'Type 2',
@@ -64,29 +65,14 @@ const SwapStatus = () => {
                         requestedQuantity: userFlowData?.selectedBatteries?.length || 1,
                         stationName: `Station #${stationId}`,
                         vehicleId: userFlowData?.selectedVehicle?.vehicle_id,
-                        firstTimeData: userFlowData?.firstTimeData,
                     });
                 } else {
                     // Booking flow
                     setIsUserFlow(false);
                     if (location.state?.booking) {
                         const booking = location.state.booking;
-                        setBookingData({
-                            bookingId: booking.booking_id,
-                            driverId: booking.driver_id,
-                            userName: booking.driver?.fullname || 'Customer',
-                            vehicleModel: booking.vehicle?.model?.name || 'Unknown Model',
-                            vehiclePlate: booking.vehicle?.license_plate || 'N/A',
-                            batteryType: booking.vehicle?.model?.batteryType?.battery_type_code || 'Type 2',
-                            batteryTypeId: booking.vehicle?.model?.batteryType?.battery_type_id,
-                            stationName: booking.station?.station_name || `Trạm #${stationId}`,
-                            scheduledTime: new Date(booking.scheduled_time).toLocaleString('en-US'),
-                            vehicleId: booking.vehicle?.vehicle_id,
-                        });
-                    } else {
-                        // Fetch from API
-                        const response = await bookingAPI.getById(bookingId);
-                        const booking = response.data.booking;
+                        // Store booked batteries from booking response
+                        setBookedBatteries(booking.batteries || []);
 
                         setBookingData({
                             bookingId: booking.booking_id,
@@ -99,6 +85,28 @@ const SwapStatus = () => {
                             stationName: booking.station?.station_name || `Trạm #${stationId}`,
                             scheduledTime: new Date(booking.scheduled_time).toLocaleString('en-US'),
                             vehicleId: booking.vehicle?.vehicle_id,
+                            requestedQuantity: booking.batteries?.length || 1,
+                        });
+                    } else {
+                        // Fetch from API
+                        const response = await bookingAPI.getById(bookingId);
+                        const booking = response.data.booking;
+
+                        // Store booked batteries from booking response
+                        setBookedBatteries(booking.batteries || []);
+
+                        setBookingData({
+                            bookingId: booking.booking_id,
+                            driverId: booking.driver_id,
+                            userName: booking.driver?.fullname || 'Customer',
+                            vehicleModel: booking.vehicle?.model?.name || 'Unknown Model',
+                            vehiclePlate: booking.vehicle?.license_plate || 'N/A',
+                            batteryType: booking.vehicle?.model?.batteryType?.battery_type_code || 'Type 2',
+                            batteryTypeId: booking.vehicle?.model?.batteryType?.battery_type_id,
+                            stationName: booking.station?.station_name || `Trạm #${stationId}`,
+                            scheduledTime: new Date(booking.scheduled_time).toLocaleString('en-US'),
+                            vehicleId: booking.vehicle?.vehicle_id,
+                            requestedQuantity: booking.batteries?.length || 1,
                         });
                     }
                 }
@@ -147,83 +155,64 @@ const SwapStatus = () => {
         }
     };
 
-    // Validate first time pickup
-    const validateFirstTimePickup = async () => {
+    // Fetch vehicle batteries
+    const fetchVehicleBatteries = async (vehicleId) => {
         try {
-            const currentData = isUserFlow ? userData : bookingData;
-            const response = await swapAPI.validateAndPrepare({
-                driver_id: currentData.userId,
-                vehicle_id: currentData.vehicleId,
-                station_id: parseInt(stationId),
-                battery_type_id: currentData.batteryTypeId,
-                requested_quantity: currentData.requestedQuantity || 1
-            });
-            return response.data;
+            const response = await batteryAPI.getByVehicleId(vehicleId);
+            const batteries = response.data || [];
+            setVehicleBatteries(batteries);
+            return batteries;
         } catch (error) {
             console.error('Error validating first time pickup:', error);
             throw error;
         }
     };
 
-    // First time pickup
-    const performFirstTimePickup = async () => {
+    // Execute swap (for user flow)
+    const executeSwap = async (batteryData) => {
         try {
             const currentData = isUserFlow ? userData : bookingData;
-            const response = await swapAPI.firstTimePickup(
-                currentData.userId,
-                currentData.vehicleId,
-                parseInt(stationId)
-            );
+            const response = await swapAPI.execute({
+                driver_id: isUserFlow ? currentData.userId : currentData.driverId,
+                vehicle_id: currentData.vehicleId,
+                station_id: parseInt(stationId),
+                battery_type_id: currentData.batteryTypeId,
+                batteriesIn: batteryData
+            });
             return response.data;
         } catch (error) {
-            console.error('Error performing first time pickup:', error);
+            console.error('Error executing swap:', error);
             throw error;
         }
     };
 
-    // Validate with booking for first time
-    const validateWithBooking = async () => {
+    // Execute swap with booking (for booking flow)
+    const executeSwapWithBooking = async (batteryData, batteriesOut) => {
         try {
-            const currentData = isUserFlow ? userData : bookingData;
-            const response = await swapAPI.validateWithBooking(
-                currentData.bookingId,
-                currentData.driverId,
-                currentData.vehicleId,
-                parseInt(stationId),
-                currentData.batteryTypeId
-            );
-            return response.data;
-        } catch (error) {
-            console.error('Error validating with booking:', error);
-            throw error;
-        }
-    };
-
-    // Execute first time with booking
-    const executeFirstTimeWithBooking = async (bookedBatteries) => {
-        try {
-            const currentData = isUserFlow ? userData : bookingData;
-            const response = await swapAPI.executeFirstTimeWithBooking({
+            const currentData = bookingData;
+            const response = await swapAPI.executeWithBooking({
                 booking_id: currentData.bookingId,
                 driver_id: currentData.driverId,
                 vehicle_id: currentData.vehicleId,
                 station_id: parseInt(stationId),
-                bookedBatteries: bookedBatteries
+                battery_type_id: currentData.batteryTypeId,
+                batteriesIn: batteryData,
+                batteriesOut: batteriesOut
             });
             return response.data;
         } catch (error) {
-            console.error('Error executing first time with booking:', error);
+            console.error('Error executing swap with booking:', error);
             throw error;
         }
     };
 
-    // Validate and prepare swap
+    // Validate and prepare swap (for user flow)
     const validateAndPrepareSwap = async (batteryData) => {
         try {
             const currentData = isUserFlow ? userData : bookingData;
             const response = await swapAPI.validateAndPrepare({
-                driver_id: isUserFlow ? currentData.userId : currentData.bookingId,
-                vehicle_id: isUserFlow ? currentData.vehicleId : currentData.vehicleId,
+                driver_id: isUserFlow ? currentData.userId : currentData.driverId,
+                vehicle_id: currentData.vehicleId,
                 station_id: parseInt(stationId),
                 battery_type_id: currentData.batteryTypeId,
                 requested_quantity: currentData.requestedQuantity || 1,
@@ -232,6 +221,25 @@ const SwapStatus = () => {
             return response.data;
         } catch (error) {
             console.error('Error validating and preparing swap:', error);
+            throw error;
+        }
+    };
+
+    // Validate with booking (for booking flow)
+    const validateSwapWithBooking = async (batteryData) => {
+        try {
+            const currentData = bookingData;
+            const response = await swapAPI.validateWithBooking({
+                booking_id: currentData.bookingId,
+                driver_id: currentData.driverId,
+                vehicle_id: currentData.vehicleId,
+                station_id: parseInt(stationId),
+                battery_type_id: currentData.batteryTypeId,
+                batteriesIn: batteryData
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error validating swap with booking:', error);
             throw error;
         }
     };
@@ -257,202 +265,61 @@ const SwapStatus = () => {
             // Simulate verification delay
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Check flow type and first-time status
-            console.log('Flow check:', { isUserFlow, isFirstTimeSwap, userId, bookingId });
+            // Regular swap flow (both user flow and booking flow)
+            // Step 2: Get empty slots
+            setCurrentAction(prev => ({
+                ...prev,
+                title: 'Getting Empty Slots',
+                description: 'Retrieving list of empty slots at station',
+                progress: 33,
+                status: 'in_progress'
+            }));
 
-            if (isUserFlow && isFirstTimeSwap) {
-                // First time pickup flow (no booking)
-                setCurrentAction({
-                    title: 'Validating First Time Pickup',
-                    description: 'Checking battery availability for first time pickup',
-                    progress: 33,
-                    status: 'in_progress',
-                    showButton: false
-                });
-
-                // Step 1: Validate first time pickup
-                const validationData = await validateFirstTimePickup();
-                setFirstTimeValidationData(validationData);
-
-                if (!validationData.ready_to_execute) {
-                    setCurrentAction({
-                        title: 'Validation Failed',
-                        description: validationData.message || 'Unable to proceed with first time pickup',
-                        progress: 33,
-                        status: 'error',
-                        showButton: false
-                    });
-                    return;
-                }
-
-                setCurrentAction({
-                    title: 'First Time Battery Pickup',
-                    description: 'Processing your first time battery pickup',
-                    progress: 66,
-                    status: 'in_progress',
-                    showButton: false
-                });
-
-                // Step 2: Execute first time pickup
-                const pickupData = await performFirstTimePickup();
-                setFirstTimePickupData(pickupData);
-
-                setCurrentAction({
-                    title: 'Battery Ready for Pickup',
-                    description: `Battery is ready at slot ${firstTimeValidationData?.data?.available_batteries_out?.[0]?.slot_number || firstTimePickupData?.data?.slot_number || 'N/A'}. Please take your battery.`,
-                    progress: 83,
-                    status: 'in_progress',
-                    showButton: true,
-                    buttonText: 'Battery Retrieved'
-                });
-            } else if (isUserFlow && !isFirstTimeSwap) {
-                // Regular user flow (no booking, not first time)
+            const slots = await fetchEmptySlots();
+            if (slots.length === 0) {
                 setCurrentAction(prev => ({
                     ...prev,
-                    title: 'Getting Empty Slots',
-                    description: 'Retrieving list of empty slots at station',
-                    progress: 33,
-                    status: 'in_progress'
+                    title: 'Error',
+                    description: 'No empty slots available at station',
+                    status: 'error'
                 }));
-
-                const slots = await fetchEmptySlots();
-                if (slots.length === 0) {
-                    setCurrentAction(prev => ({
-                        ...prev,
-                        title: 'Error',
-                        description: 'No empty slots available at station',
-                        status: 'error'
-                    }));
-                    return;
-                }
-
-                // Select random slots for battery insertion
-                const currentData = userData;
-                const requestedQuantity = currentData.requestedQuantity || 1;
-                const selectedSlotsForInsertion = selectRandomSlots(slots, requestedQuantity);
-                setSelectedSlots(selectedSlotsForInsertion);
-
-                setCurrentAction({
-                    title: 'Insert Old Batteries',
-                    description: `Please insert ${requestedQuantity} old batteries into slots: ${selectedSlotsForInsertion.map(s => s.slot_number).join(', ')}`,
-                    progress: 50,
-                    status: 'in_progress',
-                    showButton: true,
-                    buttonText: 'Batteries Inserted'
-                });
-            } else if (!isUserFlow && bookingData) {
-                // Check if this is first time with booking
-                setCurrentAction({
-                    title: 'Validating Booking for First Time',
-                    description: 'Checking if this is a first time battery pickup with booking',
-                    progress: 33,
-                    status: 'in_progress',
-                    showButton: false
-                });
-
-                const validationData = await validateWithBooking();
-                setBookingValidationData(validationData);
-                setIsFirstTimeWithBooking(validationData.is_first_time);
-
-                if (validationData.is_first_time) {
-                    // First time with booking flow
-                    setCurrentAction({
-                        title: 'First Time Battery Pickup with Booking',
-                        description: 'Processing your first time battery pickup with booking',
-                        progress: 66,
-                        status: 'in_progress',
-                        showButton: false
-                    });
-
-                    const bookedBatteries = validationData.data.booked_batteries_out.map(battery => ({
-                        slot_id: battery.slot_id,
-                        battery_id: battery.battery_id
-                    }));
-
-                    const executionData = await executeFirstTimeWithBooking(bookedBatteries);
-                    setFirstTimePickupData(executionData);
-
-                    setCurrentAction({
-                        title: 'Batteries Ready for Pickup',
-                        description: `Batteries are ready at slots: ${validationData.data.booked_batteries_out.map(b => b.slot_id).join(', ')}. Please take your batteries.`,
-                        progress: 83,
-                        status: 'in_progress',
-                        showButton: true,
-                        buttonText: 'Batteries Retrieved'
-                    });
-                } else {
-                    // Regular booking flow
-                    // Step 2: Get empty slots
-                    setCurrentAction(prev => ({
-                        ...prev,
-                        title: 'Getting Empty Slots',
-                        description: 'Retrieving list of empty slots at station',
-                        progress: 33,
-                        status: 'in_progress'
-                    }));
-
-                    const slots = await fetchEmptySlots();
-                    if (slots.length === 0) {
-                        setCurrentAction(prev => ({
-                            ...prev,
-                            title: 'Error',
-                            description: 'No empty slots available at station',
-                            status: 'error'
-                        }));
-                        return;
-                    }
-
-                    // Step 3: Select random slots for battery insertion
-                    const currentData = isUserFlow ? userData : bookingData;
-                    const requestedQuantity = currentData.requestedQuantity || 1;
-                    const selectedSlotsForInsertion = selectRandomSlots(slots, requestedQuantity);
-                    setSelectedSlots(selectedSlotsForInsertion);
-
-                    setCurrentAction({
-                        title: 'Insert Old Batteries',
-                        description: `Please insert ${requestedQuantity} old batteries into slots: ${selectedSlotsForInsertion.map(s => s.slot_number).join(', ')}`,
-                        progress: 50,
-                        status: 'in_progress',
-                        showButton: true,
-                        buttonText: 'Batteries Inserted'
-                    });
-                }
-            } else {
-                // Regular booking flow (not first time)
-                setCurrentAction(prev => ({
-                    ...prev,
-                    title: 'Getting Empty Slots',
-                    description: 'Retrieving list of empty slots at station',
-                    progress: 33,
-                    status: 'in_progress'
-                }));
-
-                const slots = await fetchEmptySlots();
-                if (slots.length === 0) {
-                    setCurrentAction(prev => ({
-                        ...prev,
-                        title: 'Error',
-                        description: 'No empty slots available at station',
-                        status: 'error'
-                    }));
-                    return;
-                }
-
-                // Select random slots for battery insertion
-                const currentData = bookingData;
-                const requestedQuantity = currentData.requestedQuantity || 1;
-                const selectedSlotsForInsertion = selectRandomSlots(slots, requestedQuantity);
-                setSelectedSlots(selectedSlotsForInsertion);
-
-                setCurrentAction({
-                    title: 'Insert Old Batteries',
-                    description: `Please insert ${requestedQuantity} old batteries into slots: ${selectedSlotsForInsertion.map(s => s.slot_number).join(', ')}`,
-                    progress: 50,
-                    status: 'in_progress',
-                    showButton: true,
-                    buttonText: 'Batteries Inserted'
-                });
+                return;
             }
+
+            // Step 3: Fetch vehicle batteries to get battery IDs
+            const currentData = isUserFlow ? userData : bookingData;
+            setCurrentAction(prev => ({
+                ...prev,
+                title: 'Fetching Battery Information',
+                description: 'Retrieving current battery information from vehicle',
+                progress: 40,
+                status: 'in_progress'
+            }));
+
+            const batteries = await fetchVehicleBatteries(currentData.vehicleId);
+            if (batteries.length === 0) {
+                setCurrentAction(prev => ({
+                    ...prev,
+                    title: 'Error',
+                    description: 'No batteries found on vehicle',
+                    status: 'error'
+                }));
+                return;
+            }
+
+            // Step 4: Select random slots for battery insertion
+            const requestedQuantity = currentData.requestedQuantity || 1;
+            const selectedSlotsForInsertion = selectRandomSlots(slots, requestedQuantity);
+            setSelectedSlots(selectedSlotsForInsertion);
+
+            setCurrentAction({
+                title: 'Insert Old Batteries',
+                description: `Please insert ${requestedQuantity} old batteries into slots: ${selectedSlotsForInsertion.map(s => s.slot_number).join(', ')}`,
+                progress: 50,
+                status: 'in_progress',
+                showButton: true,
+                buttonText: 'Batteries Inserted'
+            });
 
         } catch (error) {
             console.error('Error starting swap process:', error);
@@ -471,6 +338,116 @@ const SwapStatus = () => {
         return shuffled.slice(0, quantity);
     };
 
+    // Generate random UUID format battery ID for testing
+    const generateRandomBatteryId = () => {
+        const chars = '0123456789abcdef';
+        const segments = [8, 4, 4, 4, 12]; // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        return segments.map(len =>
+            Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+        ).join('-');
+    };
+
+    // Test handler for invalid battery insertion
+    const handleInvalidBatteryTest = async () => {
+        setCurrentAction(prev => ({
+            ...prev,
+            showButton: false,
+            status: 'completed'
+        }));
+
+        // Move to validation step
+        setTimeout(async () => {
+            try {
+                setCurrentAction({
+                    title: 'Validate and Prepare',
+                    description: 'System is validating and preparing new batteries',
+                    progress: 66,
+                    status: 'in_progress',
+                    showButton: false
+                });
+
+                // Generate invalid battery data with random battery IDs
+                const invalidBatteryData = selectedSlots.map((slot) => ({
+                    slot_id: slot.slot_id,
+                    battery_id: generateRandomBatteryId() // Random invalid battery ID
+                }));
+
+                let validationResponse;
+                try {
+                    if (isUserFlow) {
+                        // User flow: use validateAndPrepare
+                        validationResponse = await validateAndPrepareSwap(invalidBatteryData);
+                    } else {
+                        // Booking flow: use validateWithBooking
+                        validationResponse = await validateSwapWithBooking(invalidBatteryData);
+                    }
+                } catch (apiError) {
+                    // Handle API error response
+                    const errorData = apiError?.response?.data || {};
+                    const errorMessage = errorData?.data?.invalid_batteries_in?.error ||
+                        errorData?.invalid_batteries_in?.error ||
+                        errorData?.message ||
+                        apiError?.message ||
+                        'Battery validation failed. The inserted batteries do not match your vehicle.';
+
+                    setCurrentAction(prev => ({
+                        ...prev,
+                        title: 'Validation Failed',
+                        description: errorMessage,
+                        status: 'error'
+                    }));
+
+                    // Return to kiosk home after 10 seconds
+                    setTimeout(() => {
+                        navigate(`/kiosk/${stationId}`);
+                    }, 10000);
+                    return;
+                }
+
+                setValidationData(validationResponse);
+
+                // Check if validation passed (should fail with invalid batteries)
+                if (!validationResponse.ready_to_execute) {
+                    const errorMessage = validationResponse.data?.invalid_batteries_in?.error ||
+                        validationResponse.message ||
+                        'Unable to proceed with swap';
+
+                    setCurrentAction(prev => ({
+                        ...prev,
+                        title: 'Validation Failed',
+                        description: errorMessage,
+                        status: 'error'
+                    }));
+
+                    // Return to kiosk home after 10 seconds
+                    setTimeout(() => {
+                        navigate(`/kiosk/${stationId}`);
+                    }, 10000);
+                    return;
+                }
+
+            } catch (error) {
+                console.error('Error testing invalid battery:', error);
+                const errorMessage = error?.response?.data?.data?.invalid_batteries_in?.error ||
+                    error?.response?.data?.invalid_batteries_in?.error ||
+                    error?.message ||
+                    'Unable to validate batteries. Please check the inserted batteries and try again.';
+
+                setCurrentAction(prev => ({
+                    ...prev,
+                    title: 'Validation Error',
+                    description: errorMessage,
+                    status: 'error'
+                }));
+
+                // Return to kiosk home after 10 seconds
+                setTimeout(() => {
+                    navigate(`/kiosk/${stationId}`);
+                }, 10000);
+            }
+        }, 1000);
+    };
+
     const handleActionComplete = async () => {
         setCurrentAction(prev => ({
             ...prev,
@@ -480,25 +457,8 @@ const SwapStatus = () => {
 
         // Move to next step
         setTimeout(async () => {
-            if (currentAction.title === 'Battery Ready for Pickup' || currentAction.title === 'Batteries Ready for Pickup') {
-                // First time pickup completed
-                setCurrentAction({
-                    title: isFirstTimeWithBooking ? 'First Time Pickup with Booking Complete' : 'First Time Pickup Complete',
-                    description: isFirstTimeWithBooking ? 'Your first battery pickup with booking has been completed successfully' : 'Your first battery pickup has been completed successfully',
-                    progress: 100,
-                    status: 'in_progress',
-                    showButton: false
-                });
-
-                // Simulate completion time
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                // Navigate to completion page
-                setSwapComplete(true);
-                const completeId = isUserFlow ? userId : bookingId;
-                navigate(`/kiosk/${stationId}/complete/${completeId}`);
-            } else if (currentAction.title === 'Insert Old Batteries') {
-                // Step 4: Validate and prepare
+            if (currentAction.title === 'Insert Old Batteries') {
+                // Step 5: Validate and prepare (different for user flow vs booking flow)
                 try {
                     setCurrentAction({
                         title: 'Validate and Prepare',
@@ -508,21 +468,92 @@ const SwapStatus = () => {
                         showButton: false
                     });
 
-                    // Prepare battery data for validation
-                    const batteryData = selectedSlots.map(slot => ({
+                    // Prepare battery data for validation - map selected slots with vehicle batteries
+                    const batteryData = selectedSlots.map((slot, index) => ({
                         slot_id: slot.slot_id,
-                        battery_id: `battery_${Date.now()}_${Math.random()}` // Mock battery ID
+                        battery_id: vehicleBatteries[index]?.battery_id || vehicleBatteries[0]?.battery_id
                     }));
 
-                    await validateAndPrepareSwap(batteryData);
+                    if (!batteryData.every(b => b.battery_id)) {
+                        throw new Error('Missing battery ID information');
+                    }
 
-                    // Simulate processing time
-                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    let validationResponse;
+                    if (isUserFlow) {
+                        // User flow: use validateAndPrepare
+                        validationResponse = await validateAndPrepareSwap(batteryData);
+                    } else {
+                        // Booking flow: use validateWithBooking
+                        validationResponse = await validateSwapWithBooking(batteryData);
+                    }
+                    setValidationData(validationResponse);
 
-                    // Step 5: Get new batteries
+                    // Check if validation passed
+                    if (!validationResponse.ready_to_execute) {
+                        // Check for invalid batteries error message
+                        const errorMessage = validationResponse.data?.invalid_batteries_in?.error ||
+                            validationResponse.message ||
+                            'Unable to proceed with swap';
+
+                        setCurrentAction(prev => ({
+                            ...prev,
+                            title: 'Validation Failed',
+                            description: errorMessage,
+                            status: 'error'
+                        }));
+
+                        // Return to kiosk home after 10 seconds (user likely doesn't have correct batteries)
+                        setTimeout(() => {
+                            navigate(`/kiosk/${stationId}`);
+                        }, 10000);
+                        return;
+                    }
+
+                    // Step 6: Execute swap
+                    setCurrentAction({
+                        title: 'Executing Swap',
+                        description: 'Processing battery swap',
+                        progress: 75,
+                        status: 'in_progress',
+                        showButton: false
+                    });
+
+                    let executeResponse;
+                    if (isUserFlow) {
+                        // User flow: use execute
+                        const validBatteriesIn = validationResponse.data?.valid_batteries_in || batteryData;
+                        executeResponse = await executeSwap(validBatteriesIn);
+                    } else {
+                        // Booking flow: use executeWithBooking
+                        const validBatteriesIn = validationResponse.data?.valid_batteries_in || batteryData;
+                        // Prepare batteriesOut from booked_batteries_out in validation response
+                        const batteriesOut = validationResponse.data?.booked_batteries_out?.map(b => ({
+                            battery_id: b.battery_id
+                        })) || [];
+                        executeResponse = await executeSwapWithBooking(validBatteriesIn, batteriesOut);
+                    }
+                    setSwapResult(executeResponse);
+
+                    // Step 7: Get new batteries - show which slots have batteries ready
+                    let batteriesOutInfo = [];
+                    if (isUserFlow) {
+                        batteriesOutInfo = executeResponse.data?.batteries_out_info || [];
+                    } else {
+                        // For booking flow, use booked_batteries_out from validation or execute response
+                        batteriesOutInfo = executeResponse.data?.batteries_out_info ||
+                            validationResponse.data?.booked_batteries_out || [];
+                    }
+
+                    // Map slot_id to slot_number from available slots
+                    const batteriesOutSlots = batteriesOutInfo.map(b => {
+                        // Try to find slot_number from empty slots or use slot_id
+                        const slotInfo = emptySlots.find(s => s.slot_id === b.slot_id);
+                        return slotInfo?.slot_number || b.slot_number || `Slot ${b.slot_id}`;
+                    });
+
                     setCurrentAction({
                         title: 'Get New Batteries',
-                        description: 'New battery slots are open, please take the batteries',
+                        description: `New batteries are ready at slots: ${batteriesOutSlots.join(', ')}. Please take the batteries.`,
                         progress: 83,
                         status: 'in_progress',
                         showButton: true,
@@ -530,12 +561,43 @@ const SwapStatus = () => {
                     });
 
                 } catch (error) {
+                    console.error('Error in swap process:', error);
+
+                    // Check for invalid batteries error in response
+                    const errorMessage = error?.response?.data?.data?.invalid_batteries_in?.error ||
+                        error?.response?.data?.invalid_batteries_in?.error ||
+                        error?.response?.data?.message ||
+                        error?.message ||
+                        'Unable to complete battery swap';
+
                     setCurrentAction(prev => ({
                         ...prev,
                         title: 'Error',
-                        description: 'Unable to validate and prepare batteries',
+                        description: errorMessage,
                         status: 'error'
                     }));
+
+                    // If it's a validation error (invalid batteries), return to kiosk home
+                    if (errorMessage.includes('battery') || errorMessage.includes('Battery') ||
+                        error?.response?.data?.data?.invalid_batteries_in?.error ||
+                        error?.response?.data?.invalid_batteries_in?.error) {
+                        // Return to kiosk home after 10 seconds
+                        setTimeout(() => {
+                            navigate(`/kiosk/${stationId}`);
+                        }, 10000);
+                    } else {
+                        // For other errors, allow retry
+                        setTimeout(() => {
+                            setCurrentAction({
+                                title: 'Insert Old Batteries',
+                                description: `Please insert the correct batteries into slots: ${selectedSlots.map(s => s.slot_number).join(', ')}`,
+                                progress: 50,
+                                status: 'in_progress',
+                                showButton: true,
+                                buttonText: 'Batteries Inserted'
+                            });
+                        }, 3000);
+                    }
                 }
             } else if (currentAction.title === 'Get New Batteries') {
                 // Step 6: Complete swap
@@ -553,7 +615,16 @@ const SwapStatus = () => {
                 // Navigate to completion page
                 setSwapComplete(true);
                 const completeId = isUserFlow ? userId : bookingId;
-                navigate(`/kiosk/${stationId}/complete/${completeId}`);
+                navigate(`/kiosk/${stationId}/complete/${completeId}`, {
+                    state: {
+                        isUserFlow,
+                        userData: isUserFlow ? userData : null,
+                        bookingData: !isUserFlow ? bookingData : null,
+                        swapResult: swapResult,
+                        vehicleBatteries: vehicleBatteries, // Pass old batteries for SOC calculation
+                        validationData: validationData // Pass validation data for booked batteries (booking flow)
+                    }
+                });
             }
         }, 1000);
     };
@@ -653,7 +724,7 @@ const SwapStatus = () => {
 
                             {/* Action Button */}
                             {currentAction.showButton && (
-                                <div className="text-center">
+                                <div className="text-center space-y-4">
                                     <Button
                                         size="lg"
                                         onClick={handleActionComplete}
@@ -661,6 +732,18 @@ const SwapStatus = () => {
                                     >
                                         {currentAction.buttonText}
                                     </Button>
+
+                                    {/* Test Button for Invalid Battery - Only show at Insert Old Batteries step */}
+                                    {currentAction.title === 'Insert Old Batteries' && (
+                                        <Button
+                                            variant="outline"
+                                            size="lg"
+                                            onClick={handleInvalidBatteryTest}
+                                            className="text-xl px-8 py-6 h-auto border-orange-500 text-orange-600 hover:bg-orange-50"
+                                        >
+                                            🧪 Test: Invalid Battery ID
+                                        </Button>
+                                    )}
                                 </div>
                             )}
 
@@ -678,123 +761,6 @@ const SwapStatus = () => {
                     </CardContent>
                 </Card>
 
-                {/* First Time Pickup Display */}
-                {firstTimePickupData && (currentAction.title === 'Battery Ready for Pickup' || currentAction.title === 'Batteries Ready for Pickup') && (
-                    <Card className="bg-green-50 border-green-200">
-                        <CardHeader>
-                            <CardTitle className="text-2xl text-green-800">
-                                {isFirstTimeWithBooking ? 'First Time Battery Pickup with Booking' : 'First Time Battery Pickup'}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div className="text-center">
-                                    <p className="text-xl text-green-700 mb-2">
-                                        {firstTimePickupData.message}
-                                    </p>
-                                    {isFirstTimeWithBooking ? (
-                                        <p className="text-lg text-green-600">
-                                            Batteries ready at slots: <span className="font-bold">
-                                                {firstTimePickupData.data.batteries_out.map(b => b.slot_id).join(', ')}
-                                            </span>
-                                        </p>
-                                    ) : (
-                                        <p className="text-lg text-green-600">
-                                            Battery ready at slot: <span className="font-bold">
-                                                {firstTimeValidationData?.data?.available_batteries_out?.[0]?.slot_number || firstTimePickupData.data.slot_number}
-                                            </span>
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-white p-4 rounded-lg border border-green-200">
-                                        <h4 className="font-semibold text-green-800 mb-2">Vehicle Information</h4>
-                                        <p className="text-sm text-muted-foreground">
-                                            <span className="font-medium">License Plate:</span> {isFirstTimeWithBooking ? firstTimePickupData.data.vehicle.license_plate : firstTimePickupData.data.vehicle.license_plate}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            <span className="font-medium">Model:</span> {isFirstTimeWithBooking ? firstTimePickupData.data.vehicle.model : firstTimePickupData.data.vehicle.model}
-                                        </p>
-                                        {!isFirstTimeWithBooking && userData?.firstTimeData && (
-                                            <>
-                                                <p className="text-sm text-muted-foreground">
-                                                    <span className="font-medium">Status:</span> {userData.firstTimeData.data.status}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    <span className="font-medium">Total Swaps:</span> {userData.firstTimeData.data.total_swap_count}
-                                                </p>
-                                            </>
-                                        )}
-                                    </div>
-                                    <div className="bg-white p-4 rounded-lg border border-green-200">
-                                        <h4 className="font-semibold text-green-800 mb-2">Battery Information</h4>
-                                        {isFirstTimeWithBooking ? (
-                                            <>
-                                                <p className="text-sm text-muted-foreground">
-                                                    <span className="font-medium">Batteries Ready:</span> {firstTimePickupData.data.batteries_out.length}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    <span className="font-medium">Slot Numbers:</span> {firstTimePickupData.data.batteries_out.map(b => b.slot_id).join(', ')}
-                                                </p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <p className="text-sm text-muted-foreground">
-                                                    <span className="font-medium">Batteries Picked:</span> {firstTimePickupData.data.batteries_picked}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    <span className="font-medium">Slot Number:</span> {firstTimePickupData.data.slot_number}
-                                                </p>
-                                                {userData?.firstTimeData && (
-                                                    <>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            <span className="font-medium">Battery Type:</span> {userData.firstTimeData.data.battery_type_id}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            <span className="font-medium">Battery Slots:</span> {userData.firstTimeData.data.battery_slot}
-                                                        </p>
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                                {!isFirstTimeWithBooking && firstTimeValidationData && (
-                                    <div className="bg-white p-4 rounded-lg border border-green-200">
-                                        <h4 className="font-semibold text-green-800 mb-2">Validation Information</h4>
-                                        <p className="text-sm text-muted-foreground">
-                                            <span className="font-medium">Available Batteries:</span> {firstTimeValidationData.data.available_batteries_out.length}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            <span className="font-medium">Battery Serial:</span> {firstTimeValidationData.data.available_batteries_out[0]?.battery_serial}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            <span className="font-medium">SOC:</span> {firstTimeValidationData.data.available_batteries_out[0]?.current_soc}%
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            <span className="font-medium">SOH:</span> {firstTimeValidationData.data.available_batteries_out[0]?.current_soh}%
-                                        </p>
-                                    </div>
-                                )}
-                                {isFirstTimeWithBooking && bookingValidationData && (
-                                    <div className="bg-white p-4 rounded-lg border border-green-200">
-                                        <h4 className="font-semibold text-green-800 mb-2">Booking Information</h4>
-                                        <p className="text-sm text-muted-foreground">
-                                            <span className="font-medium">Booking ID:</span> {bookingValidationData.data.booking_id}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            <span className="font-medium">Status:</span> {firstTimePickupData.data.booking.status}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            <span className="font-medium">Scheduled Time:</span> {new Date(bookingValidationData.data.booking_info.scheduled_time).toLocaleString()}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
                 {/* Selected Slots Display */}
                 {selectedSlots.length > 0 && currentAction.title === 'Insert Old Batteries' && (
                     <Card className="bg-blue-50 border-blue-200">
@@ -803,16 +769,88 @@ const SwapStatus = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {selectedSlots.map((slot) => (
-                                    <div key={slot.slot_id} className="bg-white p-4 rounded-lg border-2 border-blue-500 text-center">
-                                        <Badge variant="default" className="text-lg px-3 py-1 bg-blue-600">
-                                            {slot.slot_number}
-                                        </Badge>
-                                        <p className="text-sm text-muted-foreground mt-2">
-                                            Cabinet {slot.cabinet_id}
+                                {selectedSlots.map((slot, index) => {
+                                    const battery = vehicleBatteries[index];
+                                    return (
+                                        <div key={slot.slot_id} className="bg-white p-4 rounded-lg border-2 border-blue-500 text-center">
+                                            <Badge variant="default" className="text-lg px-3 py-1 bg-blue-600">
+                                                {slot.slot_number}
+                                            </Badge>
+                                            {battery && (
+                                                <div className="mt-2 text-xs text-muted-foreground">
+                                                    <p>Battery: {battery.battery_serial || battery.battery_id.slice(0, 8)}</p>
+                                                    <p>SOC: {battery.current_soc}% | SOH: {battery.current_soh}%</p>
+                                                </div>
+                                            )}
+                                            <p className="text-sm text-muted-foreground mt-2">
+                                                Cabinet {slot.cabinet_id}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Swap Result Display */}
+                {swapResult && currentAction.title === 'Get New Batteries' && (
+                    <Card className="bg-green-50 border-green-200">
+                        <CardHeader>
+                            <CardTitle className="text-2xl text-green-800">Batteries Ready for Pickup</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="text-center">
+                                    <p className="text-xl text-green-700 mb-2">
+                                        {swapResult.message || 'Swap completed successfully'}
+                                    </p>
+                                    {swapResult.data?.swap_summary && (
+                                        <p className="text-lg text-green-600">
+                                            Swapped {swapResult.data.swap_summary.batteries_in} battery/batteries
                                         </p>
-                                    </div>
-                                ))}
+                                    )}
+                                </div>
+                                {((swapResult.data?.batteries_out_info && swapResult.data.batteries_out_info.length > 0) ||
+                                    (validationData?.data?.booked_batteries_out && validationData.data.booked_batteries_out.length > 0)) && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {(swapResult.data?.batteries_out_info || validationData?.data?.booked_batteries_out || []).map((battery, index) => {
+                                                // Handle both user flow (batteries_out_info) and booking flow (booked_batteries_out) formats
+                                                const slotId = battery.slot_id;
+                                                const slotNumber = battery.slot_number;
+                                                const soc = battery.soc || battery.current_soc;
+                                                const soh = battery.soh || battery.current_soh;
+                                                const serial = battery.battery_serial;
+
+                                                const slotInfo = emptySlots.find(s => s.slot_id === slotId);
+                                                const displaySlot = slotNumber || slotInfo?.slot_number || `Slot ${slotId}`;
+
+                                                return (
+                                                    <div key={index} className="bg-white p-4 rounded-lg border border-green-200">
+                                                        <h4 className="font-semibold text-green-800 mb-2">
+                                                            Battery #{index + 1}
+                                                        </h4>
+                                                        <div className="space-y-1 text-sm">
+                                                            <p className="text-muted-foreground">
+                                                                <span className="font-medium">Slot:</span> {displaySlot}
+                                                            </p>
+                                                            {serial && (
+                                                                <p className="text-muted-foreground">
+                                                                    <span className="font-medium">Serial:</span> {serial}
+                                                                </p>
+                                                            )}
+                                                            <p className="text-muted-foreground">
+                                                                <span className="font-medium">SOC:</span> {soc}%
+                                                            </p>
+                                                            <p className="text-muted-foreground">
+                                                                <span className="font-medium">SOH:</span> {soh}%
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                             </div>
                         </CardContent>
                     </Card>

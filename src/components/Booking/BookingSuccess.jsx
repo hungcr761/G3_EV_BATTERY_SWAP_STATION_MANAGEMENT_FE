@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -7,6 +7,7 @@ import QRCodeLib from 'qrcode';
 
 const BookingSuccess = ({ bookingData, onClose }) => {
     const qrCodeRef = useRef(null);
+    const [countdown, setCountdown] = useState(0);
 
     useEffect(() => {
         if (bookingData?.booking_id && qrCodeRef.current) {
@@ -23,7 +24,25 @@ const BookingSuccess = ({ bookingData, onClose }) => {
         }
     }, [bookingData?.booking_id]);
 
+    // Update countdown every second
+    useEffect(() => {
+        if (bookingData?.scheduled_time) {
+            const updateCountdown = () => {
+                const now = new Date();
+                const scheduledTime = new Date(bookingData.scheduled_time);
+                const timeDiff = scheduledTime.getTime() - now.getTime();
+                setCountdown(Math.max(0, Math.floor(timeDiff / 1000)));
+            };
+
+            updateCountdown();
+            const interval = setInterval(updateCountdown, 1000);
+
+            return () => clearInterval(interval);
+        }
+    }, [bookingData?.scheduled_time]);
+
     const formatTime = (timeString) => {
+        if (!timeString) return '';
         const date = new Date(timeString);
         return date.toLocaleTimeString('vi-VN', {
             hour: '2-digit',
@@ -33,6 +52,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
     };
 
     const formatDate = (timeString) => {
+        if (!timeString) return '';
         const date = new Date(timeString);
         return date.toLocaleDateString('vi-VN', {
             weekday: 'long',
@@ -42,14 +62,21 @@ const BookingSuccess = ({ bookingData, onClose }) => {
         });
     };
 
-    const getActiveTimeRange = (scheduledTime) => {
+    const getActiveTimeRange = () => {
+        if (!bookingData?.scheduled_time) return { start: '', end: '' };
         const now = new Date();
-        const endTime = new Date(scheduledTime);
+        const endTime = new Date(bookingData.scheduled_time);
 
         return {
-            start: formatTime(now),
-            end: formatTime(endTime)
+            start: formatTime(now.toISOString()),
+            end: formatTime(endTime.toISOString())
         };
+    };
+
+    const formatCountdown = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
     return (
@@ -62,7 +89,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                     Đặt lịch thành công!
                 </h2>
                 <p className="text-muted-foreground">
-                    Lệnh đặt lịch đã được tạo và sẽ có hiệu lực vào thời gian bạn chọn
+                    Lệnh đặt lịch đã được tạo và sẽ có hiệu lực đến {bookingData?.scheduled_time ? formatTime(bookingData.scheduled_time) : 'N/A'}
                 </p>
             </div>
 
@@ -76,6 +103,27 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
+                        {/* Active Time Range */}
+                        {bookingData?.scheduled_time && (
+                            <div className="p-4 rounded-lg border bg-blue-50 border-blue-200 mb-4">
+                                <div className="flex items-center justify-center space-x-2">
+                                    <Clock className="h-5 w-5 text-blue-600" />
+                                    <span className="font-bold text-lg text-blue-700">
+                                        {getActiveTimeRange().start} - {getActiveTimeRange().end}
+                                    </span>
+                                </div>
+                                <p className="text-center text-sm mt-1 text-blue-600">
+                                    Thời gian lệnh đặt sẽ active
+                                </p>
+                                {countdown > 0 && (
+                                    <div className="mt-2 text-center">
+                                        <p className="text-sm text-blue-600">
+                                            Còn lại: {formatCountdown(countdown)} để đến trạm
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-3">
                                 <div className="flex justify-between">
@@ -97,7 +145,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Giờ đặt lịch:</span>
+                                    <span className="text-muted-foreground">Giờ đến trạm:</span>
                                     <span className="font-medium">
                                         {bookingData?.scheduled_time ? formatTime(bookingData.scheduled_time) : 'N/A'}
                                     </span>
@@ -218,22 +266,6 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                 </CardContent>
             </Card>
 
-            {/* Important Notice */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                    <Battery className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                        <p className="font-medium mb-2">Lưu ý quan trọng:</p>
-                        <ul className="list-disc list-inside space-y-1">
-                            <li>Lệnh đặt lịch đã active ngay từ khi bạn xác nhận</li>
-                            <li>Lệnh đặt sẽ kết thúc vào thời gian bạn chọn đến trạm</li>
-                            <li>Nếu không đến trạm trong thời gian quy định, lệnh đặt sẽ tự động bị hủy</li>
-                            <li>Vui lòng đến trạm đúng giờ để đảm bảo có pin sẵn sàng</li>
-                            <li><strong>Quan trọng:</strong> Mang theo mã QR này và quét tại kiosk để xác nhận đặt lịch</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
 
             {/* Action Button */}
             <div className="flex justify-center pt-4">

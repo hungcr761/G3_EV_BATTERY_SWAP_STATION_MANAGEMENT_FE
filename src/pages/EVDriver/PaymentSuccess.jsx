@@ -15,7 +15,7 @@ import {
     Calendar,
     ExternalLink
 } from 'lucide-react';
-import { subscriptionPlanAPI, vehicleAPI } from '@/lib/apiServices';
+import { subscriptionPlanAPI, vehicleAPI, batteryAPI } from '@/lib/apiServices';
 
 export default function PaymentSuccess() {
     const [searchParams] = useSearchParams();
@@ -24,6 +24,7 @@ export default function PaymentSuccess() {
     const [paymentData, setPaymentData] = useState(null);
     const [error, setError] = useState(null);
     const [retryLoading, setRetryLoading] = useState(false);
+    const [batteryCreationStatus, setBatteryCreationStatus] = useState(null);
 
     useEffect(() => {
         const extractPaymentData = () => {
@@ -62,7 +63,7 @@ export default function PaymentSuccess() {
                 setError(null);
             } catch (err) {
                 console.error('Error parsing payment data:', err);
-                setError('Không thể xử lý thông tin thanh toán');
+                setError('Unable to process payment information');
             } finally {
                 setLoading(false);
             }
@@ -71,8 +72,34 @@ export default function PaymentSuccess() {
         extractPaymentData();
     }, [searchParams]);
 
+    // Create batteries for vehicle when payment is successful
+    useEffect(() => {
+        const createBatteriesForVehicle = async () => {
+            // Only proceed if payment is successful and vehicleId is available
+            if (paymentData?.isSuccess && paymentData?.vehicleId) {
+                try {
+                    console.log('Creating batteries for vehicle:', paymentData.vehicleId);
+                    setBatteryCreationStatus('creating');
+                    const response = await batteryAPI.createForVehicle(paymentData.vehicleId);
+                    console.log('Batteries created successfully:', response.data);
+                    setBatteryCreationStatus('success');
+                } catch (err) {
+                    console.error('Error creating batteries for vehicle:', err);
+                    setBatteryCreationStatus('error');
+                    // Don't show error to user as payment was successful
+                    // Just log it for debugging
+                }
+            }
+        };
+
+        // Only run when paymentData is set and loading is complete
+        if (!loading && paymentData) {
+            createBatteriesForVehicle();
+        }
+    }, [paymentData, loading]);
+
     const formatPrice = (price) => {
-        return new Intl.NumberFormat('vi-VN', {
+        return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'VND'
         }).format(price);
@@ -193,7 +220,7 @@ export default function PaymentSuccess() {
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
                 <div className="text-center">
                     <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-                    <p className="text-lg text-muted-foreground">Đang xử lý kết quả thanh toán...</p>
+                    <p className="text-lg text-muted-foreground">Processing payment result...</p>
                 </div>
             </div>
         );
@@ -204,11 +231,11 @@ export default function PaymentSuccess() {
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-orange-50">
                 <div className="max-w-md mx-auto text-center">
                     <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-red-800 mb-2">Lỗi xử lý</h1>
+                    <h1 className="text-2xl font-bold text-red-800 mb-2">Processing Error</h1>
                     <p className="text-red-600 mb-6">{error}</p>
                     <Button onClick={() => navigate('/dashboard')}>
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Về trang chủ
+                        Back to Home
                     </Button>
                 </div>
             </div>
@@ -227,20 +254,20 @@ export default function PaymentSuccess() {
                         <>
                             <CheckCircle className="h-20 w-20 text-green-500 mx-auto mb-4" />
                             <h1 className="text-4xl font-bold text-green-800 mb-2">
-                                Thanh toán thành công!
+                                Payment Successful!
                             </h1>
                             <p className="text-xl text-green-600">
-                                Gói dịch vụ đã được kích hoạt cho xe của bạn
+                                Subscription plan has been activated for your vehicle
                             </p>
                         </>
                     ) : (
                         <>
                             <XCircle className="h-20 w-20 text-red-500 mx-auto mb-4" />
                             <h1 className="text-4xl font-bold text-red-800 mb-2">
-                                Thanh toán thất bại
+                                Payment Failed
                             </h1>
                             <p className="text-xl text-red-600">
-                                {paymentData?.message || 'Có lỗi xảy ra trong quá trình thanh toán'}
+                                {paymentData?.message || 'An error occurred during payment'}
                             </p>
                         </>
                     )}
@@ -253,30 +280,30 @@ export default function PaymentSuccess() {
                         <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
                             <CardTitle className="flex items-center text-xl">
                                 <CreditCard className="mr-3 h-5 w-5 text-primary" />
-                                Thông tin thanh toán
+                                Payment Information
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="pt-6 space-y-4">
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Mã đơn hàng:</span>
+                                <span className="text-muted-foreground">Order ID:</span>
                                 <span className="font-mono text-sm">{paymentData?.orderId || 'N/A'}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Số tiền:</span>
+                                <span className="text-muted-foreground">Amount:</span>
                                 <span className="font-semibold text-lg">
                                     {formatPrice(paymentData?.amount || 0)}
                                 </span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Trạng thái:</span>
+                                <span className="text-muted-foreground">Status:</span>
                                 <Badge className={isSuccess ? 'bg-green-500' : 'bg-red-500'}>
-                                    {isSuccess ? 'Thành công' : 'Thất bại'}
+                                    {isSuccess ? 'Success' : 'Failed'}
                                 </Badge>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Thời gian:</span>
+                                <span className="text-muted-foreground">Time:</span>
                                 <span className="text-sm">
-                                    {new Date().toLocaleString('vi-VN')}
+                                    {new Date().toLocaleString('en-US')}
                                 </span>
                             </div>
                         </CardContent>
@@ -287,20 +314,20 @@ export default function PaymentSuccess() {
                         <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50">
                             <CardTitle className="flex items-center text-xl">
                                 <Package className="mr-3 h-5 w-5 text-blue-600" />
-                                Thông tin dịch vụ
+                                Service Information
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="pt-6 space-y-4">
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Mã hóa đơn:</span>
+                                <span className="text-muted-foreground">Invoice ID:</span>
                                 <span className="font-mono text-sm">{paymentData?.invoiceId || 'N/A'}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Mã gói:</span>
+                                <span className="text-muted-foreground">Plan ID:</span>
                                 <span className="font-mono text-sm">{paymentData?.planId || 'N/A'}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground">Mã xe:</span>
+                                <span className="text-muted-foreground">Vehicle ID:</span>
                                 <span className="font-mono text-sm">{paymentData?.vehicleId || 'N/A'}</span>
                             </div>
                         </CardContent>
@@ -315,13 +342,13 @@ export default function PaymentSuccess() {
                                 <CheckCircle className="h-6 w-6 text-green-600 mt-0.5" />
                                 <div>
                                     <h3 className="font-semibold text-green-800 mb-2">
-                                        Gói dịch vụ đã được kích hoạt
+                                        Subscription Plan Activated
                                     </h3>
                                     <ul className="space-y-1 text-sm text-green-700">
-                                        <li>• Gói dịch vụ đổi pin đã được kích hoạt cho xe của bạn</li>
-                                        <li>• Bạn có thể bắt đầu sử dụng dịch vụ ngay lập tức</li>
-                                        <li>• Hóa đơn điện tử sẽ được gửi qua email</li>
-                                        <li>• Thông tin chi tiết có thể xem tại Dashboard</li>
+                                        <li>• Battery swap service has been activated for your vehicle</li>
+                                        <li>• You can start using the service immediately</li>
+                                        <li>• Electronic invoice will be sent via email</li>
+                                        <li>• Detailed information can be viewed in Dashboard</li>
                                     </ul>
                                 </div>
                             </div>
@@ -337,13 +364,13 @@ export default function PaymentSuccess() {
                                 <XCircle className="h-6 w-6 text-red-600 mt-0.5" />
                                 <div>
                                     <h3 className="font-semibold text-red-800 mb-2">
-                                        Thanh toán không thành công
+                                        Payment Unsuccessful
                                     </h3>
                                     <ul className="space-y-1 text-sm text-red-700">
-                                        <li>• Giao dịch đã bị hủy hoặc thất bại</li>
-                                        <li>• Số tiền chưa được trừ khỏi tài khoản</li>
-                                        <li>• Bạn có thể thử thanh toán lại</li>
-                                        <li>• Liên hệ hỗ trợ nếu vấn đề tiếp tục</li>
+                                        <li>• Transaction was cancelled or failed</li>
+                                        <li>• Amount was not deducted from your account</li>
+                                        <li>• You can try to pay again</li>
+                                        <li>• Contact support if the issue persists</li>
                                     </ul>
                                 </div>
                             </div>
@@ -361,7 +388,7 @@ export default function PaymentSuccess() {
                                 className="bg-green-600 hover:bg-green-700"
                             >
                                 <CheckCircle className="mr-2 h-5 w-5" />
-                                Về Dashboard
+                                Go to Dashboard
                             </Button>
                             <Button
                                 onClick={handleBackToServices}
@@ -369,7 +396,7 @@ export default function PaymentSuccess() {
                                 size="lg"
                             >
                                 <Package className="mr-2 h-5 w-5" />
-                                Xem thêm gói dịch vụ
+                                View More Plans
                             </Button>
                         </>
                     ) : (
@@ -383,12 +410,12 @@ export default function PaymentSuccess() {
                                 {retryLoading ? (
                                     <>
                                         <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                        Đang tải...
+                                        Loading...
                                     </>
                                 ) : (
                                     <>
                                         <ArrowLeft className="mr-2 h-5 w-5" />
-                                        Thử lại thanh toán
+                                        Retry Payment
                                     </>
                                 )}
                             </Button>
@@ -398,7 +425,7 @@ export default function PaymentSuccess() {
                                 size="lg"
                             >
                                 <Motorbike className="mr-2 h-5 w-5" />
-                                Về Dashboard
+                                Go to Dashboard
                             </Button>
                         </>
                     )}

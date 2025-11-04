@@ -34,7 +34,7 @@ const UserVerification = () => {
                 }
 
                 // Fetch user's vehicles
-                const vehiclesResponse = await vehicleAPI.getAll();
+                const vehiclesResponse = await vehicleAPI.getByUserId(userId);
                 if (vehiclesResponse.data && vehiclesResponse.data.vehicles) {
                     setUserVehicles(vehiclesResponse.data.vehicles);
                 }

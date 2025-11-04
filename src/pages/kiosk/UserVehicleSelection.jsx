@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Motorbike, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
-import { vehicleAPI, subscriptionAPI, swapAPI } from '../../lib/apiServices';
+import { vehicleAPI, subscriptionAPI } from '../../lib/apiServices';
 
 const UserVehicleSelection = () => {
     const { stationId, userId } = useParams();
@@ -29,11 +29,11 @@ const UserVehicleSelection = () => {
     useEffect(() => {
         const fetchVehicles = async () => {
             try {
-                // Fetch vehicles with complete model and battery information
-                const response = await vehicleAPI.getAll();
+                // Fetch vehicles by user ID with complete model and battery information
+                const response = await vehicleAPI.getByUserId(userId);
                 const vehiclesData = response.data?.vehicles || [];
 
-                // Fetch subscription data and first-time status for each vehicle
+                // Fetch subscription data for each vehicle
                 const vehiclesWithSubscriptions = await Promise.all(
                     vehiclesData.map(async (vehicle) => {
                         try {
@@ -45,19 +45,6 @@ const UserVehicleSelection = () => {
                             const hasActiveSubscription = subscriptionData?.payload?.subscription?.some(
                                 sub => sub.status === 'active'
                             ) || false;
-
-                            // Check if this is first time taking battery using new API
-                            let isFirstTimeSwap = false;
-                            let firstTimeData = null;
-                            try {
-                                const firstTimeResponse = await swapAPI.checkFirstTimePickup(vehicle.vehicle_id);
-                                firstTimeData = firstTimeResponse.data;
-                                isFirstTimeSwap = firstTimeData?.data?.is_first_time || false;
-                            } catch (firstTimeError) {
-                                console.error(`Error checking first time status for vehicle ${vehicle.vehicle_id}:`, firstTimeError);
-                                // If first time check fails, assume not first time
-                                isFirstTimeSwap = false;
-                            }
 
                             const modelName = vehicle.model?.name || 'Unknown Model';
                             const batteryTypeCode = vehicle.model?.batteryType?.battery_type_code || 'Unknown';
@@ -72,8 +59,6 @@ const UserVehicleSelection = () => {
                                 batteryCapacity,
                                 batterySlots,
                                 hasActiveSubscription,
-                                isFirstTimeSwap,
-                                firstTimeData,
                                 subscription: subscriptionData?.payload?.subscription || []
                             };
                         } catch (subscriptionError) {
@@ -92,8 +77,6 @@ const UserVehicleSelection = () => {
                                 batteryCapacity,
                                 batterySlots,
                                 hasActiveSubscription: false,
-                                isFirstTimeSwap: false,
-                                firstTimeData: null,
                                 subscription: []
                             };
                         }
@@ -120,9 +103,7 @@ const UserVehicleSelection = () => {
         if (!selectedVehicle || !selectedVehicle.hasActiveSubscription) return;
         navigate(`/kiosk/${stationId}/user/${userId}/battery`, {
             state: {
-                selectedVehicle,
-                isFirstTimeSwap: selectedVehicle.isFirstTimeSwap,
-                firstTimeData: selectedVehicle.firstTimeData
+                selectedVehicle
             }
         });
     };
@@ -212,19 +193,19 @@ const UserVehicleSelection = () => {
                                                 {vehicle.hasActiveSubscription ? (
                                                     <Badge variant="default" className="text-lg px-3 py-1 bg-green-100 text-green-800">
                                                         <CheckCircle2 className="h-4 w-4 mr-1" />
-                                                        Has Subscription
+                                                        Subscription
                                                     </Badge>
                                                 ) : (
                                                     <Badge variant="outline" className="text-lg px-3 py-1 border-red-300 text-red-600">
                                                         No Subscription
                                                     </Badge>
                                                 )}
-                                                {selectedVehicle?.vehicle_id === vehicle.vehicle_id && (
+                                                {/* {selectedVehicle?.vehicle_id === vehicle.vehicle_id && (
                                                     <Badge variant="default" className="text-lg px-3 py-1">
                                                         <CheckCircle2 className="h-4 w-4 mr-1" />
                                                         Selected
                                                     </Badge>
-                                                )}
+                                                )} */}
                                             </div>
                                             <div className="text-sm text-muted-foreground">
                                                 <p>Battery slots: {vehicle.batterySlots} {vehicle.batterySlots === 1 ? 'battery' : 'batteries'}</p>
@@ -263,29 +244,6 @@ const UserVehicleSelection = () => {
                     </Button>
                 </div>
 
-                {/* Selection Info */}
-                {selectedVehicle && (
-                    <Card className={`${selectedVehicle.hasActiveSubscription ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'}`}>
-                        <CardContent className="p-6">
-                            <div className="text-center">
-                                <h3 className={`text-2xl font-bold mb-2 ${selectedVehicle.hasActiveSubscription ? 'text-blue-800' : 'text-red-800'}`}>
-                                    Selected Vehicle
-                                </h3>
-                                <p className={`text-xl mb-2 ${selectedVehicle.hasActiveSubscription ? 'text-blue-600' : 'text-red-600'}`}>
-                                    {selectedVehicle.modelName} - {selectedVehicle.license_plate}
-                                </p>
-                                <div className={`text-lg space-y-1 ${selectedVehicle.hasActiveSubscription ? 'text-blue-500' : 'text-red-500'}`}>
-                                    <p>Battery Type: {selectedVehicle.batteryType}</p>
-                                    <p>Capacity: {selectedVehicle.batteryCapacity} kWh</p>
-                                    <p>Battery slots: {selectedVehicle.batterySlots} {selectedVehicle.batterySlots === 1 ? 'battery' : 'batteries'}</p>
-                                    <p className="font-semibold">
-                                        {selectedVehicle.hasActiveSubscription ? '✅ Has subscription package' : '❌ No subscription package'}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
             </div>
         </div>
     );

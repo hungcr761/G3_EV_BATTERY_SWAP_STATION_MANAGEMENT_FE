@@ -4,14 +4,13 @@ import { Button } from '../ui/button';
 import { bookingAPI } from '../../lib/apiServices';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import VehicleSelection from './VehicleSelection';
-import TimeSelection from './TimeSelection';
 import BatterySelection from './BatterySelection';
 import BookingConfirmation from './BookingConfirmation';
 import BookingSuccess from './BookingSuccess';
 
 const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClose }) => {
     const [currentStep, setCurrentStep] = useState(1);
-    const [selectedTime, setSelectedTime] = useState(null);
+    const [scheduledTime, setScheduledTime] = useState(null);
     const [selectedBatteries, setSelectedBatteries] = useState([]);
     const [availabilityData, setAvailabilityData] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,6 +22,13 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     const timerRef = useRef(null);
     const deleteTimerRef = useRef(null);
 
+    // Auto-set scheduled_time to now + 1 hour
+    useEffect(() => {
+        const now = new Date();
+        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+        setScheduledTime(oneHourLater);
+    }, []);
+
     // Check availability when vehicle is selected
     useEffect(() => {
         if (selectedVehicle && selectedStation) {
@@ -33,14 +39,14 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
     // Handle booking timer when booking is created
     useEffect(() => {
-        if (bookingId && selectedTime) {
+        if (bookingId && scheduledTime) {
             // Booking is active immediately when created
             setIsBookingActive(true);
 
-            // Set timer to cancel booking at selected time
+            // Set timer to cancel booking at scheduled time
             const now = new Date();
-            const selectedDateTime = new Date(selectedTime.time);
-            const timeDiff = selectedDateTime.getTime() - now.getTime();
+            const scheduledDateTime = new Date(scheduledTime);
+            const timeDiff = scheduledDateTime.getTime() - now.getTime();
 
             if (timeDiff > 0) {
                 deleteTimerRef.current = setTimeout(() => {
@@ -53,7 +59,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             if (timerRef.current) clearTimeout(timerRef.current);
             if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
         };
-    }, [bookingId, selectedTime]);
+    }, [bookingId, scheduledTime]);
 
     const checkAvailability = async () => {
         try {
@@ -90,49 +96,41 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     };
 
 
-    const handleTimeSelect = (time) => {
-        setSelectedTime(time);
-        setError(null);
-    };
-
     const handleBatterySelection = (batteries) => {
         console.log('BookingFlow handleBatterySelection called with:', batteries);
         setSelectedBatteries(batteries);
         setError(null);
     };
 
-    // Auto-advance to next step when batteries are selected
+    // Auto-advance to next step when batteries are selected (only for multi-slot vehicles)
     useEffect(() => {
-        if (currentStep === 2 && selectedBatteries.length > 0) {
-            console.log('Auto-advancing from step 2 to step 3, selectedBatteries:', selectedBatteries);
-            setCurrentStep(3);
+        const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
+        if (hasMultipleSlots && currentStep === 1 && selectedBatteries.length > 0) {
+            console.log('Auto-advancing from step 1 to step 2, selectedBatteries:', selectedBatteries);
+            setCurrentStep(2);
         }
-    }, [selectedBatteries, currentStep]);
+    }, [selectedBatteries, currentStep, selectedVehicle]);
 
-    const handleNext = () => {
-        if (currentStep === 1 && selectedTime) {
-            // Debug: Log vehicle info
-            console.log('Vehicle info for battery selection:', {
-                selectedVehicle,
-                batterySlot: selectedVehicle.model?.battery_slot,
-                modelName: selectedVehicle?.modelName
-            });
-
+    // Auto-navigate to appropriate step based on vehicle battery slots
+    useEffect(() => {
+        if (selectedVehicle && scheduledTime) {
             // Check if vehicle has multiple battery slots
             if (selectedVehicle.model?.battery_slot > 1) {
-                console.log('Vehicle has multiple battery slots, going to battery selection');
-                setCurrentStep(2); // Go to battery selection
+                // Stay on step 1 (battery selection) for multi-slot vehicles
+                setCurrentStep(1);
             } else {
-                console.log('Vehicle has single battery slot, skipping battery selection');
-                // Set default battery selection for single battery vehicles
+                // Set default battery selection for single battery vehicles and go to confirmation (step 1 for single-slot vehicles)
                 setSelectedBatteries([1]);
-                setCurrentStep(3); // Skip battery selection, go to confirmation
+                setCurrentStep(1);
             }
-        } else if (currentStep === 2 && selectedBatteries.length > 0) {
-            console.log('BookingFlow: Moving from step 2 to step 3, selectedBatteries:', selectedBatteries);
-            setCurrentStep(3); // Go to confirmation
-        } else if (currentStep === 2) {
-            console.log('BookingFlow: Still on step 2, selectedBatteries:', selectedBatteries, 'length:', selectedBatteries.length);
+        }
+    }, [selectedVehicle, scheduledTime]);
+
+    const handleNext = () => {
+        const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
+        if (hasMultipleSlots && currentStep === 1 && selectedBatteries.length > 0) {
+            console.log('BookingFlow: Moving from step 1 to step 2, selectedBatteries:', selectedBatteries);
+            setCurrentStep(2); // Go to confirmation
         }
     };
 
@@ -143,7 +141,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     };
 
     const handleConfirmBooking = async () => {
-        if (!selectedVehicle || !selectedTime || !selectedStation) {
+        if (!selectedVehicle || !scheduledTime || !selectedStation) {
             setError('Missing required information to make a booking');
             return;
         }
@@ -156,7 +154,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             const bookingData = {
                 station_id: selectedStation.id,
                 vehicle_id: selectedVehicle.vehicle_id,
-                scheduled_time: selectedTime.time.toISOString(),
+                scheduled_time: scheduledTime.toISOString(),
                 battery_quantity: batteryQuantity,
             };
 
@@ -225,61 +223,91 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     };
 
     const renderStepContent = () => {
-        switch (currentStep) {
-            case 1:
-                return (
-                    <TimeSelection
-                        onTimeSelect={handleTimeSelect}
-                        selectedTime={selectedTime}
-                        onNext={handleNext}
-                        onBack={handleBack}
-                    />
-                );
-            case 2:
-                return (
-                    <BatterySelection
-                        selectedVehicle={selectedVehicle}
-                        onBatterySelection={handleBatterySelection}
-                        onNext={handleNext}
-                        onBack={handleBack}
-                    />
-                );
-            case 3:
-                return (
-                    <BookingConfirmation
-                        selectedVehicle={selectedVehicle}
-                        selectedTime={selectedTime}
-                        selectedStation={selectedStation}
-                        selectedBatteries={selectedBatteries}
-                        onConfirm={handleConfirmBooking}
-                        onBack={handleBack}
-                        isSubmitting={isSubmitting}
-                    />
-                );
-            case 4:
-                return (
-                    <BookingSuccess
-                        bookingData={bookingData}
-                        onClose={handleClose}
-                    />
-                );
-            default:
-                return null;
+        const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
+
+        if (hasMultipleSlots) {
+            // Multi-slot vehicle flow: Battery Selection -> Confirmation -> Success
+            switch (currentStep) {
+                case 1:
+                    return (
+                        <BatterySelection
+                            selectedVehicle={selectedVehicle}
+                            onBatterySelection={handleBatterySelection}
+                            onNext={handleNext}
+                            onBack={handleBack}
+                        />
+                    );
+                case 2:
+                    return (
+                        <BookingConfirmation
+                            selectedVehicle={selectedVehicle}
+                            selectedTime={{ time: scheduledTime }}
+                            selectedStation={selectedStation}
+                            selectedBatteries={selectedBatteries}
+                            onConfirm={handleConfirmBooking}
+                            onBack={handleBack}
+                            isSubmitting={isSubmitting}
+                        />
+                    );
+                case 3:
+                    return (
+                        <BookingSuccess
+                            bookingData={bookingData}
+                            onClose={handleClose}
+                        />
+                    );
+                default:
+                    return null;
+            }
+        } else {
+            // Single-slot vehicle flow: Confirmation -> Success
+            switch (currentStep) {
+                case 1:
+                    return (
+                        <BookingConfirmation
+                            selectedVehicle={selectedVehicle}
+                            selectedTime={{ time: scheduledTime }}
+                            selectedStation={selectedStation}
+                            selectedBatteries={selectedBatteries}
+                            onConfirm={handleConfirmBooking}
+                            onBack={handleBack}
+                            isSubmitting={isSubmitting}
+                        />
+                    );
+                case 2:
+                    return (
+                        <BookingSuccess
+                            bookingData={bookingData}
+                            onClose={handleClose}
+                        />
+                    );
+                default:
+                    return null;
+            }
         }
     };
 
     const getStepTitle = () => {
-        switch (currentStep) {
-            case 1: return 'Select Time';
-            case 2: return 'Select Battery Quantity';
-            case 3: return 'Confirm Booking';
-            case 4: return 'Complete';
-            default: return '';
+        const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
+
+        if (hasMultipleSlots) {
+            switch (currentStep) {
+                case 1: return 'Select Battery Quantity';
+                case 2: return 'Confirm Booking';
+                case 3: return 'Complete';
+                default: return '';
+            }
+        } else {
+            switch (currentStep) {
+                case 1: return 'Confirm Booking';
+                case 2: return 'Complete';
+                default: return '';
+            }
         }
     };
 
     const getTotalSteps = () => {
-        return selectedVehicle.model?.battery_slot > 1 ? 4 : 3;
+        return selectedVehicle?.model?.battery_slot > 1 ? 3 : 2;
     };
 
     return (

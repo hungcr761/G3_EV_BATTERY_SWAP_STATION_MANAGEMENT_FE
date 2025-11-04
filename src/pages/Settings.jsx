@@ -13,21 +13,21 @@ const Settings = () => {
     const themes = [
         {
             value: 'light',
-            label: 'Sáng',
-            icon: Sun,
-            description: 'Giao diện sáng'
-        },
-        {
-            value: 'dark',
-            label: 'Tối',
-            icon: Moon,
-            description: 'Giao diện tối'
-        },
-        {
-            value: 'system',
-            label: 'Hệ thống',
-            icon: Monitor,
-            description: 'Theo hệ thống'
+                                            label: 'Light',
+                                            icon: Sun,
+                                            description: 'Light theme'
+                                        },
+                                        {
+                                            value: 'dark',
+                                            label: 'Dark',
+                                            icon: Moon,
+                                            description: 'Dark theme'
+                                        },
+                                        {
+                                            value: 'system',
+                                            label: 'System',
+                                            icon: Monitor,
+                                            description: 'Follow system'
         }
     ];
 
@@ -42,13 +42,13 @@ const Settings = () => {
                         className="mb-4"
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Quay lại
+                        Back
                     </Button>
                     <h1 className="text-3xl font-bold text-foreground">
-                        Cài đặt
+                        Settings
                     </h1>
                     <p className="text-muted-foreground mt-2">
-                        Quản lý cài đặt tài khoản và ứng dụng của bạn
+                        Manage your account and application settings
                     </p>
                 </div>
 
@@ -56,14 +56,14 @@ const Settings = () => {
                     {/* Theme Settings */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Giao diện</CardTitle>
+                            <CardTitle>Appearance</CardTitle>
                             <CardDescription>
-                                Chọn giao diện hiển thị cho ứng dụng
+                                Choose the display theme for your application
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                <Label className="text-base">Chế độ hiển thị</Label>
+                                <Label className="text-base">Display Mode</Label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {themes.map((themeOption) => {
                                         const Icon = themeOption.icon;
@@ -109,10 +109,10 @@ const Settings = () => {
                                 </div>
                                 <p className="text-sm text-muted-foreground">
                                     {theme === 'system'
-                                        ? 'Giao diện sẽ tự động thay đổi theo cài đặt hệ thống của bạn'
+                                        ? 'Theme will automatically change based on your system settings'
                                         : theme === 'dark'
-                                            ? 'Giao diện tối giúp giảm căng thẳng mắt trong điều kiện ánh sáng yếu'
-                                            : 'Giao diện sáng tối ưu cho môi trường có ánh sáng tốt'
+                                            ? 'Dark theme helps reduce eye strain in low-light conditions'
+                                            : 'Light theme is optimal for well-lit environments'
                                     }
                                 </p>
                             </div>
@@ -122,9 +122,9 @@ const Settings = () => {
                     {/* Other Settings */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Thông báo</CardTitle>
+                            <CardTitle>Notifications</CardTitle>
                             <CardDescription>
-                                Quản lý cách bạn nhận thông báo
+                                Manage how you receive notifications
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -132,27 +132,27 @@ const Settings = () => {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="font-medium text-foreground">
-                                            Email thông báo
+                                            Email Notifications
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            Nhận thông báo qua email về giao dịch và hoạt động
+                                            Receive email notifications about transactions and activities
                                         </p>
                                     </div>
                                     <Button variant="outline" size="sm">
-                                        Cấu hình
+                                        Configure
                                     </Button>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="font-medium text-foreground">
-                                            Push notification
+                                            Push Notifications
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            Nhận thông báo đẩy trên thiết bị của bạn
+                                            Receive push notifications on your device
                                         </p>
                                     </div>
                                     <Button variant="outline" size="sm">
-                                        Cấu hình
+                                        Configure
                                     </Button>
                                 </div>
                             </div>
@@ -162,9 +162,9 @@ const Settings = () => {
                     {/* Account Settings */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Tài khoản</CardTitle>
+                            <CardTitle>Account</CardTitle>
                             <CardDescription>
-                                Quản lý tài khoản và bảo mật
+                                Manage your account and security
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -172,27 +172,27 @@ const Settings = () => {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="font-medium text-foreground">
-                                            Đổi mật khẩu
+                                            Change Password
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            Cập nhật mật khẩu của bạn
+                                            Update your password
                                         </p>
                                     </div>
                                     <Button variant="outline" size="sm">
-                                        Thay đổi
+                                        Change
                                     </Button>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="font-medium text-foreground">
-                                            Xác thực hai yếu tố
+                                            Two-Factor Authentication
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            Tăng cường bảo mật cho tài khoản
+                                            Enhance your account security
                                         </p>
                                     </div>
                                     <Button variant="outline" size="sm">
-                                        Bật
+                                        Enable
                                     </Button>
                                 </div>
                             </div>
