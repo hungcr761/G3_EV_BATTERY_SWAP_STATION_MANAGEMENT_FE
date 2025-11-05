@@ -67,8 +67,8 @@ export const userAPI = {
 // Subscription Plan APIs
 export const subscriptionPlanAPI = {
     getAll: () =>
-        USE_MOCK_API ? mockApi.getSubscriptionPlans() : api.get('/subscription-plan'),
-    getById: (id) => USE_MOCK_API ? mockApi.getSubscriptionPlanById(id) : api.get(`/subscription-plan/${id}`)
+        USE_MOCK_API ? mockApi.getSubscriptionPlans() : api.get('/subscription-plans'),
+    getById: (id) => USE_MOCK_API ? mockApi.getSubscriptionPlanById(id) : api.get(`/subscription-plans/${id}`)
 };
 
 // Subscription APIs (User đăng ký gói cho xe)
@@ -82,12 +82,12 @@ export const subscriptionAPI = {
 };
 
 export const stationAPI = {
-    getAll: () => api.get('/station'),
-    getById: (id) => api.get(`/station/${id}`),
-    create: (data) => api.post('/station', data),
-    update: (id, data) => api.put(`/station/${id}`, data),
-    updateStatus: (id, status) => api.put(`/station/${id}/status`, { status }),
-    delete: (id) => api.delete(`/station/${id}`),
+    getAll: () => api.get('/stations'),
+    getById: (id) => api.get(`/stations/${id}`),
+    create: (data) => api.post('/stations', data),
+    update: (id, data) => api.put(`/stations/${id}`, data),
+    updateStatus: (id, status) => api.put(`/stations/${id}/status`, { status }),
+    delete: (id) => api.delete(`/stations/${id}`),
 };
 
 // Booking APIs
