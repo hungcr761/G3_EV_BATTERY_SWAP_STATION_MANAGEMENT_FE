@@ -22,7 +22,7 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { useApi } from '../../hooks/useApi';
-import { batteryAPI } from '../../lib/apiServices';
+import { batteryAPI, batteryTypeAPI, stationAPI } from '../../lib/apiServices';
 
 const BatteryManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,29 +31,121 @@ const BatteryManagement = () => {
 
 
     const { data: apiBatteries, loading: batteriesLoading, error: batteriesError } = useApi(batteryAPI.getAll, []);
+    const { data: apiBatteryTypes, loading: batteryTypesLoading, error: batteryTypesError } = useApi(batteryTypeAPI.getAll, []);
+    const { data: apiStations, loading: stationsLoading, error: stationsError } = useApi(stationAPI.getAll, []);
 
-    const batteries = Array.isArray(apiBatteries)
-        ? apiBatteries.map((b) => ({
+    // Create a map of battery types by battery_type_id for quick lookup
+    const batteryTypeMap = React.useMemo(() => {
+        if (!apiBatteryTypes) {
+            console.log('BatteryManagement: apiBatteryTypes is null/undefined');
+            return {};
+        }
+
+        // Handle response structure: { success: true, payload: { batteryTypes: [...] } }
+        const types = apiBatteryTypes?.payload?.batteryTypes ||
+            (Array.isArray(apiBatteryTypes) ? apiBatteryTypes : []);
+
+        console.log('BatteryManagement: apiBatteryTypes structure:', {
+            hasPayload: !!apiBatteryTypes?.payload,
+            hasBatteryTypes: !!apiBatteryTypes?.payload?.batteryTypes,
+            isArray: Array.isArray(apiBatteryTypes),
+            typesCount: Array.isArray(types) ? types.length : 0,
+            firstType: Array.isArray(types) && types.length > 0 ? types[0] : null
+        });
+
+        if (!Array.isArray(types) || types.length === 0) {
+            console.log('BatteryManagement: No battery types found');
+            return {};
+        }
+
+        const map = types.reduce((acc, type) => {
+            if (type?.battery_type_id != null) {
+                // Use both string and number keys to handle type mismatches
+                acc[type.battery_type_id] = type;
+                acc[String(type.battery_type_id)] = type;
+                acc[Number(type.battery_type_id)] = type;
+            }
+            return acc;
+        }, {});
+
+        console.log('BatteryManagement: batteryTypeMap created with keys:', Object.keys(map));
+        return map;
+    }, [apiBatteryTypes]);
+
+    // Process stations from API response
+    const stations = React.useMemo(() => {
+        if (!apiStations) return [{ id: 'all', name: 'All Stations' }];
+
+        // Handle response structure: { success: true, payload: { stations: [...] } }
+        const stationsData = apiStations?.payload?.stations ||
+            (Array.isArray(apiStations) ? apiStations : []);
+
+        if (!Array.isArray(stationsData) || stationsData.length === 0) {
+            return [{ id: 'all', name: 'All Stations' }];
+        }
+
+        // Transform stations to include 'All Stations' option
+        const transformedStations = [
+            { id: 'all', name: 'All Stations' },
+            ...stationsData.map(station => ({
+                id: station.station_id || station.id,
+                name: station.station_name || station.name || 'Unknown Station'
+            }))
+        ];
+
+        return transformedStations;
+    }, [apiStations]);
+
+    // Create a map of station IDs to station names for battery location lookup
+    const stationMap = React.useMemo(() => {
+        const map = {};
+        stations.forEach(station => {
+            if (station.id !== 'all') {
+                map[station.id] = station.name;
+                // Handle both string and number keys
+                map[String(station.id)] = station.name;
+                map[Number(station.id)] = station.name;
+            }
+        });
+        return map;
+    }, [stations]);
+
+    // Handle batteries response structure - could be direct array or in payload
+    const batteriesArray = Array.isArray(apiBatteries)
+        ? apiBatteries
+        : (apiBatteries?.payload?.batteries || apiBatteries?.batteries || []);
+
+    const batteries = batteriesArray.map((b) => {
+        const batteryTypeId = b?.battery_type_id;
+        // Try both number and string keys for lookup
+        const batteryType = batteryTypeId ?
+            (batteryTypeMap[batteryTypeId] || batteryTypeMap[String(batteryTypeId)] || batteryTypeMap[Number(batteryTypeId)]) :
+            null;
+
+        if (batteryTypeId && !batteryType) {
+            console.log('BatteryManagement: No battery type found for battery_type_id:', batteryTypeId, 'Available keys:', Object.keys(batteryTypeMap));
+        }
+
+        // Get station name from station_id
+        const stationId = b?.station_id;
+        const stationName = stationId ?
+            (stationMap[stationId] || stationMap[String(stationId)] || stationMap[Number(stationId)] || null) :
+            null;
+
+        return {
             id: b?.battery_id ?? b?.battery_serial ?? null,
             serialNumber: b?.battery_serial ?? null,
             status: b?.status ?? null,
             soh: b?.current_soh != null ? parseFloat(b.current_soh) : null,
             soc: b?.current_soc != null ? parseFloat(b.current_soc) : null,
-            // Fields not provided by API -> leave null
-            model: null,
-            cycles: null,
-            lastCharge: null,
-            location: null,
-            capacity: null,
-            voltage: null,
-            temperature: null,
-            healthScore: null,
-            nextMaintenance: null,
-            totalSwaps: null,
-        }))
-        : [];
-
-    const stations = ['All Stations', 'Station A1', 'Station A2', 'Station B1', 'Station B2', 'Station C1'];
+            model: batteryType?.battery_type_code ?? null,
+            location: stationName,
+            stationId: stationId,
+            capacity: batteryType?.nominal_capacity ?? null,
+            voltage: batteryType?.nominal_voltage ?? null,
+            cellChemistry: batteryType?.cell_chemistry ?? null
+        };
+    });
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -107,7 +199,8 @@ const BatteryManagement = () => {
             (battery.serialNumber ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (battery.model ?? '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === 'all' || (battery.status === filterStatus);
-        const matchesStation = filterStation === 'all' || (battery.location === filterStation);
+        const matchesStation = filterStation === 'all' ||
+            (battery.stationId != null && (String(battery.stationId) === String(filterStation) || battery.stationId === Number(filterStation)));
         return matchesSearch && matchesStatus && matchesStation;
     });
 
@@ -119,10 +212,6 @@ const BatteryManagement = () => {
                     <h1 className="text-3xl font-bold text-gray-900">Battery Management</h1>
                     <p className="mt-2 text-gray-600">Monitor and manage battery inventory and health</p>
                 </div>
-                <Button className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add New Battery
-                </Button>
             </div>
 
             {/* Filters and Search */}
@@ -156,10 +245,11 @@ const BatteryManagement = () => {
                             value={filterStation}
                             onChange={(e) => setFilterStation(e.target.value)}
                             className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            disabled={stationsLoading}
                         >
                             {stations.map(station => (
-                                <option key={station} value={station === 'All Stations' ? 'all' : station}>
-                                    {station}
+                                <option key={station.id} value={station.id}>
+                                    {station.name}
                                 </option>
                             ))}
                         </select>
@@ -195,7 +285,6 @@ const BatteryManagement = () => {
 
                         <div className="space-y-3">
                             <div className="text-sm text-gray-600">
-                                <p className="font-medium">{battery.model}</p>
                                 <p className="text-xs">ID: {battery.id}</p>
                             </div>
 
@@ -224,27 +313,21 @@ const BatteryManagement = () => {
                             {/* Technical Specs */}
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <p className="text-gray-500">Cycles</p>
-                                    <p className="font-medium">{battery.cycles}</p>
+                                    <p className="text-gray-500">Battery Type</p>
+                                    <p className="font-medium">{battery.model ?? 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-500">Cell Chemistry</p>
+                                    <p className="font-medium">{battery.cellChemistry ?? 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-500">Capacity</p>
+                                    <p className="font-medium">{battery.capacity != null ? `${battery.capacity} Ah` : 'N/A'}</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-500">Voltage</p>
-                                    <p className="font-medium">{battery.voltage}V</p>
+                                    <p className="font-medium">{battery.voltage != null ? `${battery.voltage}V` : 'N/A'}</p>
                                 </div>
-                                <div>
-                                    <p className="text-gray-500">Temperature</p>
-                                    <p className="font-medium">{battery.temperature}°C</p>
-                                </div>
-                                <div>
-                                    <p className="text-gray-500">Total Swaps</p>
-                                    <p className="font-medium">{battery.totalSwaps}</p>
-                                </div>
-                            </div>
-
-                            {/* Last Charge */}
-                            <div className="pt-3 border-t border-gray-200">
-                                <p className="text-xs text-gray-500">Last Charge</p>
-                                <p className="text-sm text-gray-900">{battery.lastCharge}</p>
                             </div>
 
                             {/* Action Buttons */}
@@ -252,10 +335,6 @@ const BatteryManagement = () => {
                                 <Button variant="outline" size="sm" className="flex-1">
                                     <Eye className="h-4 w-4 mr-1" />
                                     View
-                                </Button>
-                                <Button variant="outline" size="sm" className="flex-1">
-                                    <Edit className="h-4 w-4 mr-1" />
-                                    Edit
                                 </Button>
                                 <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
                                     <Trash2 className="h-4 w-4" />
@@ -271,7 +350,7 @@ const BatteryManagement = () => {
                 <Card className="p-6">
                     <div className="flex items-center">
                         <div className="p-3 bg-blue-50 rounded-lg">
-                            <Battery className="h-6 w-6 text-blue-600" />
+                            <Battery className="h-6 w-6 text-blue-a" />
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Batteries</p>
