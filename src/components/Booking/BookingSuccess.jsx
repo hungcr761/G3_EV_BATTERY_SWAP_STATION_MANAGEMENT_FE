@@ -295,7 +295,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                     <div className="space-y-3">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Station Name:</span>
-                            <span className="font-medium">{bookingData?.station?.name || 'N/A'}</span>
+                            <span className="font-medium">{bookingData?.station?.station_name || bookingData?.station?.name || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Address:</span>
