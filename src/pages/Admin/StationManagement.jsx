@@ -48,7 +48,8 @@ const StationManagement = () => {
         name: '',
         address: '',
         latitude: '',
-        longitude: ''
+        longitude: '',
+        status: 'operational'
     });
     const [geocodingLoading, setGeocodingLoading] = useState(false);
     const [createLoading, setCreateLoading] = useState(false);
@@ -57,6 +58,13 @@ const StationManagement = () => {
     const [updateError, setUpdateError] = useState(null);
     const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
     const [statusUpdateError, setStatusUpdateError] = useState(null);
+
+    // Autocomplete states
+    const [addressSuggestions, setAddressSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [autocompleteLoading, setAutocompleteLoading] = useState(false);
+    const addressInputRef = useRef(null);
+    const suggestionsRef = useRef(null);
 
     // Fetch all batteries
     const { data: batteriesData, loading: batteriesLoading } = useApi(batteryAPI.getAll, []);
@@ -104,74 +112,196 @@ const StationManagement = () => {
         return result;
     }, [shifts]);
 
-    // Geocode address using Goong Map API
-    const geocodeAddress = async (address) => {
-        if (!address || address.trim() === '') {
+    // Fetch address autocomplete suggestions using Goong API
+    const fetchAddressSuggestions = async (input) => {
+        if (!input || input.trim().length < 3) {
+            setAddressSuggestions([]);
+            setShowSuggestions(false);
             return;
         }
 
-        setGeocodingLoading(true);
+        setAutocompleteLoading(true);
         try {
             const GOONG_API_KEY = import.meta.env.VITE_GOONG_API_KEY;
-            const encodedAddress = encodeURIComponent(address);
+            const encodedInput = encodeURIComponent(input);
+
+            // Use Goong Place Autocomplete API
             const response = await fetch(
-                `https://rsapi.goong.io/Geocode?address=${encodedAddress}&api_key=${GOONG_API_KEY}`
+                `https://rsapi.goong.io/Place/AutoComplete?input=${encodedInput}&api_key=${GOONG_API_KEY}`
             );
 
             if (!response.ok) {
-                throw new Error('Geocoding failed');
+                throw new Error('Autocomplete failed');
             }
 
             const data = await response.json();
 
-            if (data.results && data.results.length > 0) {
-                const firstResult = data.results[0];
-                const location = firstResult.geometry?.location;
+            // Handle different possible response formats
+            const predictions = data.predictions || [];
 
-                if (location) {
-                    setFormData(prev => ({
-                        ...prev,
-                        latitude: location.lat?.toString() || '',
-                        longitude: location.lng?.toString() || ''
-                    }));
+            if (predictions.length > 0) {
+                setAddressSuggestions(predictions);
+                setShowSuggestions(true);
+            } else {
+                setAddressSuggestions([]);
+                setShowSuggestions(false);
+            }
+        } catch (err) {
+            console.error('Error fetching suggestions:', err);
+            setAddressSuggestions([]);
+            setShowSuggestions(false);
+        } finally {
+            setAutocompleteLoading(false);
+        }
+    };
+
+    // Handle selecting an address suggestion
+    const handleAddressSelect = async (placeId, description) => {
+        setShowSuggestions(false);
+        setAddressSuggestions([]);
+        setGeocodingLoading(true);
+
+        try {
+            const GOONG_API_KEY = import.meta.env.VITE_GOONG_API_KEY;
+
+            // Get place details using Place Detail API or Geocode
+            // First try to get coordinates from the place_id
+            try {
+                const detailResponse = await fetch(
+                    `https://rsapi.goong.io/Place/Detail?place_id=${placeId}&api_key=${GOONG_API_KEY}`
+                );
+
+                if (detailResponse.ok) {
+                    const detailData = await detailResponse.json();
+                    const result = detailData.result || detailData;
+                    const location = result?.geometry?.location || result?.location;
+
+                    if (location) {
+                        const lat = location.lat?.toString() || location.lat;
+                        const lng = location.lng?.toString() || location.lng;
+                        const formattedAddress = result?.formatted_address || result?.name || description;
+
+                        setFormData(prev => ({
+                            ...prev,
+                            address: formattedAddress,
+                            latitude: lat || '',
+                            longitude: lng || ''
+                        }));
+                        setGeocodingLoading(false);
+                        return;
+                    }
+                }
+            } catch (detailErr) {
+                console.warn('Place Detail API failed, falling back to geocoding:', detailErr);
+            }
+
+            // Fallback to geocoding the description
+            const encodedAddress = encodeURIComponent(description);
+            const geocodeResponse = await fetch(
+                `https://rsapi.goong.io/Geocode?address=${encodedAddress}&api_key=${GOONG_API_KEY}`
+            );
+
+            if (geocodeResponse.ok) {
+                const geocodeData = await geocodeResponse.json();
+
+                // Handle different possible response formats
+                const results = geocodeData.results || geocodeData.predictions || [];
+
+                if (results.length > 0) {
+                    const firstResult = results[0];
+                    const location = firstResult.geometry?.location || firstResult.location;
+                    const formattedAddress = firstResult.formatted_address || firstResult.description || description;
+
+                    if (location) {
+                        const lat = location.lat?.toString() || location.lat;
+                        const lng = location.lng?.toString() || location.lng;
+
+                        setFormData(prev => ({
+                            ...prev,
+                            address: formattedAddress,
+                            latitude: lat || '',
+                            longitude: lng || ''
+                        }));
+                    }
                 }
             }
         } catch (err) {
-            console.error('Error geocoding address:', err);
-            setCreateError('Failed to get coordinates for address. Please enter manually.');
+            console.error('Error getting address details:', err);
+            // Still set the address even if geocoding fails
+            setFormData(prev => ({
+                ...prev,
+                address: description
+            }));
         } finally {
             setGeocodingLoading(false);
         }
     };
 
-    // Debounce timer ref
-    const geocodeTimerRef = useRef(null);
+    // Debounce timer ref for autocomplete
+    const autocompleteTimerRef = useRef(null);
 
     // Cleanup timer on unmount
     useEffect(() => {
         return () => {
-            if (geocodeTimerRef.current) {
-                clearTimeout(geocodeTimerRef.current);
+            if (autocompleteTimerRef.current) {
+                clearTimeout(autocompleteTimerRef.current);
             }
         };
     }, []);
 
-    // Handle address input with debounce
+    // Handle clicks outside suggestions dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                suggestionsRef.current &&
+                !suggestionsRef.current.contains(event.target) &&
+                addressInputRef.current &&
+                !addressInputRef.current.contains(event.target)
+            ) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    // Handle address input with debounce for autocomplete
     const handleAddressChange = (value) => {
         setFormData(prev => ({ ...prev, address: value }));
         setCreateError(null);
+        setUpdateError(null);
 
         // Clear existing timer
-        if (geocodeTimerRef.current) {
-            clearTimeout(geocodeTimerRef.current);
+        if (autocompleteTimerRef.current) {
+            clearTimeout(autocompleteTimerRef.current);
         }
 
-        // Debounce geocoding
-        geocodeTimerRef.current = setTimeout(() => {
-            if (value && value.trim().length > 5) {
-                geocodeAddress(value);
-            }
-        }, 1000);
+        // Hide suggestions if input is cleared
+        if (!value || value.trim().length < 3) {
+            setAddressSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        // Debounce autocomplete suggestions
+        autocompleteTimerRef.current = setTimeout(() => {
+            fetchAddressSuggestions(value);
+        }, 300);
+    };
+
+    // Handle keyboard navigation in suggestions
+    const handleAddressKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            setShowSuggestions(false);
+        } else if (e.key === 'Enter' && addressSuggestions.length > 0 && showSuggestions) {
+            e.preventDefault();
+            // Select first suggestion on Enter
+            const firstSuggestion = addressSuggestions[0];
+            handleAddressSelect(firstSuggestion.place_id, firstSuggestion.description);
+        }
     };
 
     // Handle form submission
@@ -191,9 +321,11 @@ const StationManagement = () => {
                 station_name: formData.name,
                 address: formData.address,
                 latitude: parseFloat(formData.latitude),
-                longitude: parseFloat(formData.longitude)
+                longitude: parseFloat(formData.longitude),
+                status: formData.status
             };
 
+            console.log(stationData);
             await createStation(stationData);
 
             // Reset form and close dialog
@@ -201,7 +333,8 @@ const StationManagement = () => {
                 name: '',
                 address: '',
                 latitude: '',
-                longitude: ''
+                longitude: '',
+                status: 'operational'
             });
             setIsCreateDialogOpen(false);
             setCreateError(null);
@@ -310,9 +443,12 @@ const StationManagement = () => {
                 name: '',
                 address: '',
                 latitude: '',
-                longitude: ''
+                longitude: '',
+                status: 'operational'
             });
             setCreateError(null);
+            setAddressSuggestions([]);
+            setShowSuggestions(false);
         }
     };
 
@@ -328,6 +464,8 @@ const StationManagement = () => {
             });
             setEditingStation(null);
             setUpdateError(null);
+            setAddressSuggestions([]);
+            setShowSuggestions(false);
         }
     };
 
@@ -452,83 +590,127 @@ const StationManagement = () => {
                 </div>
             </Card>
 
-            {/* Stations Grid */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                {filteredStations.map((station) => (
-                    <Card key={station.id} className="p-6 hover:shadow-lg transition-shadow">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <MapPin className="h-5 w-5 text-blue-600" />
-                                    <h3 className="font-semibold text-gray-900">{station.name || 'Unnamed Station'}</h3>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1 ml-7">ID: {station.id}</p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <Badge
-                                    className={`${getStatusColor(station.status || 'operational')} cursor-pointer hover:opacity-80 transition-opacity`}
-                                    onClick={() => handleStatusClick(station)}
-                                >
-                                    <div className="flex items-center gap-1">
-                                        {getStatusIcon(station.status || 'operational')}
-                                        {getStatusText(station.status || 'operational')}
-                                    </div>
-                                </Badge>
-                                {/* <Button variant="ghost" size="sm">
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button> */}
-                            </div>
+            {/* Stations Table */}
+            <Card className="overflow-hidden">
+                {error && (
+                    <div className="p-4 bg-red-50 border-l-4 border-red-400 mb-4">
+                        <div className="flex items-center">
+                            <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+                            <p className="text-sm text-red-700">{error}</p>
                         </div>
-
-                        <div className="space-y-3">
-                            <p className="text-sm text-gray-600">{station.address || 'No address provided'}</p>
-
-                            {/* Battery Status */}
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Battery className="h-4 w-4 text-orange-600" />
-                                    <span className="text-sm text-gray-600">Batteries</span>
-                                </div>
-                                <span className="text-sm font-medium">
-                                    {station.current_battery_count || 0}/{station.max_battery_capacity || 0}
-                                </span>
-                            </div>
-
-                            {/* Staff Count */}
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Users className="h-4 w-4 text-green-600" />
-                                    <span className="text-sm text-gray-600">Staff</span>
-                                </div>
-                                <span className="text-sm font-medium">
-                                    {shiftsLoading ? '...' : (staffCountByStation[station.id] || 0)}
-                                </span>
-                            </div>
-
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-2 pt-3">
-                                {/* <Button variant="outline" size="sm" className="flex-1">
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    View
-                                </Button> */}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex-1"
-                                    onClick={() => handleEditClick(station)}
-                                >
-                                    <Edit className="h-4 w-4 mr-1" />
-                                    Edit
-                                </Button>
-                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
+                    </div>
+                )}
+                {loading ? (
+                    <div className="flex items-center justify-center p-12">
+                        <div className="flex items-center gap-2 text-gray-500">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                            <span>Loading stations...</span>
                         </div>
-                    </Card>
-                ))}
-            </div>
+                    </div>
+                ) : filteredStations.length === 0 ? (
+                    <div className="flex items-center justify-center p-12">
+                        <div className="text-center text-gray-500">
+                            <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                            <p>No stations found</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Station
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Batteries
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Staff
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {filteredStations.map((station) => (
+                                    <tr key={station.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className="flex-shrink-0 h-10 w-10">
+                                                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                                        <MapPin className="h-5 w-5 text-blue-600" />
+                                                    </div>
+                                                </div>
+                                                <div className="ml-4">
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {station.name || 'Unnamed Station'}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500">
+                                                        {station.address || 'No address provided'}
+                                                    </div>
+                                                    <div className="text-xs text-gray-400">ID: {station.id}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <Badge
+                                                className={`${getStatusColor(station.status || 'operational')} cursor-pointer hover:opacity-80 transition-opacity`}
+                                                onClick={() => handleStatusClick(station)}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    {getStatusIcon(station.status || 'operational')}
+                                                    {getStatusText(station.status || 'operational')}
+                                                </div>
+                                            </Badge>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                <Battery className="h-4 w-4 text-orange-600" />
+                                                <span className="text-sm text-gray-900">
+                                                    {station.current_battery_count || 0}/{station.max_battery_capacity || 0}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                <Users className="h-4 w-4 text-green-600" />
+                                                <span className="text-sm text-gray-900">
+                                                    {shiftsLoading ? '...' : (staffCountByStation[station.id] || 0)}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleEditClick(station)}
+                                                    title="Edit"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-red-600 hover:text-red-700"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </Card>
 
             {/* Summary Stats */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -615,20 +797,58 @@ const StationManagement = () => {
                                 <Label htmlFor="address">Address *</Label>
                                 <div className="relative">
                                     <Input
+                                        ref={addressInputRef}
                                         id="address"
                                         value={formData.address}
                                         onChange={(e) => handleAddressChange(e.target.value)}
-                                        placeholder="Enter address (will auto-get coordinates)"
+                                        onKeyDown={handleAddressKeyDown}
+                                        onFocus={() => {
+                                            if (addressSuggestions.length > 0) {
+                                                setShowSuggestions(true);
+                                            }
+                                        }}
+                                        placeholder="Start typing an address..."
                                         required
+                                        autoComplete="off"
                                     />
-                                    {geocodingLoading && (
+                                    {(geocodingLoading || autocompleteLoading) && (
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                             <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                                         </div>
                                     )}
+
+                                    {/* Autocomplete Suggestions Dropdown */}
+                                    {showSuggestions && addressSuggestions.length > 0 && (
+                                        <div
+                                            ref={suggestionsRef}
+                                            className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+                                        >
+                                            {addressSuggestions.map((suggestion, index) => (
+                                                <div
+                                                    key={suggestion.place_id || index}
+                                                    onClick={() => handleAddressSelect(suggestion.place_id, suggestion.description)}
+                                                    className="px-4 py-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                                                >
+                                                    <div className="flex items-start gap-2">
+                                                        <MapPin className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                                {suggestion.description}
+                                                            </p>
+                                                            {suggestion.structured_formatting?.secondary_text && (
+                                                                <p className="text-xs text-gray-500 truncate">
+                                                                    {suggestion.structured_formatting.secondary_text}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 <p className="text-xs text-gray-500">
-                                    Coordinates will be automatically fetched when you enter an address
+                                    Start typing to see address suggestions. Select an address to auto-fill coordinates.
                                 </p>
                             </div>
 
@@ -738,20 +958,58 @@ const StationManagement = () => {
                                 <Label htmlFor="edit-address">Address *</Label>
                                 <div className="relative">
                                     <Input
+                                        ref={addressInputRef}
                                         id="edit-address"
                                         value={formData.address}
                                         onChange={(e) => handleAddressChange(e.target.value)}
-                                        placeholder="Enter address (will auto-get coordinates)"
+                                        onKeyDown={handleAddressKeyDown}
+                                        onFocus={() => {
+                                            if (addressSuggestions.length > 0) {
+                                                setShowSuggestions(true);
+                                            }
+                                        }}
+                                        placeholder="Start typing an address..."
                                         required
+                                        autoComplete="off"
                                     />
-                                    {geocodingLoading && (
+                                    {(geocodingLoading || autocompleteLoading) && (
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                             <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                                         </div>
                                     )}
+
+                                    {/* Autocomplete Suggestions Dropdown */}
+                                    {showSuggestions && addressSuggestions.length > 0 && (
+                                        <div
+                                            ref={suggestionsRef}
+                                            className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+                                        >
+                                            {addressSuggestions.map((suggestion, index) => (
+                                                <div
+                                                    key={suggestion.place_id || index}
+                                                    onClick={() => handleAddressSelect(suggestion.place_id, suggestion.description)}
+                                                    className="px-4 py-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                                                >
+                                                    <div className="flex items-start gap-2">
+                                                        <MapPin className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                                {suggestion.description}
+                                                            </p>
+                                                            {suggestion.structured_formatting?.secondary_text && (
+                                                                <p className="text-xs text-gray-500 truncate">
+                                                                    {suggestion.structured_formatting.secondary_text}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 <p className="text-xs text-gray-500">
-                                    Coordinates will be automatically fetched when you enter an address
+                                    Start typing to see address suggestions. Select an address to auto-fill coordinates.
                                 </p>
                             </div>
 

@@ -127,9 +127,9 @@ export const swapAPI = {
 
 // Ticket APIs 
 export const ticketAPI = {
-    create: (data) => api.post('/support-ticket' , data),
+    create: (data) => api.post('/support-ticket', data),
     getByDriverId: (driverId) => api.get(`/support-ticket/creator/${driverId}`)
-}; 
+};
 // Battery APIs
 export const batteryAPI = {
     getAll: () => api.get('/batteries/all'),
@@ -146,7 +146,8 @@ export const analysisAPI = {
 
 // Shift API 
 export const shiftAPI = {
-    getCurrentShift: () => api.get('/shifts/current')
+    getCurrentShift: () => api.get('/shifts/current'),
+    getAll: (params) => api.get('/shifts', { params })
 };
 
 // Transfer API

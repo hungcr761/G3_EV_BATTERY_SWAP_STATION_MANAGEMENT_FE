@@ -81,8 +81,8 @@ export default function StaffLayout({ children }) {
                                         key={item.name}
                                         to={item.href}
                                         className={`group flex items-center py-2 text-sm font-medium rounded-lg transition-all duration-300 ${sidebarCollapsed ? 'justify-center px-2' : 'px-3'} ${isActive(item.href)
-                                                ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                                                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                         title={sidebarCollapsed ? item.name : ''}
                                     >
@@ -113,9 +113,9 @@ export default function StaffLayout({ children }) {
                             <div className="flex flex-1"></div>
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
                                 {/* Notifications */}
-                                <button type="button" className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
+                                {/* <button type="button" className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
                                     <Bell className="h-6 w-6" />
-                                </button>
+                                </button> */}
 
                                 {/* Profile dropdown */}
                                 <div className="relative">

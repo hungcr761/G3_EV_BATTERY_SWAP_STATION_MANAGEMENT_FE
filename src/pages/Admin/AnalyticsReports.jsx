@@ -156,7 +156,7 @@ const AnalyticsReports = () => {
     const [stationPerformanceLoading, setStationPerformanceLoading] = useState(true);
 
     // Use station hook
-    const { stations } = useStation();
+    const { stations, loading: stationsLoading } = useStation();
 
     // Helper function to format date to YYYY-MM-DD in local timezone
     const formatDateLocal = (date) => {
@@ -470,6 +470,11 @@ const AnalyticsReports = () => {
 
     // Fetch station performance data
     useEffect(() => {
+        // Skip if stations are still loading
+        if (stationsLoading) {
+            return;
+        }
+
         const fetchStationPerformance = async () => {
             try {
                 setStationPerformanceLoading(true);
@@ -506,7 +511,7 @@ const AnalyticsReports = () => {
                                 stationId: stationId,
                                 stationName: item.station_name || '',
                                 totalSwaps: 0,
-                                uniqueUsers: new Set()
+                                totalUsers: 0
                             };
                         }
                         // Parse totalSwaps (can be string or number from API)
@@ -516,7 +521,7 @@ const AnalyticsReports = () => {
                         swapsByStation[stationId].totalSwaps += isNaN(swapsCount) ? 0 : swapsCount;
                         // If there's user information in the swap data, track unique users
                         if (item.user_id) {
-                            swapsByStation[stationId].uniqueUsers.add(item.user_id);
+                            swapsByStation[stationId].totalUsers++;
                         }
                     }
                 });
@@ -526,18 +531,18 @@ const AnalyticsReports = () => {
                     const stationId = station.station_id || station.id;
                     const swapData = swapsByStation[stationId] || {
                         totalSwaps: 0,
-                        uniqueUsers: new Set()
+                        totalUsers: 0
                     };
 
-                    const uniqueUsersCount = swapData.uniqueUsers.size || 0;
+                    const totalUsersCount = swapData.totalUsers || 0;
                     const totalSwaps = swapData.totalSwaps || 0;
-                    const avgSwapsPerUser = uniqueUsersCount > 0 ? (totalSwaps / uniqueUsersCount).toFixed(2) : 0;
+                    const avgSwapsPerUser = totalUsersCount > 0 ? (totalSwaps / totalUsersCount).toFixed(2) : 0;
 
                     return {
                         name: station.station_name || station.name || 'Unknown Station',
                         location: station.address || 'N/A',
                         swaps: totalSwaps,
-                        usersServed: uniqueUsersCount,
+                        usersServed: totalUsersCount,
                         avgSwapsPerUser: parseFloat(avgSwapsPerUser)
                     };
                 });
@@ -555,7 +560,7 @@ const AnalyticsReports = () => {
         };
 
         fetchStationPerformance();
-    }, [selectedPeriod, customDateRange]);
+    }, [selectedPeriod, customDateRange, stations, stationsLoading]);
 
     // Format data for line charts
     const totalRevenueChartData = revenueData.map(item => ({
@@ -1039,7 +1044,7 @@ const AnalyticsReports = () => {
             </Card>
 
             {/* AI Insights */}
-            <Card className="p-6">
+            {/* <Card className="p-6">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">AI-Powered Insights</h3>
                     <Badge variant="outline" className="flex items-center gap-1">
@@ -1073,7 +1078,7 @@ const AnalyticsReports = () => {
                         </div>
                     ))}
                 </div>
-            </Card>
+            </Card> */}
 
         </div>
     );
