@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { paymentAPI } from '@/lib/apiServices';
+import { invoiceAPI } from '@/lib/apiServices';
 
 export function usePaymentHistory() {
-    const [payments, setPayments] = useState([]);
+    const [paymentsHistory, setPaymentsHistory] = useState([]);
     const [filteredPayments, setFilteredPayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
-        dateRange: 'all', // all, month, 3months, 6months, year
+        dateRange: 'all', 
         searchQuery: '',
     });
 
@@ -25,18 +25,18 @@ export function usePaymentHistory() {
             }
 
             const user = JSON.parse(userData);
-            const response = await paymentAPI.getByDriverId(user.account_id);
+            const response = await invoiceAPI.getPaymentHistoryByDriverId(user.account_id);
             
             if (response.data?.success) {
-                const paymentsData = response.data?.payload?.payments || [];
-                setPayments(paymentsData);
+                const payments = response.data || [];
+                setPaymentsHistory(payments);
             } else {
                 throw new Error('Failed to fetch payment history');
             }
         } catch (err) {
             console.error('Error fetching payment history:', err);
             setError(err.message || 'Failed to load payment history');
-            setPayments([]);
+            setPaymentsHistory([]);
         } finally {
             setLoading(false);
         }
@@ -44,9 +44,8 @@ export function usePaymentHistory() {
 
     // Apply filters
     useEffect(() => { 
-        let filtered = [...payments];
+        let filtered = [...paymentsHistory];
 
-        // Date range filter
         if (filters.dateRange !== 'all') {
             // const now = new Date(); 
             const monthsMap = {
@@ -86,7 +85,7 @@ export function usePaymentHistory() {
         }
 
         setFilteredPayments(filtered);
-    }, [payments, filters]);
+    }, [paymentsHistory, filters]);
 
     // Update filters
     const updateFilters = useCallback((newFilters) => {

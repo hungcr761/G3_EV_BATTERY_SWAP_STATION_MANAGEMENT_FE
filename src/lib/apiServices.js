@@ -1,5 +1,3 @@
-// API service functions
-
 import { api } from './api';
 import { mockApi } from './mockApi';
 
@@ -75,7 +73,7 @@ export const subscriptionPlanAPI = {
 export const subscriptionAPI = {
     create: (data) => api.post('/subscription', data),
     getByVehicleId: (vehicleId) => api.get(`/subscription/vehicle/${vehicleId}`),
-    cancel: (subscriptionId) => api.delete(`/subscription/${subscriptionId}`),
+    cancel: (subscriptionId) => api.put(`/subscription/cancel/${subscriptionId}`),
     getAll: () => api.get('/subscription'),
     getByDriverId: (driverId) => api.get(`/subscription/driver/${driverId}`),
     renew: (subscriptionId, data) => api.post(`/subscription/${subscriptionId}/renew`, data)
@@ -106,14 +104,13 @@ export const bookingAPI = {
 export const invoiceAPI = {
     createFromSubscription: (data) =>
         USE_MOCK_API ? mockApi.createInvoiceFromSubscription(data) : api.post('/invoice/create-from-subscription', data),
+    getPaymentHistoryByDriverId: (driverId) => api.get(`/invoice/payment-history/driver/${driverId}`)
 };
 
 // Payment APIs
 export const paymentAPI = {
     create: (data) =>
-        USE_MOCK_API ? mockApi.createPayment(data) : api.post('/payment/create', data),
-    getByDriverId: (driverId) =>
-        USE_MOCK_API ? mockApi.getPaymentHistory(driverId) : api.get(`/payment/driver/${driverId}`),
+        USE_MOCK_API ? mockApi.createPayment(data) : api.post('/payment/create', data)
 };
 
 export const swapAPI = {
@@ -128,6 +125,11 @@ export const swapAPI = {
     checkFirstTimePickup: (vehicleId) => api.get(`/swap/check-first-time-pickup?vehicle_id=${vehicleId}`),
 };
 
+// Ticket APIs 
+export const ticketAPI = {
+    create: (data) => api.post('/support-ticket' , data),
+    getByDriverId: (driverId) => api.get(`/support-ticket/creator/${driverId}`)
+}; 
 // Battery APIs
 export const batteryAPI = {
     getAll: () => api.get('/batteries/all'),
@@ -141,7 +143,16 @@ export const analysisAPI = {
     getSwaps: (params) => api.get('/analysis/swaps', { params }),
 };
 
-// Shift APIs
+
+// Shift API 
 export const shiftAPI = {
-    getAll: () => api.get('/shifts'),
+    getCurrentShift: () => api.get('/shifts/current')
+};
+
+// Transfer API
+export const transferAPI = {
+    getByStation: () => api.get('/transfers/request'),
+    create: (data) => api.post('/transfers/request', data),
+    cancel: (id) => USE_MOCK_API ? mockApi.cancelTransferRequest(id) : api.patch(`/transfers/${id}/cancel`),
+    confirmArrival: (id) => USE_MOCK_API ? mockApi.confirmTransferArrival(id) : api.patch(`/transfers/${id}/confirm-arrival`),
 };

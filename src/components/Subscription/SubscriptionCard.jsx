@@ -6,11 +6,10 @@ import { AlertCircle, Battery, Calendar, Motorbike, RefreshCcw, XCircle, Trendin
 
 export default function SubscriptionCard({
     subscription,
-    onDelete,
-    onRenew,
+    onCancel,
     getDaysRemaining,
     getStatusColor,
-    isSubmitting
+    isCanceling = false,
 }) {
     const daysLeft = getDaysRemaining(subscription.end_date);
     const isActive = subscription.status === 'active';
@@ -48,7 +47,6 @@ export default function SubscriptionCard({
                     <div className="flex items-center space-x-3">
                         <Motorbike className="h-5 w-5 text-blue-600" />
                         <div className="flex-1">
-                            <p className="text-sm text-slate-600">Vehicle</p>
                             <p className="font-semibold text-slate-800">
                                 {subscription.vehicle?.model?.name || subscription.vehicle?.model_name || 'N/A'}
                             </p>
@@ -94,7 +92,7 @@ export default function SubscriptionCard({
                         </div>
                         <div className="text-right">
                             <p className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-                                {subscription.plan?.fee?.toLocaleString() || '0'}₫
+                                {Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subscription.plan?.plan_fee || 0)}
                             </p>
                             <p className="text-xs text-slate-500">
                                 /{subscription.plan?.duration_months || 1} month{subscription.plan?.duration_months > 1 ? 's' : ''}
@@ -131,20 +129,20 @@ export default function SubscriptionCard({
                 <div className="flex space-x-2 pt-2">
                     {isActive && (
                         <>
-                            <Button
+                            {/* <Button
                                 variant="outline"
                                 size="sm"
                                 className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50"
                                 onClick={() => onRenew(subscription)}
                             >
                                 <RefreshCcw className="mr-2 h-4 w-4" />Renewal
-                            </Button>
+                            </Button> */}
                             <Button
                                 variant="outline"
                                 size="sm"
                                 className="flex-1 border-red-300 text-red-700 hover:bg-red-50"
-                                onClick={() => onDelete(subscription.subscription_id)}
-                                disabled={isSubmitting}
+                                onClick={() => onCancel(subscription)}
+                                disabled={isCanceling}
                             >
                                 <XCircle className="mr-2 h-4 w-4" /> Cancel
                             </Button>
