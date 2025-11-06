@@ -66,7 +66,7 @@ export const userAPI = {
 export const subscriptionPlanAPI = {
     getAll: () =>
         USE_MOCK_API ? mockApi.getSubscriptionPlans() : api.get('/subscription-plan'),
-    getById: (id) => USE_MOCK_API ? mockApi.getSubscriptionPlanById(id) : api.get(`/subscription-plan/${id}`)
+    getById: (id) => USE_MOCK_API ? mockApi.getSubscriptionPlanById(id) : api.get(`/subscription-plans/${id}`)
 };
 
 // Subscription APIs (User đăng ký gói cho xe)
@@ -140,4 +140,18 @@ export const batteryAPI = {
 export const analysisAPI = {
     getRevenue: (params) => api.get('/analysis/revenue', { params }),
     getSwaps: (params) => api.get('/analysis/swaps', { params }),
+};
+
+
+// Shift API 
+export const shiftAPI = {
+    getCurrentShift: () => api.get('/shifts/current')
+};
+
+// Transfer API
+export const transferAPI = {
+    getByStation: () => api.get('/transfers/request'),
+    create: (data) => api.post('/transfers/request', data),
+    cancel: (id) => USE_MOCK_API ? mockApi.cancelTransferRequest(id) : api.patch(`/transfers/${id}/cancel`),
+    confirmArrival: (id) => USE_MOCK_API ? mockApi.confirmTransferArrival(id) : api.patch(`/transfers/${id}/confirm-arrival`),
 };

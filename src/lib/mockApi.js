@@ -15,7 +15,7 @@ const mockUsers = [
         email: "leehongminh004@gmail.com",
         password: "H25022k5",
         fullname: "Le Hong Minh",
-        phone_number: "0987654321", 
+        phone_number: "0987654321",
         role: "driver",
         status: "active"
     }
@@ -254,6 +254,45 @@ const mockVehicleModels = [
     { model_id: 25, name: 'Vento S', brand: 'VinFast', battery_type_id: 11, avg_energy_usage: '2.70' },
     { model_id: 26, name: 'Feliz S', brand: 'VinFast', battery_type_id: 10, avg_energy_usage: '2.40' },
     { model_id: 27, name: 'Evo200', brand: 'VinFast', battery_type_id: 12, avg_energy_usage: '2.30' },
+];
+
+// Mock transfers (by station)
+const mockTransfers = [
+    {
+        transfer_request_id: "a06c4caf-60f1-4bba-b6ee-5204eb614b7a",
+        station_id: 1,
+        admin_id: null,
+        staff_id: "a463eabe-cd5b-4f8c-ab5e-5a3422626f4e",
+        request_time: "2025-11-03T04:36:09.207Z",
+        resolve_time: null,
+        request_quantity: 5,
+        status: "approved",
+        notes: "Auto-generated transfer request for seeding",
+        transferOrders: [
+            {
+                transfer_order_id: "3b7f2404-3a01-4534-aa2b-d03c1c778e1b",
+                transfer_request_id: "a06c4caf-60f1-4bba-b6ee-5204eb614b7a",
+                source_station_id: 2,
+                target_station_id: 1,
+                staff_id: null,
+                confirm_time: null,
+                transfer_quantity: 3,
+                status: "incompleted"
+            }
+        ]
+    },
+    {
+        transfer_request_id: "b11e9b2c-aaaa-4d11-8888-0b1d343cccde",
+        station_id: 1,
+        admin_id: null,
+        staff_id: "1cd823b0-d8b6-4361-bc5b-239a97c923cc",
+        request_time: "2025-11-04T09:10:00.000Z",
+        resolve_time: null,
+        request_quantity: 10,
+        status: "requested",
+        notes: "Need more batteries for rush hours",
+        transferOrders: []
+    }
 ];
 
 // Mock subscription plans (fee_slot = 0: not per swap, fee_slot > 0: per swap)
@@ -1247,9 +1286,9 @@ export const mockApi = {
         await delay(500);
 
         const driverPayments = mockPayments.filter(p => p.driver_id === driverId);
-        
+
         // Sort by payment date descending (newest first)
-        const sortedPayments = driverPayments.sort((a, b) => 
+        const sortedPayments = driverPayments.sort((a, b) =>
             new Date(b.payment_date) - new Date(a.payment_date)
         );
 
@@ -1261,9 +1300,198 @@ export const mockApi = {
                 }
             }
         };
+    },
+
+    // Mock: get transfers by station id with filters
+    async getTransfersByStation(params = {}) {
+        await delay(400);
+        const {
+            station_id,
+            status,
+            direction,
+            approved,
+            timeframe,
+            qtyMin,
+            qtyMax,
+            search,
+            page = 1,
+            pageSize = 10,
+        } = params;
+
+        let list = mockTransfers.slice();
+
+        if (station_id) {
+            // include requests related to this station (either created by or involved in orders)
+            list = list.filter(t => {
+                const involvedOutbound = t.transferOrders?.some(o => String(o.source_station_id) === String(station_id));
+                const involvedInbound = t.transferOrders?.some(o => String(o.target_station_id) === String(station_id));
+                return String(t.station_id) === String(station_id) || involvedOutbound || involvedInbound;
+            });
+        }
+
+        if (status && status !== 'all') {
+            list = list.filter(t => (t.status || '').toLowerCase() === status.toLowerCase());
+        }
+
+        if (direction && direction !== 'all' && station_id) {
+            list = list.filter(t => {
+                const outbound = t.transferOrders?.some(o => String(o.source_station_id) === String(station_id));
+                const inbound = t.transferOrders?.some(o => String(o.target_station_id) === String(station_id));
+                const computed = outbound ? 'outbound' : (inbound ? 'inbound' : 'unknown');
+                return computed === direction;
+            });
+        }
+
+        if (approved && approved !== 'all') {
+            const wantApproved = approved === 'yes';
+            list = list.filter(t => {
+                const hasOrders = Array.isArray(t.transferOrders) && t.transferOrders.length > 0;
+                return wantApproved ? hasOrders : !hasOrders;
+            });
+        }
+
+        // timeframe filter: today | this_week
+        if (timeframe && timeframe !== 'all') {
+            const now = new Date();
+            let start, end;
+            if (timeframe === 'today') {
+                start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+                end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            } else if (timeframe === 'this_week') {
+                // Week starts on Monday
+                const day = now.getDay(); // 0 Sun - 6 Sat
+                const diffToMonday = day === 0 ? -6 : (1 - day);
+                const monday = new Date(now);
+                monday.setDate(now.getDate() + diffToMonday);
+                start = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate(), 0, 0, 0, 0);
+                const sunday = new Date(start);
+                sunday.setDate(start.getDate() + 6);
+                end = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate(), 23, 59, 59, 999);
+            }
+            if (start && end) {
+                list = list.filter(t => {
+                    const tTime = new Date(t.request_time).getTime();
+                    return tTime >= start.getTime() && tTime <= end.getTime();
+                });
+            }
+        }
+
+        // quantity filter (based on effective qty)
+        const min = qtyMin !== undefined && qtyMin !== '' ? Number(qtyMin) : null;
+        const max = qtyMax !== undefined && qtyMax !== '' ? Number(qtyMax) : null;
+        if ((min !== null && !Number.isNaN(min)) || (max !== null && !Number.isNaN(max))) {
+            list = list.filter(t => {
+                const hasOrders = Array.isArray(t.transferOrders) && t.transferOrders.length > 0;
+                const qty = hasOrders ? t.transferOrders.reduce((s, it) => s + Number(it.transfer_quantity || 0), 0) : Number(t.request_quantity || 0);
+                if (min !== null && !Number.isNaN(min) && qty < min) return false;
+                if (max !== null && !Number.isNaN(max) && qty > max) return false;
+                return true;
+            });
+        }
+
+        if (search) {
+            const s = String(search).toLowerCase();
+            list = list.filter(t =>
+                (t.transfer_request_id || '').toLowerCase().includes(s) ||
+                (t.notes || '').toLowerCase().includes(s)
+            );
+        }
+
+        // sort by request_time desc
+        list.sort((a, b) => new Date(b.request_time) - new Date(a.request_time));
+
+        const total = list.length;
+        const start = (Number(page) - 1) * Number(pageSize);
+        const paged = list.slice(start, start + Number(pageSize));
+
+        return {
+            data: {
+                success: true,
+                payload: {
+                    transfers: paged,
+                    total,
+                    page: Number(page),
+                    pageSize: Number(pageSize),
+                    totalPages: Math.ceil(total / Number(pageSize))
+                }
+            }
+        };
+    },
+
+    // Mock: create transfer request
+    async createTransferRequest(data = {}) {
+        await delay(400);
+        const { from_station_id, request_quantity, notes } = data;
+        if (!from_station_id || !request_quantity) {
+            return Promise.reject({ response: { status: 400, data: { message: 'Missing required fields' } } });
+        }
+        const newReq = {
+            transfer_request_id: `${crypto?.randomUUID ? crypto.randomUUID() : 'req-' + Date.now()}`,
+            station_id: Number(from_station_id),
+            admin_id: null,
+            staff_id: 'mock-staff',
+            request_time: new Date().toISOString(),
+            resolve_time: null,
+            request_quantity: Number(request_quantity),
+            status: 'pending',
+            notes: notes || '',
+            transferOrders: []
+        };
+        mockTransfers.push(newReq);
+        return {
+            data: {
+                success: true,
+                payload: newReq
+            }
+        };
+    },
+
+    // Mock: cancel transfer request
+    async cancelTransferRequest(transfer_request_id) {
+        await delay(300);
+        const idx = mockTransfers.findIndex(t => t.transfer_request_id === transfer_request_id);
+        if (idx === -1) {
+            return Promise.reject({ response: { status: 404, data: { message: 'Transfer request not found' } } });
+        }
+        if (mockTransfers[idx].status !== 'pending') {
+            return Promise.reject({ response: { status: 400, data: { message: 'Only pending requests can be cancelled' } } });
+        }
+        mockTransfers[idx] = { ...mockTransfers[idx], status: 'cancelled', resolve_time: new Date().toISOString() };
+        return {
+            data: {
+                success: true,
+                payload: mockTransfers[idx]
+            }
+        };
+    },
+
+    // Mock: confirm arrival (complete request and orders)
+    async confirmTransferArrival(transfer_request_id) {
+        await delay(350);
+        const idx = mockTransfers.findIndex(t => t.transfer_request_id === transfer_request_id);
+        if (idx === -1) {
+            return Promise.reject({ response: { status: 404, data: { message: 'Transfer request not found' } } });
+        }
+        const allowed = ['approved', 'in_transit'];
+        if (!allowed.includes(String(mockTransfers[idx].status))) {
+            return Promise.reject({ response: { status: 400, data: { message: 'Request is not in a confirmable state' } } });
+        }
+        const updatedOrders = (mockTransfers[idx].transferOrders || []).map(o => ({
+            ...o,
+            status: 'completed',
+            confirm_time: new Date().toISOString()
+        }));
+        mockTransfers[idx] = {
+            ...mockTransfers[idx],
+            status: 'completed',
+            resolve_time: new Date().toISOString(),
+            transferOrders: updatedOrders
+        };
+        return { data: { success: true, payload: mockTransfers[idx] } };
     }
 };
 
 // Export mock users for testing
-export const getMockUsers = () => mockUsers.map(({ password, ...user }) => user);
+export const getMockUsers = () => mockUsers.map((u) => { const clone = { ...u }; delete clone.password; return clone; });
 export const getMockVehicles = () => mockVehicles;
+export const getMockTransfers = () => mockTransfers;

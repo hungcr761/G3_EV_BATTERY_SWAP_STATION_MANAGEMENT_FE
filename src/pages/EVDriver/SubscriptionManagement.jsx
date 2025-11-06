@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import useSubscription from '@/hooks/useSubscription';
 import SubscriptionCard from '@/components/Subscription/SubscriptionCard';
 import { AlertCircle, ArrowLeft, CheckCircle, Loader2, Package } from 'lucide-react';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
 export default function SubscriptionManagement() {
@@ -51,7 +51,7 @@ export default function SubscriptionManagement() {
   //   setShowDeleteSubDialog
   // };
 
-
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -136,7 +136,6 @@ export default function SubscriptionManagement() {
           </div>
         )}
 
-
         {/* Subscription List */}
         {!loading && !error && (
           <>
@@ -159,24 +158,24 @@ export default function SubscriptionManagement() {
                 </CardContent>
               </Card>
             ) : (
-                <div>
+              <div>
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold text-slate-800">
                     Your Subscriptions <span className="text-slate-500 font-normal">({activeSubscriptions.length})</span>
                   </h2>
                 </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {activeSubscriptions.map((subscription) => (
-                            <SubscriptionCard
-                              key={subscription.subscription_id}
-                              subscription={subscription}
-                              onCancel={handleCancel}
-                              getDaysRemaining={getDaysRemaining}
-                              getStatusColor={getStatusColor}
-                              isCanceling={confirmCancel?.subscription?.subscription_id === subscription.subscription_id}
-                            />
-                          ))}
-                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activeSubscriptions.map((subscription) => (
+                    <SubscriptionCard
+                      key={subscription.subscription_id}
+                      subscription={subscription}
+                      onCancel={handleCancel}
+                      getDaysRemaining={getDaysRemaining}
+                      getStatusColor={getStatusColor}
+                      isCanceling={confirmCancel?.subscription?.subscription_id === subscription.subscription_id}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </>
@@ -200,7 +199,7 @@ export default function SubscriptionManagement() {
                 Confirm Cancel
               </DialogTitle>
               <DialogDescription className="text-center text-base text-slate-600">
-                Are you sure you want to cancel subscription for <strong className="text-slate-900">{confirmCancel?.subscription?.vehicle?.license_plate}</strong>? 
+                Are you sure you want to cancel subscription for <strong className="text-slate-900">{confirmCancel?.subscription?.vehicle?.license_plate}</strong>?
                 <br />
                 <span className="text-red-600 font-medium">This action cannot be undone.</span>
               </DialogDescription>
