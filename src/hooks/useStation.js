@@ -1,144 +1,162 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { stationAPI } from '../lib/apiServices';
+
+// Helper function to transform station data
+const transformStation = (station) => ({
+    id: station.station_id,
+    name: station.station_name,
+    address: station.address,
+    latitude: station.latitude,
+    longitude: station.longitude,
+    status: station.status,
+    current_battery_count: station.current_battery_count || 0,
+    max_battery_capacity: station.max_battery_capacity || 20,
+    staff_count: station.staff_count || 0
+});
 
 export const useStation = () => {
     const [stations, setStations] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchStations = async () => {
-        setLoading(true);
-        setError(null);
+    // Fetch all stations
+    const fetchStations = useCallback(async () => {
         try {
+            setLoading(true);
+            setError(null);
+
             const response = await stationAPI.getAll();
             // Handle the API response structure: { success: true, payload: { stations: [...] } }
             const stationsData = response.data?.payload?.stations || response.data?.stations || [];
 
             // Transform the data to match our expected structure
-            const transformedStations = stationsData.map(station => ({
-                id: station.station_id,
-                name: station.station_name,
-                address: station.address,
-                latitude: station.latitude,
-                longitude: station.longitude,
-                status: station.status,
-                // Add default values for fields that might not be in the API response
-                current_battery_count: station.current_battery_count || 0,
-                max_battery_capacity: station.max_battery_capacity || 20,
-                staff_count: station.staff_count || 0
-            }));
-
+            const transformedStations = stationsData.map(transformStation);
             setStations(transformedStations);
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to fetch stations');
+            setError(err.response?.data?.message || err.message || 'Failed to fetch stations');
+            setStations([]);
             console.error('Error fetching stations:', err);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const createStation = async (stationData) => {
-        setLoading(true);
-        setError(null);
+    // Create station
+    const createStation = useCallback(async (stationData) => {
         try {
+            setError(null);
             const response = await stationAPI.create(stationData);
-            const newStation = response.data?.payload || response.data;
 
-            // Transform the response to match our structure
-            const transformedStation = {
-                id: newStation.station_id,
-                name: newStation.station_name,
-                address: newStation.address,
-                latitude: newStation.latitude,
-                longitude: newStation.longitude,
-                status: newStation.status,
-                current_battery_count: newStation.current_battery_count || 0,
-                max_battery_capacity: newStation.max_battery_capacity || 20,
-                staff_count: newStation.staff_count || 0
-            };
+            if (response.data?.success) {
+                const newStation = response.data?.payload || response.data;
+                const transformedStation = transformStation(newStation);
 
-            setStations(prev => [...prev, transformedStation]);
-            return transformedStation;
+                // Update local state
+                setStations(prev => [...prev, transformedStation]);
+                // Refetch to ensure data consistency
+                await fetchStations();
+                return response.data;
+            }
+            throw new Error('Failed to create station');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to create station');
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to create station';
+            setError(errorMessage);
             throw err;
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [fetchStations]);
 
-    const updateStation = async (id, stationData) => {
-        setLoading(true);
-        setError(null);
+    // Update station
+    const updateStation = useCallback(async (id, stationData) => {
         try {
+            setError(null);
             const response = await stationAPI.update(id, stationData);
-            const updatedStation = response.data?.payload || response.data;
 
-            // Transform the response to match our structure
-            const transformedStation = {
-                id: updatedStation.station_id,
-                name: updatedStation.station_name,
-                address: updatedStation.address,
-                latitude: updatedStation.latitude,
-                longitude: updatedStation.longitude,
-                status: updatedStation.status,
-                current_battery_count: updatedStation.current_battery_count || 0,
-                max_battery_capacity: updatedStation.max_battery_capacity || 20,
-                staff_count: updatedStation.staff_count || 0
-            };
+            if (response.data?.success) {
+                const updatedStation = response.data?.payload || response.data;
+                const transformedStation = transformStation(updatedStation);
 
-            setStations(prev => prev.map(station =>
-                station.id === id ? transformedStation : station
-            ));
-            return transformedStation;
+                // Update local state
+                setStations(prev => prev.map(station =>
+                    station.id === id ? transformedStation : station
+                ));
+                // Refetch to ensure data consistency
+                await fetchStations();
+                return response.data;
+            }
+            throw new Error('Failed to update station');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to update station');
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to update station';
+            setError(errorMessage);
             throw err;
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [fetchStations]);
 
-    const deleteStation = async (id) => {
-        setLoading(true);
-        setError(null);
+    // Update station status
+    const updateStationStatus = useCallback(async (id, status) => {
         try {
-            await stationAPI.delete(id);
-            setStations(prev => prev.filter(station => station.id !== id));
+            setError(null);
+            const response = await stationAPI.updateStatus(id, status);
+
+            if (response.data?.success) {
+                // Update local state
+                setStations(prev => prev.map(station =>
+                    station.id === id ? { ...station, status } : station
+                ));
+                // Refetch to ensure data consistency
+                await fetchStations();
+                return response.data;
+            }
+            throw new Error('Failed to update station status');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to delete station');
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to update station status';
+            setError(errorMessage);
             throw err;
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [fetchStations]);
 
-    const getStationById = async (id) => {
+    // Delete station
+    const deleteStation = useCallback(async (id) => {
         try {
+            setError(null);
+            const response = await stationAPI.delete(id);
+
+            if (response.data?.success) {
+                // Update local state
+                setStations(prev => prev.filter(station => station.id !== id));
+                // Refetch to ensure data consistency
+                await fetchStations();
+                return response.data;
+            }
+            throw new Error('Failed to delete station');
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to delete station';
+            setError(errorMessage);
+            throw err;
+        }
+    }, [fetchStations]);
+
+    // Get station by ID
+    const getStationById = useCallback(async (id) => {
+        try {
+            setError(null);
             const response = await stationAPI.getById(id);
-            const station = response.data?.payload || response.data;
 
-            // Transform the response to match our structure
-            return {
-                id: station.station_id,
-                name: station.station_name,
-                address: station.address,
-                latitude: station.latitude,
-                longitude: station.longitude,
-                status: station.status,
-                current_battery_count: station.current_battery_count || 0,
-                max_battery_capacity: station.max_battery_capacity || 20,
-                staff_count: station.staff_count || 0
-            };
+            if (response.data?.success) {
+                const station = response.data?.payload?.station || response.data?.payload || response.data;
+                return transformStation(station);
+            }
+            throw new Error('Failed to fetch station');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to fetch station');
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch station';
+            setError(errorMessage);
             throw err;
         }
-    };
+    }, []);
 
+    // Fetch stations on mount
     useEffect(() => {
         fetchStations();
-    }, []);
+    }, [fetchStations]);
 
     return {
         stations,
@@ -147,7 +165,9 @@ export const useStation = () => {
         fetchStations,
         createStation,
         updateStation,
+        updateStationStatus,
         deleteStation,
-        getStationById
+        getStationById,
+        refetch: fetchStations
     };
 };

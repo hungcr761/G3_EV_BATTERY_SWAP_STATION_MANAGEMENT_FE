@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router';
 import { Battery, Home, MapPin } from 'lucide-react';
-import { stationAPI } from '../../lib/apiServices';
+import { useStation } from '../../hooks/useStation';
 
 const KioskLayout = ({ children }) => {
     const navigate = useNavigate();
@@ -11,6 +11,7 @@ const KioskLayout = ({ children }) => {
     const [stationInfo, setStationInfo] = useState(null);
     const [loadingStation, setLoadingStation] = useState(true);
     const IDLE_TIMEOUT = 120000; // 2 minutes in milliseconds
+    const { getStationById } = useStation();
 
     // Fetch station information
     useEffect(() => {
@@ -19,16 +20,13 @@ const KioskLayout = ({ children }) => {
 
             setLoadingStation(true);
             try {
-                const response = await stationAPI.getById(stationId);
-                if (response.data && response.data.success) {
-                    const station = response.data.payload.station;
-                    setStationInfo({
-                        id: station.station_id,
-                        name: station.station_name,
-                        address: station.address,
-                        status: station.status
-                    });
-                }
+                const station = await getStationById(stationId);
+                setStationInfo({
+                    id: station.id,
+                    name: station.name,
+                    address: station.address,
+                    status: station.status
+                });
             } catch (error) {
                 console.error('Error fetching station:', error);
                 setStationInfo({
@@ -43,7 +41,7 @@ const KioskLayout = ({ children }) => {
         };
 
         fetchStation();
-    }, [stationId]);
+    }, [stationId, getStationById]);
 
     // Auto-idle timeout - reset to home if inactive
     useEffect(() => {

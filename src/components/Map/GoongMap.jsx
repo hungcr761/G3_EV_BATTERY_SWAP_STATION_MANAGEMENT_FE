@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPin, Navigation } from 'lucide-react';
-import { stationAPI } from '../../lib/apiServices';
+import { useStation } from '../../hooks/useStation';
 
 const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
     const mapRef = useRef(null);
@@ -8,39 +8,18 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
     const markersRef = useRef([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [userLocation, setUserLocation] = useState(null);
-    const [stations, setStations] = useState([]);
-    const [stationsLoading, setStationsLoading] = useState(false);
-    const [stationsError, setStationsError] = useState(null);
     const [mapInitialized, setMapInitialized] = useState(false);
-
-    // Fetch stations from API
-    useEffect(() => {
-        const fetchStations = async () => {
-            setStationsLoading(true);
-            setStationsError(null);
-            try {
-                const response = await stationAPI.getAll();
-                if (response.data && response.data.success && response.data.payload && response.data.payload.stations) {
-                    const processedStations = response.data.payload.stations.map(station => ({
-                        id: station.station_id,
-                        name: station.station_name,
-                        address: station.address,
-                        latitude: parseFloat(station.latitude),
-                        longitude: parseFloat(station.longitude),
-                        status: station.status === 'operational' ? 'available' : 'limited'
-                    }));
-                    setStations(processedStations);
-                }
-            } catch (error) {
-                setStationsError(error);
-                console.error('Error fetching stations:', error);
-            } finally {
-                setStationsLoading(false);
-            }
-        };
-
-        fetchStations();
-    }, []);
+    
+    // Use station hook
+    const { stations, loading: stationsLoading, error: stationsError } = useStation();
+    
+    // Process stations for map (convert status for map display)
+    const processedStations = stations.map(station => ({
+        ...station,
+        latitude: parseFloat(station.latitude),
+        longitude: parseFloat(station.longitude),
+        status: station.status === 'operational' ? 'available' : 'limited'
+    }));
 
     // Goong Map API key
     const GOONG_API_KEY = import.meta.env.VITE_GOONG_API_KEY;
@@ -200,7 +179,7 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
         });
         markersRef.current = [];
 
-        stations.forEach((station) => {
+        processedStations.forEach((station) => {
             // Use real coordinates from API
             const coord = [station.longitude, station.latitude];
 
@@ -283,12 +262,12 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
         if (isLoaded && mapInstanceRef.current) {
             addStationMarkers();
         }
-    }, [stations, isLoaded]);
+    }, [processedStations, isLoaded]);
 
     // Center map on selected station
     useEffect(() => {
         if (selectedStation && mapInstanceRef.current) {
-            const station = stations.find(s => s.id === selectedStation.id);
+            const station = processedStations.find(s => s.id === selectedStation.id);
             if (station && station.longitude && station.latitude) {
                 mapInstanceRef.current.flyTo({
                     center: [station.longitude, station.latitude],
@@ -296,7 +275,7 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
                 });
             }
         }
-    }, [selectedStation, stations]);
+    }, [selectedStation, processedStations]);
 
     return (
         <div className="relative w-full h-full">
@@ -323,7 +302,7 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
                     <div className="text-center">
                         <p className="text-red-500 mb-2">Lỗi tải dữ liệu trạm</p>
                         <p className="text-sm text-muted-foreground">
-                            {stationsError.message || 'Không thể kết nối đến server'}
+                            {stationsError || 'Không thể kết nối đến server'}
                         </p>
                     </div>
                 </div>

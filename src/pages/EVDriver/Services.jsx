@@ -1,5 +1,6 @@
                                                                                                                                                                                                                                                                                                                                                                                         
 import React from 'react';
+import { useNavigate } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +10,11 @@ import useSubscriptionPlan from '@/hooks/useSubscriptionPlan';
 import useServiceSubscription from '@/hooks/useServiceSubscription';
 import VehicleSelectionDialog from '@/components/Services/VehicleSelectionDialog';
 import PlanCard from '@/components/Services/PlanCard';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Services() {
+    const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const { plans, loading, error, refetch } = useSubscriptionPlan();
 
     const {
@@ -23,10 +27,19 @@ export default function Services() {
         setSelectedVehicle,
         formatPrice,
         formatPercent,
-        handleSelectSubscription,
+        handleSelectSubscription: originalHandleSelectSubscription,
         handleSubscribe,
         handleCancelDialog
     } = useServiceSubscription();
+
+    // Wrapper to check authentication before selecting subscription
+    const handleSelectSubscription = (plan) => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+        originalHandleSelectSubscription(plan);
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">

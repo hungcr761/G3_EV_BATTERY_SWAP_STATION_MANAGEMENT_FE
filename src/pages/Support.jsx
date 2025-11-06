@@ -1,25 +1,48 @@
-
-import { useState } from 'react';
-import { AlertCircle, Calendar, Clock, FileText, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-
-import useTicket from '@/hooks/useTicket';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import {
+    MessageCircle,
+    Phone,
+    Mail,
+    MapPin,
+    Clock,
+    HelpCircle,
+    FileText,
+    AlertTriangle
+} from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 const Support = () => {
-    const {
-        tickets,
-        loading,
-        message,
-        isSubmitting,
-        createTicket,
-        closeTicket,
-        getStatusColor,
-        getStatusLabel,
-        getSubjectLabel
-    } = useTicket();
+    const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
+    const [formData, setFormData] = useState({
+        issueType: '',
+        priority: 'low',
+        description: ''
+    });
+
+    const faqs = [
+        {
+            question: 'How do I swap batteries at the station?',
+            answer: 'Scan the QR code at the station, the system will automatically swap batteries in 3-5 minutes.'
+        },
+        {
+            question: 'Can I cancel my scheduled appointment?',
+            answer: 'Yes, you can cancel your appointment up to 2 hours in advance without any charges.'
+        },
+        {
+            question: 'How do I track my usage costs?',
+            answer: 'Go to Dashboard > Transaction History to view detailed costs.'
+        },
+        {
+            question: 'Are batteries insured?',
+            answer: 'All batteries are fully insured, including damage and loss coverage.'
+        }
+    ];
 
     const [formData, setFormData] = useState({
         subject: '',
@@ -229,9 +252,87 @@ const Support = () => {
                                             );
                                         })}
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+
+                            {/* Support Request Form */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center">
+                                        <FileText className="mr-2 h-5 w-5" />
+                                        Submit Support Request
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Describe the issue you're experiencing in detail
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <form 
+                                        className="space-y-4"
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
+                                            if (!isAuthenticated) {
+                                                navigate('/login');
+                                                return;
+                                            }
+                                            // Handle form submission here
+                                            console.log('Form submitted:', formData);
+                                            // You can add API call here
+                                        }}
+                                    >
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">
+                                                    Issue Type
+                                                </label>
+                                                <select 
+                                                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                                                    value={formData.issueType}
+                                                    onChange={(e) => setFormData({ ...formData, issueType: e.target.value })}
+                                                >
+                                                    <option value="">Select issue type</option>
+                                                    <option value="technical">Technical Issue</option>
+                                                    <option value="billing">Billing Issue</option>
+                                                    <option value="booking">Booking Issue</option>
+                                                    <option value="other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">
+                                                    Priority Level
+                                                </label>
+                                                <select 
+                                                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                                                    value={formData.priority}
+                                                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                                                >
+                                                    <option value="low">Low</option>
+                                                    <option value="medium">Medium</option>
+                                                    <option value="high">High</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">
+                                                Detailed Description
+                                            </label>
+                                            <textarea
+                                                className="w-full h-32 px-3 py-2 rounded-md border border-input bg-background"
+                                                placeholder="Describe the issue you're experiencing in detail..."
+                                                value={formData.description}
+                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <Button type="submit" className="w-full">
+                                            <AlertTriangle className="mr-2 h-4 w-4" />
+                                            Submit Support Request
+                                        </Button>
+                                    </form>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 </div>
             </div>

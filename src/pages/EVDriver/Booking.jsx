@@ -8,7 +8,9 @@ import GoongMap from '@/components/Map/GoongMap';
 import BookingFlow from '@/components/Booking/BookingFlow';
 import VehicleSelector from '@/components/Booking/VehicleSelector';
 import NoVehicleSelected from '@/components/Booking/NoVehicleSelected';
-import { stationAPI, bookingAPI, vehicleAPI, modelAPI, batteryTypeAPI } from '@/lib/apiServices';
+import { bookingAPI, vehicleAPI, modelAPI, batteryTypeAPI } from '@/lib/apiServices';
+import { useStation } from '@/hooks/useStation';
+import { useAuth } from '@/hooks/useAuth';
 import {
     MapPin,
     Battery,
@@ -26,8 +28,6 @@ const Stations = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [batteryType, setBatteryType] = useState('');
     const [stations, setStations] = useState([]);
-    const [stationsLoading, setStationsLoading] = useState(false);
-    const [stationsError, setStationsError] = useState(null);
     const [userLocation, setUserLocation] = useState(null);
     const [nearestStation, setNearestStation] = useState(null);
     const [showBookingFlow, setShowBookingFlow] = useState(false);
@@ -40,37 +40,32 @@ const Stations = () => {
     const [vehiclesLoading, setVehiclesLoading] = useState(true);
     const [showVehiclePrompt, setShowVehiclePrompt] = useState(false);
 
-    // Fetch stations from API
-    useEffect(() => {
-        const fetchStations = async () => {
-            setStationsLoading(true);
-            setStationsError(null);
-            try {
-                const response = await stationAPI.getAll();
-                if (response.data && response.data.success && response.data.payload && response.data.payload.stations) {
-                    const processedStations = response.data.payload.stations.map(station => ({
-                        id: station.station_id,
-                        name: station.station_name,
-                        address: station.address,
-                        latitude: parseFloat(station.latitude),
-                        longitude: parseFloat(station.longitude),
-                        status: station.status === 'operational' ? 'available' : 'limited'
-                    }));
-                    setStations(processedStations);
-                }
-            } catch (error) {
-                setStationsError(error);
-                console.error('Error fetching stations:', error);
-            } finally {
-                setStationsLoading(false);
-            }
-        };
+    const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
 
-        fetchStations();
-    }, []);
+    // Use station hook
+    const { stations: stationsData, loading: stationsLoading, error: stationsError } = useStation();
+
+    // Process stations for booking (convert status for booking display)
+    useEffect(() => {
+        const processedStations = stationsData.map(station => ({
+            ...station,
+            latitude: parseFloat(station.latitude),
+            longitude: parseFloat(station.longitude),
+            status: station.status === 'operational' ? 'available' : 'closed'
+        }));
+        setStations(processedStations);
+        // setStationsError(stationsError || null);
+    }, [stationsData, stationsError]);
 
     // Fetch user vehicles and auto-select if only one vehicle
     useEffect(() => {
+        // Only fetch vehicles if user is authenticated
+        if (!isAuthenticated) {
+            setVehiclesLoading(false);
+            return;
+        }
+
         const fetchUserVehicles = async () => {
             setVehiclesLoading(true);
             try {
@@ -126,7 +121,7 @@ const Stations = () => {
         };
 
         fetchUserVehicles();
-    }, []);
+    }, [isAuthenticated]);
 
     // Get user location and find nearest station
     useEffect(() => {
@@ -146,10 +141,10 @@ const Stations = () => {
 
     // Check availability for all stations when vehicle is selected
     useEffect(() => {
-        if (selectedVehicle && stations.length > 0) {
+        if (selectedVehicle && stations.length > 0 && isAuthenticated) {
             checkAllStationsAvailability();
         }
-    }, [selectedVehicle, stations]);
+    }, [selectedVehicle, stations, isAuthenticated]);
 
     // Calculate distance between two points using Haversine formula
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -280,6 +275,11 @@ const Stations = () => {
 
     // Handle booking
     const handleBooking = (station) => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+
         if (!selectedVehicle) {
             // Show vehicle selector first
             setBookingStation(station);
@@ -303,6 +303,11 @@ const Stations = () => {
 
     // Handle vehicle selection
     const handleVehicleSelect = (vehicle) => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+
         setSelectedVehicle(vehicle);
         setShowVehicleSelector(false);
 
@@ -313,6 +318,10 @@ const Stations = () => {
     };
 
     const handleShowVehicleSelector = () => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
         setShowVehicleSelector(true);
     };
 
@@ -454,7 +463,7 @@ const Stations = () => {
                                 >
                                     <option value="">Status</option>
                                     <option value="available">Available</option>
-                                    <option value="limited">Limited</option>
+                                    <option value="closed">Closed</option>
                                 </select>
                             </div>
                             <div>
@@ -517,7 +526,7 @@ const Stations = () => {
                                                             {station.status === 'available' ? (
                                                                 <Badge variant="default">Available</Badge>
                                                             ) : (
-                                                                <Badge variant="secondary">Limited</Badge>
+                                                                <Badge variant="secondary">Closed</Badge>
                                                             )}
                                                             {nearestStation?.id === station.id && (
                                                                 <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
