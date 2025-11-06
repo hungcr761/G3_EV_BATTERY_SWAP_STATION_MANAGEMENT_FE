@@ -35,6 +35,13 @@ export default function VehicleForm({ onSubmit, editingVehicle, vehicleModels = 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
 
+            {/* error message */}
+            {apiError && (
+                <div className="p-2 bg-red-50 border border-red-200 rounded-md flex items-center">
+                    <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                    <span className="text-sm text-red-700">{apiError}</span>
+                </div>
+            )}
             {/* Vin */}
             <div className="space-y-2">
                 <Label htmlFor="vin">
@@ -70,13 +77,6 @@ export default function VehicleForm({ onSubmit, editingVehicle, vehicleModels = 
                         <AlertCircle className="h-3 w-3" />
                         <span>VIN cannot be modified after registration</span>
                     </p>
-                )}
-                {/* error message */}
-                {apiError && (
-                    <div className="p-2 bg-red-50 border border-red-200 rounded-md flex items-center">
-                        <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
-                        <span className="text-sm text-red-700">{apiError}</span>
-                    </div>
                 )}
             </div>
 
@@ -144,13 +144,6 @@ export default function VehicleForm({ onSubmit, editingVehicle, vehicleModels = 
                                 ✓ No spaces or special characters allowed
                             </p>
                         </div>
-                    </div>
-                )}
-                {/* error message */}
-                {apiError && (
-                    <div className="p-2 bg-red-50 border border-red-200 rounded-md flex items-center">
-                        <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
-                        <span className="text-sm text-red-700">{apiError}</span>
                     </div>
                 )}
             </div>

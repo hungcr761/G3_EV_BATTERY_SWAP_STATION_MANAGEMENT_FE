@@ -35,6 +35,9 @@ import AnalyticsReports from './pages/Admin/AnalyticsReports';
 import SystemSettings from './pages/Admin/SystemSettings';
 import PaymentHistory from './pages/EVDriver/PaymentHistory.jsx';
 import ShiftSchedule from './pages/Admin/ShiftSchedule';
+import StaffLayout from './components/Layout/StaffLayout.jsx';
+import StaffDashboard from './pages/staff/StaffDashboard.jsx';
+import TransferManagement from './pages/staff/TransferManagement.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -51,8 +54,31 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
-// Admin Protected Route Component
-const AdminProtectedRoute = ({ children }) => {
+// // Admin Protected Route Component
+// const AdminProtectedRoute = ({ children }) => {
+//   const { isAuthenticated, loading, user } = useAuth();
+
+//   if (loading) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center">
+//         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+//       </div>
+//     );
+//   }
+
+//   if (!isAuthenticated) {
+//     return <Navigate to="/login" replace />;
+//   }
+
+//   // Check if user has admin role (this would come from your auth system)
+//   if (user?.role !== 'admin') {
+//     return <Navigate to="/dashboard" replace />;
+//   }
+
+//   return children;
+// };
+
+const RoleProtectedRoute = ({ children, allowedRoute = [], redirectTo = '/dashboard' }) => {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
@@ -63,13 +89,12 @@ const AdminProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if(!isAuthenticated){
+    return <Navigate to="/login" replace/>
   }
 
-  // Check if user has admin role (this would come from your auth system)
-  if (user?.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
+  if(!allowedRoute.includes(user?.role)){
+    return <Navigate to={redirectTo} replace/>
   }
 
   return children;
@@ -121,50 +146,70 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Protected routes with layout */}
+          {/*Ev routes*/}
           <Route path="/dashboard" element={
-            <ProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['driver','user']}>
               <Layout>
                 <Dashboard />
               </Layout>
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           } />
           <Route path="/profile" element={
-            <ProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
               <Layout>
                 <Profile />
               </Layout>
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           } />
           <Route path="/vehiclesManagement" element={
-            <ProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
               <Layout>
                 <VehicleManagement />
               </Layout>
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           } />
 
           <Route path="/subscriptionManagement" element={
-            <ProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
               <Layout>
                 <SubscriptionManagement />
               </Layout>
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           } />
           <Route path='/paymentHistory' element={
-            <ProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
               <Layout>
                 <PaymentHistory />
               </Layout>
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           } />
           <Route path="/settings" element={
-            <ProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
               <Layout>
                 <Settings />
               </Layout>
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           } />
+
+
+          {/* Staff routes */}
+          <Route path="/staff" element={
+            <RoleProtectedRoute allowedRoute={['staff']}>
+              <StaffLayout>
+                <StaffDashboard />
+              </StaffLayout>
+            </RoleProtectedRoute>    
+          }
+          />
+
+          <Route path="/staff/transfer-management" element={
+            <RoleProtectedRoute allowedRoute={['staff']}>
+              <StaffLayout>
+                <TransferManagement />
+              </StaffLayout>
+            </RoleProtectedRoute>
+          } 
+          />
 
           {/* Kiosk routes - separate layout, no auth required */}
           <Route path="/kiosk/:stationId" element={<KioskLayout><KioskHome /></KioskLayout>} />
@@ -180,46 +225,46 @@ function App() {
 
           {/* Admin routes */}
           <Route path="/admin" element={
-            <AdminProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
                 <AnalyticsReports />
               </AdminLayout>
-            </AdminProtectedRoute>
+            </RoleProtectedRoute>
           } />
           <Route path="/admin/shifts" element={
-            <AdminProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
                 <ShiftSchedule />
               </AdminLayout>
-            </AdminProtectedRoute>
+            </RoleProtectedRoute>
           } />
           <Route path="/admin/stations" element={
-            <AdminProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
                 <StationManagement />
               </AdminLayout>
-            </AdminProtectedRoute>
+            </RoleProtectedRoute>
           } />
           <Route path="/admin/users" element={
-            <AdminProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
                 <UserManagement />
               </AdminLayout>
-            </AdminProtectedRoute>
+            </RoleProtectedRoute>
           } />
           <Route path="/admin/batteries" element={
-            <AdminProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
                 <BatteryManagement />
               </AdminLayout>
-            </AdminProtectedRoute>
+            </RoleProtectedRoute>
           } />
           <Route path="/admin/settings" element={
-            <AdminProtectedRoute>
+            <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
                 <SystemSettings />
               </AdminLayout>
-            </AdminProtectedRoute>
+            </RoleProtectedRoute>
           } />
 
           {/* Redirect unknown routes to home */}

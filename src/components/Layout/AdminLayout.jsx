@@ -72,12 +72,12 @@ const AdminLayout = ({ children }) => {
                 <div
                     className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform transition-all duration-400 ease-in-out lg:translate-x-0 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
                         }`}
-                    onMouseEnter={(e) => {
+                    onMouseEnter={() => {
                         if (window.innerWidth >= 1024) {
                             setSidebarCollapsed(false);
                         }
                     }}
-                    onMouseLeave={(e) => {
+                    onMouseLeave={() => {
                         if (window.innerWidth >= 1024) {
                             setSidebarCollapsed(true);
                         }
