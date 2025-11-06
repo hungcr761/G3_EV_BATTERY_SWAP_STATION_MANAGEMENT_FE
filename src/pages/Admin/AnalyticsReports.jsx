@@ -16,7 +16,7 @@ import {
     AlertTriangle,
     Loader2
 } from 'lucide-react';
-import { Line, LineChart as RechartsLineChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Line, LineChart as RechartsLineChart, BarChart as RechartsBarChart, Bar, AreaChart as RechartsAreaChart, Area, PieChart as RechartsPieChart, Pie, Cell, CartesianGrid, XAxis, YAxis, Legend } from 'recharts';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -139,6 +139,314 @@ const LineChart = ({ data, height = 250, color = '#3B82F6', name = 'Value' }) =>
     );
 };
 
+// Custom Tooltip Component for Bar Chart
+const CustomBarChartTooltip = ({ active, payload, className }) => {
+    if (!active || !payload || !payload.length) {
+        return null;
+    }
+
+    const data = payload[0].payload;
+
+    return (
+        <div
+            className={cn(
+                "rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl",
+                className
+            )}
+        >
+            <div className="font-semibold mb-2">{data.planName}</div>
+            {payload.map((item, index) => (
+                <div key={index} className="flex items-center gap-2 mb-1">
+                    <div
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{
+                            backgroundColor: item.color,
+                        }}
+                    />
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-muted-foreground">
+                            {item.name || item.dataKey}
+                        </span>
+                        <span className="font-mono font-semibold tabular-nums text-foreground">
+                            {typeof item.value === "number"
+                                ? item.value.toLocaleString()
+                                : item.value}
+                        </span>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+// Grouped Bar Chart Component using shadcn/ui and Recharts
+const GroupedBarChart = ({ data, height = 300 }) => {
+    if (!data || data.length === 0) return null;
+
+    const chartConfig = {
+        totalSubscriptions: {
+            label: "Total Subscribers",
+            color: "hsl(var(--chart-1))",
+        },
+        activeSubscriptions: {
+            label: "Active",
+            color: "hsl(142, 76%, 36%)", // green-600
+        },
+        inactiveSubscriptions: {
+            label: "Inactive",
+            color: "hsl(0, 84%, 60%)", // red-500
+        },
+    };
+
+    // Calculate max value for Y-axis scaling
+    const maxValue = Math.max(
+        ...data.map(d => Math.max(
+            d.totalSubscriptions || 0,
+            d.activeSubscriptions || 0,
+            d.inactiveSubscriptions || 0
+        ))
+    );
+
+    return (
+        <ChartContainer config={chartConfig} className="w-full" style={{ height: `${height}px` }}>
+            <RechartsBarChart
+                data={data}
+                margin={{ top: 5, right: 10, left: 0, bottom: 60 }}
+            >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                    dataKey="planName"
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    textAnchor="middle"
+                    height={80}
+                />
+                <YAxis
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    domain={[0, Math.ceil(maxValue * 1.1)]}
+                    tickFormatter={(value) => formatNumber(value)}
+                />
+                <ChartTooltip content={<CustomBarChartTooltip />} />
+                <Legend />
+                <Bar
+                    dataKey="totalSubscriptions"
+                    fill="hsl(var(--chart-1))"
+                    name="Total Subscribers"
+                    radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                    dataKey="activeSubscriptions"
+                    fill="hsl(142, 76%, 36%)"
+                    name="Active Subscriptions"
+                    radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                    dataKey="inactiveSubscriptions"
+                    fill="hsl(0, 84%, 60%)"
+                    name="Inactive Subscriptions"
+                    radius={[4, 4, 0, 0]}
+                />
+            </RechartsBarChart>
+        </ChartContainer>
+    );
+};
+
+// Custom Tooltip Component for Area Chart
+const CustomAreaChartTooltip = ({ active, payload, label, className }) => {
+    if (!active || !payload || !payload.length) {
+        return null;
+    }
+
+    return (
+        <div
+            className={cn(
+                "rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl",
+                className
+            )}
+        >
+            <div className="font-semibold mb-2">{label}</div>
+            {payload.map((item, index) => (
+                <div key={index} className="flex items-center gap-2 mb-1">
+                    <div
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{
+                            backgroundColor: item.color,
+                        }}
+                    />
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-muted-foreground">
+                            {item.name || item.dataKey}
+                        </span>
+                        <span className="font-mono font-semibold tabular-nums text-foreground">
+                            {typeof item.value === "number"
+                                ? `${item.value.toLocaleString()} VND`
+                                : item.value}
+                        </span>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+// Stacked Area Chart Component for Revenue Distribution using shadcn/ui and Recharts
+const RevenueStackedAreaChart = ({ data, height = 350 }) => {
+    if (!data || data.length === 0) {
+        return (
+            <div className="flex items-center justify-center" style={{ height: `${height}px` }}>
+                <p className="text-muted-foreground">No revenue data available</p>
+            </div>
+        );
+    }
+
+    // Get all unique plan names from the data
+    const allKeys = data.flatMap(item => Object.keys(item));
+    const planNames = [...new Set(allKeys.filter(key => key !== 'label' && key !== 'period'))];
+
+    if (planNames.length === 0) {
+        return (
+            <div className="flex items-center justify-center" style={{ height: `${height}px` }}>
+                <p className="text-muted-foreground">No revenue data available</p>
+            </div>
+        );
+    }
+
+    // Color palette for area chart
+    const COLORS = [
+        'hsl(217, 91%, 60%)', // blue-500
+        'hsl(142, 76%, 36%)', // green-600
+        'hsl(38, 92%, 50%)',  // amber-500
+        'hsl(262, 83%, 58%)', // purple-500
+        'hsl(0, 84%, 60%)',   // red-500
+        'hsl(199, 89%, 48%)', // cyan-500
+        'hsl(280, 100%, 70%)', // fuchsia-400
+        'hsl(24, 95%, 53%)',  // orange-500
+    ];
+
+    // Build chart config dynamically
+    const chartConfig = {};
+    planNames.forEach((planName, index) => {
+        chartConfig[planName] = {
+            label: planName,
+            color: COLORS[index % COLORS.length],
+        };
+    });
+
+    // Normalize data for expanded (100% stacked) area chart
+    const normalizedData = data.map((item) => {
+        const result = { ...item };
+        const total = planNames.reduce((sum, planName) => sum + (item[planName] || 0), 0);
+
+        if (total > 0) {
+            let remainingPercentage = 100;
+            planNames.forEach((planName, index) => {
+                if (index === planNames.length - 1) {
+                    // Last plan gets the remaining percentage to ensure total is exactly 100%
+                    result[planName] = remainingPercentage;
+                } else {
+                    const percentage = ((item[planName] || 0) / total) * 100;
+                    result[planName] = Math.round(percentage * 100) / 100; // Round to 2 decimal places
+                    remainingPercentage -= result[planName];
+                }
+            });
+        } else {
+            planNames.forEach((planName) => {
+                result[planName] = 0;
+            });
+        }
+
+        return result;
+    });
+
+    return (
+        <ChartContainer config={chartConfig} className="w-full" style={{ height: `${height}px` }}>
+            <RechartsAreaChart
+                data={normalizedData}
+                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+            >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                    dataKey="label"
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                />
+                <YAxis
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    domain={[0, 100]}
+                    tickFormatter={(value) => {
+                        // Ensure value is capped at 100 and rounded
+                        const roundedValue = Math.min(100, Math.round(value * 100) / 100);
+                        return `${roundedValue}%`;
+                    }}
+                />
+                <ChartTooltip
+                    content={(props) => {
+                        const { active, payload, label } = props;
+                        if (!active || !payload || !payload.length) return null;
+
+                        const originalItem = data.find(item => item.label === label);
+                        const total = planNames.reduce((sum, planName) => sum + (originalItem?.[planName] || 0), 0);
+
+                        return (
+                            <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
+                                <div className="font-semibold mb-2">{label}</div>
+                                {payload.map((item, index) => {
+                                    const planName = item.dataKey;
+                                    const percentage = Math.min(100, Math.round((item.value || 0) * 100) / 100);
+                                    const actualValue = originalItem?.[planName] || 0;
+                                    return (
+                                        <div key={index} className="flex items-center gap-2 mb-1">
+                                            <div
+                                                className="h-2 w-2 shrink-0 rounded-full"
+                                                style={{ backgroundColor: item.color }}
+                                            />
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-muted-foreground">{planName}</span>
+                                                <span className="font-mono font-semibold tabular-nums text-foreground">
+                                                    {percentage.toFixed(2)}% ({actualValue.toLocaleString()} VND)
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {total > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-border/50">
+                                        <span className="text-muted-foreground">Total: </span>
+                                        <span className="font-semibold">{total.toLocaleString()} VND</span>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }}
+                />
+                <Legend />
+                {planNames.map((planName, index) => (
+                    <Area
+                        key={planName}
+                        type="monotone"
+                        dataKey={planName}
+                        stackId="1"
+                        stroke={COLORS[index % COLORS.length]}
+                        fill={COLORS[index % COLORS.length]}
+                        fillOpacity={0.6}
+                        name={planName}
+                    />
+                ))}
+            </RechartsAreaChart>
+        </ChartContainer>
+    );
+};
+
 const AnalyticsReports = () => {
     const [selectedPeriod, setSelectedPeriod] = useState('30d');
     const [selectedStation, setSelectedStation] = useState('all');
@@ -154,6 +462,10 @@ const AnalyticsReports = () => {
     const [batterySohLoading, setBatterySohLoading] = useState(true);
     const [stationPerformance, setStationPerformance] = useState([]);
     const [stationPerformanceLoading, setStationPerformanceLoading] = useState(true);
+    const [subscriptionPlanBarData, setSubscriptionPlanBarData] = useState([]); // Aggregated data for bar chart
+    const [subscriptionPlanAreaData, setSubscriptionPlanAreaData] = useState([]); // Time-series data for area chart
+    const [subscriptionPlanLoading, setSubscriptionPlanLoading] = useState(true);
+    const [exportLoading, setExportLoading] = useState(false);
 
     // Use station hook
     const { stations, loading: stationsLoading } = useStation();
@@ -511,7 +823,7 @@ const AnalyticsReports = () => {
                                 stationId: stationId,
                                 stationName: item.station_name || '',
                                 totalSwaps: 0,
-                                totalUsers: 0
+                                totalUsers: item.totalUsers || 0
                             };
                         }
                         // Parse totalSwaps (can be string or number from API)
@@ -561,6 +873,118 @@ const AnalyticsReports = () => {
 
         fetchStationPerformance();
     }, [selectedPeriod, customDateRange, stations, stationsLoading]);
+
+    // Helper function to format period label
+    const formatPeriodLabel = (period, groupDate) => {
+        if (!period) return '';
+        const periodDate = new Date(period);
+
+        if (groupDate === 'month') {
+            return periodDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        } else if (groupDate === 'week') {
+            return periodDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } else {
+            return periodDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+    };
+
+    // Fetch subscription plan analysis data
+    useEffect(() => {
+        const fetchSubscriptionPlanData = async () => {
+            try {
+                setSubscriptionPlanLoading(true);
+                const { startDate, endDate, groupDate } = getDateRange(selectedPeriod);
+
+                // For all time, send null dates
+                const requestParams = {
+                    groupDate: groupDate || 'month'
+                };
+
+                if (startDate && endDate) {
+                    requestParams.startDate = formatDateLocal(startDate);
+                    requestParams.endDate = formatDateLocal(endDate);
+                }
+
+                const response = await analysisAPI.getSubscriptions(requestParams);
+
+                if (response.data?.success && response.data?.payload) {
+                    const rawData = response.data.payload;
+
+                    // Aggregate data for bar chart (sum across all periods)
+                    const planAggregation = {};
+                    rawData.forEach((item) => {
+                        const planName = item.plan_name || 'Unknown Plan';
+                        if (!planAggregation[planName]) {
+                            planAggregation[planName] = {
+                                planName: planName,
+                                totalSubscriptions: 0,
+                                activeSubscriptions: 0,
+                                inactiveSubscriptions: 0,
+                            };
+                        }
+                        planAggregation[planName].totalSubscriptions += parseInt(item.totalSubscriptions || 0, 10);
+                        planAggregation[planName].activeSubscriptions += parseInt(item.activeSubscriptions || 0, 10);
+                        planAggregation[planName].inactiveSubscriptions += parseInt(item.inactiveSubscriptions || 0, 10);
+                    });
+
+                    const aggregatedBarData = Object.values(planAggregation);
+                    setSubscriptionPlanBarData(aggregatedBarData);
+
+                    // Transform data for area chart (time-series by period)
+                    // Group by period and create data points for each plan
+                    const periodDataMap = {};
+                    const allPlanNames = new Set();
+
+                    rawData.forEach((item) => {
+                        const period = item.period || item.date || '';
+                        const planName = item.plan_name || 'Unknown Plan';
+                        allPlanNames.add(planName);
+
+                        if (!periodDataMap[period]) {
+                            periodDataMap[period] = {
+                                period: period,
+                                label: formatPeriodLabel(period, groupDate || 'month'),
+                            };
+                        }
+
+                        // Store totalPaidFee for each plan in this period
+                        periodDataMap[period][planName] = parseFloat(item.totalPaidFee || 0);
+                    });
+
+                    // Convert to array and ensure all plans are present in each period (with 0 if missing)
+                    const areaChartData = Object.values(periodDataMap).map((periodItem) => {
+                        const result = { ...periodItem };
+                        allPlanNames.forEach((planName) => {
+                            if (!(planName in result)) {
+                                result[planName] = 0;
+                            }
+                        });
+                        return result;
+                    });
+
+                    // Sort by period
+                    areaChartData.sort((a, b) => {
+                        const dateA = new Date(a.period);
+                        const dateB = new Date(b.period);
+                        return dateA - dateB;
+                    });
+
+                    setSubscriptionPlanAreaData(areaChartData);
+                } else {
+                    setSubscriptionPlanBarData([]);
+                    setSubscriptionPlanAreaData([]);
+                }
+            } catch (err) {
+                console.error('Error fetching subscription plan data:', err);
+                setSubscriptionPlanBarData([]);
+                setSubscriptionPlanAreaData([]);
+            } finally {
+                setSubscriptionPlanLoading(false);
+            }
+        };
+
+        fetchSubscriptionPlanData();
+    }, [selectedPeriod, customDateRange, customGroupDate]);
 
     // Format data for line charts
     const totalRevenueChartData = revenueData.map(item => ({
@@ -642,6 +1066,64 @@ const AnalyticsReports = () => {
             case 'medium': return 'bg-yellow-100 text-yellow-800';
             case 'low': return 'bg-green-100 text-green-800';
             default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    // Handle export report
+    const handleExportReport = async () => {
+        try {
+            setExportLoading(true);
+            const { startDate, endDate } = getDateRange(selectedPeriod);
+
+            // Prepare request parameters
+            const requestParams = {};
+            if (startDate && endDate) {
+                requestParams.startDate = formatDateLocal(startDate);
+                requestParams.endDate = formatDateLocal(endDate);
+            } else {
+                // If no date range, show error or use default range
+                alert('Please select a date range to export the report');
+                setExportLoading(false);
+                return;
+            }
+
+            const response = await analysisAPI.exportReport(requestParams);
+
+            // Get filename from response headers or use default
+            // Axios normalizes headers to lowercase
+            const contentDisposition = response.headers['content-disposition'] || response.headers['Content-Disposition'];
+            let filename = 'analysis-report.xlsx';
+
+            if (contentDisposition) {
+                // Match filename in quotes: filename="analysis-report-1762425271413.xlsx"
+                // or without quotes: filename=analysis-report.xlsx
+                const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+                const unquotedMatch = contentDisposition.match(/filename=([^;]+)/i);
+
+                if (quotedMatch) {
+                    filename = quotedMatch[1];
+                } else if (unquotedMatch) {
+                    filename = unquotedMatch[1].trim();
+                }
+            }
+
+            // Create blob URL and trigger download
+            const blob = new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error exporting report:', error);
+            alert('Failed to export report. Please try again.');
+        } finally {
+            setExportLoading(false);
         }
     };
 
@@ -744,9 +1226,22 @@ const AnalyticsReports = () => {
                             )}
                         </PopoverContent>
                     </Popover>
-                    <Button className="flex items-center gap-2">
-                        <Download className="h-4 w-4" />
-                        Export Report
+                    <Button
+                        className="flex items-center gap-2"
+                        onClick={handleExportReport}
+                        disabled={exportLoading}
+                    >
+                        {exportLoading ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Exporting...
+                            </>
+                        ) : (
+                            <>
+                                <Download className="h-4 w-4" />
+                                Export Report
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
@@ -1040,6 +1535,47 @@ const AnalyticsReports = () => {
                             </tbody>
                         </table>
                     </div>
+                )}
+            </Card>
+
+            {/* Subscription Plan Analysis */}
+            <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Subscription Plan Analysis</h3>
+                </div>
+                {subscriptionPlanLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                        <div className="flex items-center gap-2 text-gray-500">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <span>Loading subscription plan data...</span>
+                        </div>
+                    </div>
+                ) : subscriptionPlanBarData.length === 0 && subscriptionPlanAreaData.length === 0 ? (
+                    <div className="flex items-center justify-center h-64">
+                        <div className="text-center text-gray-500">
+                            <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+                            <p>No subscription plan data available for the selected period</p>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="space-y-6">
+                            <div>
+                                <h4 className="text-md font-medium text-gray-700 mb-3">Subscription Metrics</h4>
+                                <GroupedBarChart
+                                    data={subscriptionPlanBarData}
+                                    height={350}
+                                />
+                            </div>
+                            <div>
+                                <h4 className="text-md font-medium text-gray-700 mb-3">Revenue Distribution</h4>
+                                <RevenueStackedAreaChart
+                                    data={subscriptionPlanAreaData}
+                                    height={350}
+                                />
+                            </div>
+                        </div>
+                    </>
                 )}
             </Card>
 
