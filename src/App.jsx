@@ -36,8 +36,11 @@ import SystemSettings from './pages/Admin/SystemSettings';
 import PaymentHistory from './pages/EVDriver/PaymentHistory.jsx';
 import ShiftSchedule from './pages/Admin/ShiftSchedule';
 import StaffLayout from './components/Layout/StaffLayout.jsx';
-import StaffDashboard from './pages/staff/StaffDashboard.jsx';
+import StaffDashboard from './pages/staff/StaffBatteryManagement.jsx';
 import TransferManagement from './pages/staff/TransferManagement.jsx';
+import StaffBatteryManagement from './pages/staff/StaffBatteryManagement.jsx';
+import ShiftManagement from './pages/staff/ShiftManagement.jsx';
+import SwapManagement from './pages/EVDriver/SwapManagement.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -148,21 +151,21 @@ function App() {
 
           {/*Ev routes*/}
           <Route path="/dashboard" element={
-            <RoleProtectedRoute allowedRoute={['driver','user']}>
+            <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
                 <Dashboard />
               </Layout>
             </RoleProtectedRoute>
           } />
           <Route path="/profile" element={
-            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
+            <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
                 <Profile />
               </Layout>
             </RoleProtectedRoute>
           } />
           <Route path="/vehiclesManagement" element={
-            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
+            <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
                 <VehicleManagement />
               </Layout>
@@ -170,21 +173,29 @@ function App() {
           } />
 
           <Route path="/subscriptionManagement" element={
-            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
+            <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
                 <SubscriptionManagement />
               </Layout>
             </RoleProtectedRoute>
           } />
           <Route path='/paymentHistory' element={
-            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
+            <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
                 <PaymentHistory />
               </Layout>
             </RoleProtectedRoute>
           } />
+
+          <Route path="/swapManagement" element={
+            <RoleProtectedRoute allowedRoute={['driver']}>
+              <Layout>
+                <SwapManagement/>
+              </Layout>
+            </RoleProtectedRoute>
+          }/>
           <Route path="/settings" element={
-            <RoleProtectedRoute allowedRoute={['driver', 'user']}>
+            <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
                 <Settings />
               </Layout>
@@ -196,12 +207,18 @@ function App() {
           <Route path="/staff" element={
             <RoleProtectedRoute allowedRoute={['staff']}>
               <StaffLayout>
-                <StaffDashboard />
+                <StaffBatteryManagement />
               </StaffLayout>
             </RoleProtectedRoute>    
           }
           />
-
+          <Route path="/staff/shift-calendar" element={
+            <RoleProtectedRoute allowedRoute={['staff']}>
+              <StaffLayout>
+                <ShiftManagement/>
+              </StaffLayout>
+            </RoleProtectedRoute>
+          }/>
           <Route path="/staff/transfer-management" element={
             <RoleProtectedRoute allowedRoute={['staff']}>
               <StaffLayout>

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import useShift from '@/hooks/useShift';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,9 +9,10 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeftRight, Plus, RefreshCcw, Search, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import useTransfer from '@/hooks/useTransfer';
+import { useShifts } from '@/hooks/useShifts';
 
 export default function TransferManagement() {
-    const { shift, loading: shiftLoading, error: shiftError } = useShift();
+    const { shift, loading: shiftLoading, error: shiftError } = useShifts();
 
     const fromStation = useMemo(() => {
         if (!shift) return null;
@@ -70,16 +70,21 @@ export default function TransferManagement() {
             ) : shiftError ? (
                 <div className="p-6 text-red-600">{shiftError}</div>
             ) : (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pb-4">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-50">
+                    <div className="p-2 rounded-xl bg-blue-50">
                         <ArrowLeftRight className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold">Transfer Management</h1>
-                        <div className="text-sm text-slate-600">
+                        <h1 className="text-2xl font-bold tracking-tight">Quản lý điều phối</h1>
+                        <div className="mt-0.5 text-sm text-slate-600 flex items-center gap-2">
                             {fromStation && (
-                                <>Trạm: <span className="font-medium">{fromStation.name}</span> — ID: {fromStation.id}</>
+                                <>
+                                    <span className="text-slate-500">Trạm</span>
+                                    <span className="font-medium">{fromStation.name}</span>
+                                    <span className="text-slate-400">•</span>
+                                    <span className="font-mono">ID: {fromStation.id}</span>
+                                </>
                             )}
                         </div>
                     </div>
@@ -117,11 +122,11 @@ export default function TransferManagement() {
             {/* Filter */}
 
             <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Bộ lọc</CardTitle>
+                <CardHeader className="pb-0">
+                    <CardTitle className="text-sm font-semibold">Bộ lọc</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                    <div className="md:col-span-2">
+                <CardContent className="pt-4 grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-3">
+                    <div className="md:col-span-3 lg:col-span-5">
                         <Label className="text-xs text-slate-500">Tìm kiếm</Label>
                         <div className="relative">
                             <Search className="w-4 h-4 text-slate-400 absolute left-2 top-2.5" />
@@ -133,7 +138,7 @@ export default function TransferManagement() {
                             />
                         </div>
                     </div>
-                    <div>
+                    <div className="md:col-span-2 lg:col-span-2">
                         <Label className="text-xs text-slate-500">Trạng thái</Label>
                         <Select>
                             <SelectTrigger><SelectValue placeholder="Tất cả" /></SelectTrigger>
@@ -147,7 +152,7 @@ export default function TransferManagement() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div>
+                    <div className="md:col-span-2 lg:col-span-2">
                         <Label className="text-xs text-slate-500">Thời gian</Label>
                         <Select>
                             <SelectTrigger><SelectValue placeholder="Tất cả" /></SelectTrigger>
@@ -158,18 +163,16 @@ export default function TransferManagement() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div>
+                    <div className="md:col-span-1 lg:col-span-1">
                         <Label className="text-xs text-slate-500">Số lượng từ</Label>
-                        <Input type="number" min={0}  placeholder="Min" />
+                        <Input type="number" min={0} placeholder="Min" />
                     </div>
-                    <div>
+                    <div className="md:col-span-1 lg:col-span-1">
                         <Label className="text-xs text-slate-500">Số lượng đến</Label>
-                        <Input type="number" min={0}  placeholder="Max" />
+                        <Input type="number" min={0} placeholder="Max" />
                     </div>
-                    <div className="flex items-end">
-                        <Button variant="outline" >
-                            Xoá lọc
-                        </Button>
+                    <div className="flex items-end md:col-span-1 lg:col-span-1">
+                        <Button variant="outline" className="w-full">Xoá lọc</Button>
                     </div>
                 </CardContent>
             </Card>
@@ -177,7 +180,7 @@ export default function TransferManagement() {
             {/* Transfer List */}
             <Card className="mt-4">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Danh sách yêu cầu điều phối</CardTitle>
+                    <CardTitle className="text-sm font-semibold">Danh sách yêu cầu điều phối</CardTitle>
                 </CardHeader>
                 <CardContent className="overflow-x-auto">
                     {listLoading ? (
@@ -188,7 +191,7 @@ export default function TransferManagement() {
                         <div className="p-6 text-slate-500">Chưa có yêu cầu nào.</div>
                     ) : (
                         <table className="w-full text-sm">
-                            <thead className="border-b bg-slate-50">
+                            <thead className="border-b bg-slate-50 sticky top-0 z-[1]">
                                 <tr>
                                     <th className="text-left py-2 px-3">STT</th>
                                     <th className="text-left py-2 px-3">Ngày</th>
@@ -216,7 +219,7 @@ export default function TransferManagement() {
                                             <td className="py-2 px-3">{qty}</td>
                                             <td className="py-2 px-3 max-w-[260px] whitespace-nowrap overflow-hidden text-ellipsis" title={r.notes || ''}>{r.notes || '-'}</td>
                                             <td className="py-2 px-3">
-                                                <Badge className={statusClass(r.status)}>
+                                                <Badge className={`${statusClass(r.status)} rounded-full px-2.5 py-0.5 capitalize`}>
                                                     {r.status || 'unknown'}
                                                 </Badge>
                                             </td>

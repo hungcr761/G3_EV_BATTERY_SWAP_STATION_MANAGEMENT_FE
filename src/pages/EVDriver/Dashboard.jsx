@@ -24,7 +24,6 @@ import {
     AlertCircle,
     QrCode,
     ChevronRight,
-    MessageSquare,
     Loader2
 } from 'lucide-react';
 
@@ -42,9 +41,7 @@ const Dashboard = () => {
             .join(' ');
     };
 
-    const [showMockTest, setShowMockTest] = useState(false);
     const [showProfileUpdate, setShowProfileUpdate] = useState(false);
-    const [showVehicleManagement, setShowVehicleManagement] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [isCancelling, setIsCancelling] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -313,7 +310,7 @@ const Dashboard = () => {
                         </Card>
                     </div>
 
-                    {/* Upcoming Bookings & Quick Actions */}
+                    {/* Upcoming Bookings */}
                     <div className="space-y-6">
                         {/* Upcoming Bookings */}
                         <Card className="border-slate-200/60 shadow-md hover:shadow-lg transition-shadow duration-300 bg-white/80 backdrop-blur-sm">
@@ -396,55 +393,6 @@ const Dashboard = () => {
                                         New Booking
                                     </Button>
                                 </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Quick Actions */}
-                        <Card className="border-slate-200/60 shadow-lg bg-white/90 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-                            <CardHeader>
-                                <CardTitle className="text-xl font-bold text-slate-800">Quick Actions</CardTitle>
-                                <CardDescription className="text-xl">
-                                    Frequently used functions
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                                <Button className="w-full justify-between group bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-slate-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-400 hover:text-blue-700 transition-all duration-200"
-                                    variant="outline"
-                                    onClick={() => navigate('/paymentHistory')}>
-                                    <span className="flex items-center">
-                                        <CreditCard className="mr-2 h-4 w-4" />
-                                        Payment History
-                                    </span>
-                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-                                </Button>
-                                <Button className="w-full justify-between group bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 text-slate-700 hover:from-purple-100 hover:to-pink-100 hover:border-purple-400 hover:text-purple-700 transition-all duration-200"
-                                    variant="outline">
-                                    <span className="flex items-center">
-                                        <Battery className="mr-2 h-4 w-4" />
-                                        Battery Swap History
-                                    </span>
-                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-                                </Button>
-                                <Button
-                                    className="w-full justify-between group bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 text-slate-700 hover:from-emerald-100 hover:to-teal-100 hover:border-emerald-400 hover:text-emerald-700 transition-all duration-200"
-                                    variant="outline"
-                                    onClick={() => navigate('/vehiclesManagement')}
-                                >
-                                    <span className="flex items-center">
-                                        <Motorbike className="mr-2 h-4 w-4" />
-                                        Vehicle Management
-                                    </span>
-                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-                                </Button>
-                                <Button className="w-full justify-between group bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 text-slate-700 hover:from-amber-100 hover:to-orange-100 hover:border-amber-400 hover:text-amber-700 transition-all duration-200"
-                                    variant="outline"
-                                    onClick={() => navigate('/subscriptionManagement')}>
-                                    <span className="flex items-center">
-                                        <CreditCard className="mr-2 h-4 w-4" />
-                                        Subscriptions Management
-                                    </span>
-                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-                                </Button>
                             </CardContent>
                         </Card>
                     </div>
