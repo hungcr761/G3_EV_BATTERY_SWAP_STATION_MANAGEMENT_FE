@@ -23,29 +23,32 @@ const BookingConfirmation = ({
 }) => {
     const [countdown, setCountdown] = useState(0);
     const [bookingStartTime] = useState(new Date());
+    const [bookingEndTime] = useState(() => {
+        const now = new Date();
+        return new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
+    });
 
     React.useEffect(() => {
-        if (selectedTime && selectedTime.time) {
-            const now = new Date();
-            const selectedDateTime = new Date(selectedTime.time);
-            const timeDiff = selectedDateTime.getTime() - now.getTime();
-            const secondsDiff = Math.max(0, Math.floor(timeDiff / 1000));
+        // Calculate countdown to end time (30 minutes from now)
+        const now = new Date();
+        const endTime = bookingEndTime;
+        const timeDiff = endTime.getTime() - now.getTime();
+        const secondsDiff = Math.max(0, Math.floor(timeDiff / 1000));
 
-            setCountdown(secondsDiff);
+        setCountdown(secondsDiff);
 
-            const interval = setInterval(() => {
-                setCountdown(prev => {
-                    if (prev <= 0) {
-                        clearInterval(interval);
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
+        const interval = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 0) {
+                    clearInterval(interval);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
 
-            return () => clearInterval(interval);
-        }
-    }, [selectedTime]);
+        return () => clearInterval(interval);
+    }, [bookingEndTime]);
 
     const formatCountdown = (seconds) => {
         const minutes = Math.floor(seconds / 60);
@@ -74,12 +77,9 @@ const BookingConfirmation = ({
 
     const isTimeExpired = countdown <= 0;
     const getActiveTimeRange = () => {
-        if (!selectedTime || !selectedTime.time) return { start: '', end: '' };
-        const startTime = bookingStartTime;
-        const endTime = new Date(selectedTime.time);
         return {
-            start: formatTime(startTime),
-            end: formatTime(endTime)
+            start: formatTime(bookingStartTime),
+            end: formatTime(bookingEndTime)
         };
     };
 
@@ -192,12 +192,9 @@ const BookingConfirmation = ({
                     <div className="space-y-3">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Date:</span>
-                            <span className="font-medium">{selectedTime?.time ? formatDate(selectedTime.time) : 'Loading...'}</span>
+                            <span className="font-medium">{formatDate(bookingStartTime)}</span>
                         </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Arrival Time:</span>
-                            <span className="font-medium">{selectedTime?.time ? formatTime(selectedTime.time) : 'Loading...'}</span>
-                        </div>
+
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Active Time:</span>
                             <span className="font-medium">

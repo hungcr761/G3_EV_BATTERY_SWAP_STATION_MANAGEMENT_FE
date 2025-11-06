@@ -27,7 +27,7 @@ export const useStation = () => {
 
             const response = await stationAPI.getAll();
             // Handle the API response structure: { success: true, payload: { stations: [...] } }
-            const stationsData = response.data?.payload?.stations || response.data?.stations || [];
+            const stationsData = response.data?.payload?.stations.sort((a, b) => a.station_id - b.station_id) || response.data?.stations.sort((a, b) => a.station_id - b.station_id) || [];
 
             // Transform the data to match our expected structure
             const transformedStations = stationsData.map(transformStation);

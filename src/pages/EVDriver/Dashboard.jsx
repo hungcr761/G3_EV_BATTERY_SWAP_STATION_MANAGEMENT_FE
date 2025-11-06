@@ -141,8 +141,8 @@ const Dashboard = () => {
         id: booking.booking_id,
         station: booking.station?.station_name || 'Trạm không xác định',
         address: booking.station?.address || '',
-        date: new Date(booking.scheduled_time).toLocaleDateString('vi-VN'),
-        time: new Date(booking.scheduled_time).toLocaleTimeString('vi-VN', {
+        date: new Date(booking.create_time).toLocaleDateString('vi-VN'),
+        time: new Date(booking.expired_time).toLocaleTimeString('vi-VN', {
             hour: '2-digit',
             minute: '2-digit'
         }),

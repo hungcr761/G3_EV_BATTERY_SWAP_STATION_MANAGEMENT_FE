@@ -16,17 +16,26 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useAuth } from '../../hooks/useAuth';
 
 const AdminLayout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [showUserMenu, setShowUserMenu] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
     const location = useLocation();
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
 
     const handleLogout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        logout();
         navigate('/login');
     };
 
@@ -138,38 +147,55 @@ const AdminLayout = ({ children }) => {
                             <div className="flex flex-1"></div>
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
                                 {/* Notifications */}
-                                <button
+                                {/* <button
                                     type="button"
                                     className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500"
                                 >
                                     <Bell className="h-6 w-6" />
-                                </button>
+                                </button> */}
 
                                 {/* Profile dropdown */}
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setShowUserMenu(!showUserMenu)}
-                                        className="flex items-center gap-x-2 text-sm font-semibold leading-6 text-gray-900"
-                                    >
-                                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                                            <User className="w-5 h-5" />
-                                        </div>
-                                        <span className="hidden lg:block">Admin User</span>
-                                        <ChevronDown className="h-4 w-4" />
-                                    </button>
-
-                                    {showUserMenu && (
-                                        <div className="absolute right-0 z-10 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5">
-                                            <button
-                                                onClick={handleLogout}
-                                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                            >
-                                                <LogOut className="h-4 w-4 mr-2" />
-                                                Sign out
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="flex items-center space-x-2">
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarImage src={user?.avatar} alt={user?.fullname} />
+                                                <AvatarFallback>
+                                                    {user?.fullname?.charAt(0) || user?.username?.charAt(0) || 'A'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col items-start">
+                                                <span className="text-sm font-medium">{user?.fullname || 'Admin User'}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {user?.role === 'admin' ? 'Admin' : user?.role || 'Admin'}
+                                                </span>
+                                            </div>
+                                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <DropdownMenuLabel>
+                                            <div className="flex flex-col space-y-1">
+                                                <p className="text-sm font-medium leading-none">{user?.fullname || 'Admin User'}</p>
+                                                <p className="text-xs leading-none text-muted-foreground">
+                                                    {user?.email || 'admin@example.com'}
+                                                </p>
+                                            </div>
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem asChild>
+                                            <Link to="/settings" className="cursor-pointer">
+                                                <Settings className="mr-2 h-4 w-4" />
+                                                <span>Settings</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
+                                            <LogOut className="mr-2 h-4 w-4" />
+                                            <span>Sign out</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
                     </div>

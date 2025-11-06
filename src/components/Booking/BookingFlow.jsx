@@ -10,7 +10,6 @@ import BookingSuccess from './BookingSuccess';
 
 const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClose }) => {
     const [currentStep, setCurrentStep] = useState(1);
-    const [scheduledTime, setScheduledTime] = useState(null);
     const [selectedBatteries, setSelectedBatteries] = useState([]);
     const [availabilityData, setAvailabilityData] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,13 +21,6 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     const timerRef = useRef(null);
     const deleteTimerRef = useRef(null);
 
-    // Auto-set scheduled_time to now + 1 hour
-    useEffect(() => {
-        const now = new Date();
-        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-        setScheduledTime(oneHourLater);
-    }, []);
-
     // Check availability when vehicle is selected
     useEffect(() => {
         if (selectedVehicle && selectedStation) {
@@ -39,27 +31,22 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
     // Handle booking timer when booking is created
     useEffect(() => {
-        if (bookingId && scheduledTime) {
+        if (bookingId) {
             // Booking is active immediately when created
             setIsBookingActive(true);
 
-            // Set timer to cancel booking at scheduled time
-            const now = new Date();
-            const scheduledDateTime = new Date(scheduledTime);
-            const timeDiff = scheduledDateTime.getTime() - now.getTime();
-
-            if (timeDiff > 0) {
-                deleteTimerRef.current = setTimeout(() => {
-                    handleAutoDeleteBooking();
-                }, timeDiff);
-            }
+            // Set timer to cancel booking at end time (30 minutes from creation)
+            const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
+            deleteTimerRef.current = setTimeout(() => {
+                handleAutoDeleteBooking();
+            }, thirtyMinutes);
         }
 
         return () => {
             if (timerRef.current) clearTimeout(timerRef.current);
             if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
         };
-    }, [bookingId, scheduledTime]);
+    }, [bookingId]);
 
     const checkAvailability = async () => {
         try {
@@ -113,7 +100,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
     // Auto-navigate to appropriate step based on vehicle battery slots
     useEffect(() => {
-        if (selectedVehicle && scheduledTime) {
+        if (selectedVehicle) {
             // Check if vehicle has multiple battery slots
             if (selectedVehicle.model?.battery_slot > 1) {
                 // Stay on step 1 (battery selection) for multi-slot vehicles
@@ -124,7 +111,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                 setCurrentStep(1);
             }
         }
-    }, [selectedVehicle, scheduledTime]);
+    }, [selectedVehicle]);
 
     const handleNext = () => {
         const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
@@ -141,7 +128,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     };
 
     const handleConfirmBooking = async () => {
-        if (!selectedVehicle || !scheduledTime || !selectedStation) {
+        if (!selectedVehicle || !selectedStation) {
             setError('Missing required information to make a booking');
             return;
         }
@@ -154,7 +141,6 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             const bookingData = {
                 station_id: selectedStation.id,
                 vehicle_id: selectedVehicle.vehicle_id,
-                scheduled_time: scheduledTime.toISOString(),
                 battery_quantity: batteryQuantity,
             };
 
@@ -191,7 +177,13 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     create_time: bookingResponse.create_time,
                     scheduled_end_time: bookingResponse.scheduled_end_time
                 });
-                setCurrentStep(4); // Success step
+
+                // Set correct step based on vehicle type
+                const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
+                const successStep = hasMultipleSlots ? 3 : 2;
+                console.log('Booking created successfully, moving to step:', successStep, 'hasMultipleSlots:', hasMultipleSlots);
+                console.log('Booking response data:', bookingResponse);
+                setCurrentStep(successStep);
                 onBookingSuccess?.(response.data);
             } else {
                 setError(response.data?.message || 'Unable to create booking');
@@ -224,6 +216,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
 
     const renderStepContent = () => {
         const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
+        console.log('renderStepContent - currentStep:', currentStep, 'hasMultipleSlots:', hasMultipleSlots, 'bookingData exists:', !!bookingData);
 
         if (hasMultipleSlots) {
             // Multi-slot vehicle flow: Battery Selection -> Confirmation -> Success
@@ -241,7 +234,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     return (
                         <BookingConfirmation
                             selectedVehicle={selectedVehicle}
-                            selectedTime={{ time: scheduledTime }}
+                            selectedTime={null}
                             selectedStation={selectedStation}
                             selectedBatteries={selectedBatteries}
                             onConfirm={handleConfirmBooking}
@@ -250,6 +243,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                         />
                     );
                 case 3:
+                    console.log('Rendering BookingSuccess for multi-slot, bookingData:', bookingData);
                     return (
                         <BookingSuccess
                             bookingData={bookingData}
@@ -266,7 +260,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     return (
                         <BookingConfirmation
                             selectedVehicle={selectedVehicle}
-                            selectedTime={{ time: scheduledTime }}
+                            selectedTime={null}
                             selectedStation={selectedStation}
                             selectedBatteries={selectedBatteries}
                             onConfirm={handleConfirmBooking}
@@ -275,6 +269,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                         />
                     );
                 case 2:
+                    console.log('Rendering BookingSuccess for single-slot, bookingData:', bookingData);
                     return (
                         <BookingSuccess
                             bookingData={bookingData}

@@ -26,20 +26,25 @@ const BookingSuccess = ({ bookingData, onClose }) => {
 
     // Update countdown every second
     useEffect(() => {
-        if (bookingData?.scheduled_time) {
+        console.log('Countdown effect triggered, scheduled_end_time:', bookingData?.scheduled_end_time);
+        if (bookingData?.scheduled_end_time) {
             const updateCountdown = () => {
                 const now = new Date();
-                const scheduledTime = new Date(bookingData.scheduled_time);
-                const timeDiff = scheduledTime.getTime() - now.getTime();
-                setCountdown(Math.max(0, Math.floor(timeDiff / 1000)));
+                const endTime = new Date(bookingData.scheduled_end_time);
+                const timeDiff = endTime.getTime() - now.getTime();
+                const seconds = Math.max(0, Math.floor(timeDiff / 1000));
+                console.log('Countdown update:', seconds, 'seconds');
+                setCountdown(seconds);
             };
 
             updateCountdown();
             const interval = setInterval(updateCountdown, 1000);
 
             return () => clearInterval(interval);
+        } else {
+            console.log('No scheduled_end_time, countdown not started');
         }
-    }, [bookingData?.scheduled_time]);
+    }, [bookingData?.scheduled_end_time]);
 
     const formatTime = (timeString) => {
         if (!timeString) return '';
@@ -63,14 +68,28 @@ const BookingSuccess = ({ bookingData, onClose }) => {
     };
 
     const getActiveTimeRange = () => {
-        if (!bookingData?.scheduled_time) return { start: '', end: '' };
-        const now = new Date();
-        const endTime = new Date(bookingData.scheduled_time);
+        console.log('getActiveTimeRange called');
+        console.log('create_time exists:', !!bookingData?.create_time);
+        console.log('scheduled_end_time exists:', !!bookingData?.scheduled_end_time);
 
-        return {
-            start: formatTime(now.toISOString()),
+        if (!bookingData?.create_time || !bookingData?.scheduled_end_time) {
+            console.log('Missing time data, returning empty');
+            return { start: '', end: '' };
+        }
+
+        const startTime = new Date(bookingData.create_time);
+        const endTime = new Date(bookingData.scheduled_end_time);
+
+        console.log('startTime:', startTime);
+        console.log('endTime:', endTime);
+
+        const result = {
+            start: formatTime(startTime.toISOString()),
             end: formatTime(endTime.toISOString())
         };
+
+        console.log('Active time range result:', result);
+        return result;
     };
 
     const formatCountdown = (seconds) => {
@@ -79,6 +98,21 @@ const BookingSuccess = ({ bookingData, onClose }) => {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    console.log('Rendering BookingSuccess component');
+    console.log('bookingData exists:', !!bookingData);
+
+    if (!bookingData) {
+        console.warn('WARNING: bookingData is null/undefined');
+        return (
+            <div className="space-y-6">
+                <div className="text-center p-8">
+                    <p className="text-red-600">Error: No booking data available</p>
+                    <p className="text-sm text-muted-foreground mt-2">Check console for details</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             <div className="text-center">
@@ -86,10 +120,10 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                     <CheckCircle className="h-8 w-8 text-green-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                    Đặt lịch thành công!
+                    Booking Successful!
                 </h2>
                 <p className="text-muted-foreground">
-                    Lệnh đặt lịch đã được tạo và sẽ có hiệu lực đến {bookingData?.scheduled_time ? formatTime(bookingData.scheduled_time) : 'N/A'}
+                    Booking has been created and will be active until {bookingData?.scheduled_end_time ? formatTime(bookingData.scheduled_end_time) : 'N/A'}
                 </p>
             </div>
 
@@ -98,56 +132,67 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <Clock className="h-5 w-5" />
-                        <span>Thông tin đặt lịch</span>
+                        <span>Booking Information</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         {/* Active Time Range */}
-                        {bookingData?.scheduled_time && (
-                            <div className="p-4 rounded-lg border bg-blue-50 border-blue-200 mb-4">
-                                <div className="flex items-center justify-center space-x-2">
-                                    <Clock className="h-5 w-5 text-blue-600" />
-                                    <span className="font-bold text-lg text-blue-700">
-                                        {getActiveTimeRange().start} - {getActiveTimeRange().end}
-                                    </span>
-                                </div>
-                                <p className="text-center text-sm mt-1 text-blue-600">
-                                    Thời gian lệnh đặt sẽ active
-                                </p>
-                                {countdown > 0 && (
-                                    <div className="mt-2 text-center">
-                                        <p className="text-sm text-blue-600">
-                                            Còn lại: {formatCountdown(countdown)} để đến trạm
-                                        </p>
+                        {(() => {
+                            const hasCreateTime = !!bookingData?.create_time;
+                            const hasEndTime = !!bookingData?.scheduled_end_time;
+                            console.log('Active Time Range check:', { hasCreateTime, hasEndTime, create_time: bookingData?.create_time, scheduled_end_time: bookingData?.scheduled_end_time });
+                            return hasCreateTime && hasEndTime;
+                        })() && (
+                                <div className="p-4 rounded-lg border bg-blue-50 border-blue-200 mb-4">
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <Clock className="h-5 w-5 text-blue-600" />
+                                        <span className="font-bold text-lg text-blue-700">
+                                            {getActiveTimeRange().start} - {getActiveTimeRange().end}
+                                        </span>
                                     </div>
-                                )}
-                            </div>
-                        )}
+                                    <p className="text-center text-sm mt-1 text-blue-600">
+                                        Booking active time
+                                    </p>
+                                    {countdown > 0 && (
+                                        <div className="mt-2 text-center">
+                                            <p className="text-sm text-blue-600">
+                                                Time remaining: {formatCountdown(countdown)} to reach station
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-3">
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Mã đặt lịch:</span>
+                                    <span className="text-muted-foreground">Booking ID:</span>
                                     <span className="font-medium font-mono text-sm">
                                         {bookingData?.booking_id || 'N/A'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Trạng thái:</span>
+                                    <span className="text-muted-foreground">Status:</span>
                                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                        Đã đặt lịch
+                                        Booked
                                     </Badge>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Ngày:</span>
+                                    <span className="text-muted-foreground">Date:</span>
                                     <span className="font-medium">
-                                        {bookingData?.scheduled_time ? formatDate(bookingData.scheduled_time) : 'N/A'}
+                                        {bookingData?.create_time ? formatDate(bookingData.create_time) : 'N/A'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Giờ đến trạm:</span>
+                                    <span className="text-muted-foreground">Start Time:</span>
                                     <span className="font-medium">
-                                        {bookingData?.scheduled_time ? formatTime(bookingData.scheduled_time) : 'N/A'}
+                                        {bookingData?.create_time ? formatTime(bookingData.create_time) : 'N/A'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">End Time:</span>
+                                    <span className="font-medium">
+                                        {bookingData?.scheduled_end_time ? formatTime(bookingData.scheduled_end_time) : 'N/A'}
                                     </span>
                                 </div>
                             </div>
@@ -155,13 +200,13 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                                 <div className="text-center">
                                     <div className="flex items-center justify-center space-x-2 mb-2">
                                         <QrCode className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-sm font-medium text-muted-foreground">Mã QR đặt lịch</span>
+                                        <span className="text-sm font-medium text-muted-foreground">Booking QR Code</span>
                                     </div>
                                     <div className="bg-white p-4 rounded-lg border-2 border-gray-200 inline-block">
                                         <canvas ref={qrCodeRef} className="block" />
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-2 max-w-[200px] text-center ml-3">
-                                        Quét mã QR này tại kiosk để xác nhận đặt lịch
+                                        Scan this QR code at the kiosk to confirm booking
                                     </p>
                                 </div>
                             </div>
@@ -175,13 +220,13 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <Motorbike className="h-5 w-5" />
-                        <span>Thông tin xe</span>
+                        <span>Vehicle Information</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Mẫu xe:</span>
+                            <span className="text-muted-foreground">Vehicle Model:</span>
                             <span className="font-medium">{bookingData?.vehicle?.modelName || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
@@ -189,11 +234,11 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                             <span className="font-medium font-mono text-sm">{bookingData?.vehicle?.vin || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Biển số:</span>
+                            <span className="text-muted-foreground">License Plate:</span>
                             <span className="font-medium">{bookingData?.vehicle?.license_plate || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Loại pin:</span>
+                            <span className="text-muted-foreground">Battery Type:</span>
                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                                 {bookingData?.vehicle?.batteryType || 'N/A'}
                             </Badge>
@@ -208,7 +253,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                     <CardHeader>
                         <CardTitle className="flex items-center space-x-2">
                             <Battery className="h-5 w-5" />
-                            <span>Thông tin pin được phân bổ</span>
+                            <span>Allocated Battery Information</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -243,23 +288,23 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <MapPin className="h-5 w-5" />
-                        <span>Thông tin trạm</span>
+                        <span>Station Information</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Tên trạm:</span>
+                            <span className="text-muted-foreground">Station Name:</span>
                             <span className="font-medium">{bookingData?.station?.name || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Địa chỉ:</span>
+                            <span className="text-muted-foreground">Address:</span>
                             <span className="font-medium text-right max-w-xs">{bookingData?.station?.address || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Trạng thái:</span>
+                            <span className="text-muted-foreground">Status:</span>
                             <Badge variant={bookingData?.station?.status === 'operational' ? 'default' : 'secondary'}>
-                                {bookingData?.station?.status === 'operational' ? 'Hoạt động' : 'Hạn chế'}
+                                {bookingData?.station?.status === 'operational' ? 'Operational' : 'Limited'}
                             </Badge>
                         </div>
                     </div>
@@ -270,7 +315,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
             {/* Action Button */}
             <div className="flex justify-center pt-4">
                 <Button onClick={onClose} size="lg" className="min-w-[200px]">
-                    Hoàn thành
+                    Complete
                 </Button>
             </div>
         </div>

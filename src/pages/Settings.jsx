@@ -13,21 +13,21 @@ const Settings = () => {
     const themes = [
         {
             value: 'light',
-                                            label: 'Light',
-                                            icon: Sun,
-                                            description: 'Light theme'
-                                        },
-                                        {
-                                            value: 'dark',
-                                            label: 'Dark',
-                                            icon: Moon,
-                                            description: 'Dark theme'
-                                        },
-                                        {
-                                            value: 'system',
-                                            label: 'System',
-                                            icon: Monitor,
-                                            description: 'Follow system'
+            label: 'Light',
+            icon: Sun,
+            description: 'Light theme'
+        },
+        {
+            value: 'dark',
+            label: 'Dark',
+            icon: Moon,
+            description: 'Dark theme'
+        },
+        {
+            value: 'system',
+            label: 'System',
+            icon: Monitor,
+            description: 'Follow system'
         }
     ];
 
@@ -120,7 +120,7 @@ const Settings = () => {
                     </Card>
 
                     {/* Other Settings */}
-                    <Card>
+                    {/* <Card>
                         <CardHeader>
                             <CardTitle>Notifications</CardTitle>
                             <CardDescription>
@@ -157,10 +157,10 @@ const Settings = () => {
                                 </div>
                             </div>
                         </CardContent>
-                    </Card>
+                    </Card> */}
 
                     {/* Account Settings */}
-                    <Card>
+                    {/* <Card>
                         <CardHeader>
                             <CardTitle>Account</CardTitle>
                             <CardDescription>
@@ -197,7 +197,7 @@ const Settings = () => {
                                 </div>
                             </div>
                         </CardContent>
-                    </Card>
+                    </Card> */}
                 </div>
             </div>
         </div>
