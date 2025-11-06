@@ -30,7 +30,7 @@ import {
 } from '../../components/ui/dialog';
 import { useStation } from '../../hooks/useStation';
 import { useApi } from '../../hooks/useApi';
-import { batteryAPI } from '../../lib/apiServices';
+import { batteryAPI, cabinetAPI } from '../../lib/apiServices';
 import { useUser } from '../../hooks/useUser';
 import { useShifts } from '../../hooks/useShifts';
 
@@ -81,6 +81,10 @@ const StationManagement = () => {
     // Fetch all shifts
     const { shifts, loading: shiftsLoading } = useShifts();
 
+    // State to store cabinet data per station
+    const [cabinetDataByStation, setCabinetDataByStation] = useState({});
+    const [cabinetLoadingByStation, setCabinetLoadingByStation] = useState({});
+
     const totalBatteries = batteriesData?.length || 0;
 
     // Get total staff from pagination
@@ -111,6 +115,75 @@ const StationManagement = () => {
 
         return result;
     }, [shifts]);
+
+    // Fetch cabinet data for all stations
+    useEffect(() => {
+        const fetchCabinetData = async () => {
+            if (!stations || stations.length === 0) return;
+
+            const newCabinetData = {};
+            const newCabinetLoading = {};
+
+            // Initialize loading states
+            stations.forEach(station => {
+                newCabinetLoading[station.id] = true;
+            });
+            setCabinetLoadingByStation(newCabinetLoading);
+
+            // Fetch cabinet data for each station
+            const promises = stations.map(async (station) => {
+                try {
+                    const response = await cabinetAPI.getByStation(station.id);
+                    const cabinets = response.data?.payload?.cabinets?.data || response.data?.cabinets?.data || [];
+                    newCabinetData[station.id] = cabinets;
+                } catch (err) {
+                    console.error(`Error fetching cabinets for station ${station.id}:`, err);
+                    newCabinetData[station.id] = [];
+                } finally {
+                    newCabinetLoading[station.id] = false;
+                }
+            });
+
+            await Promise.all(promises);
+            setCabinetDataByStation(newCabinetData);
+            setCabinetLoadingByStation(newCabinetLoading);
+        };
+
+        fetchCabinetData();
+    }, [stations]);
+
+    // Calculate battery counts per station from cabinet data
+    const batteryCountsByStation = useMemo(() => {
+        const result = {};
+
+        Object.keys(cabinetDataByStation).forEach(stationId => {
+            const cabinets = cabinetDataByStation[stationId] || [];
+
+            let totalSlots = 0;
+            let availableBatteries = 0;
+
+            cabinets.forEach(cabinet => {
+                // Sum battery_capacity to get total slots
+                totalSlots += cabinet.battery_capacity || 0;
+
+                // Count slots with non-null battery
+                if (cabinet.slots && Array.isArray(cabinet.slots)) {
+                    cabinet.slots.forEach(slot => {
+                        if (slot.battery !== null && slot.battery !== undefined) {
+                            availableBatteries++;
+                        }
+                    });
+                }
+            });
+
+            result[stationId] = {
+                available: availableBatteries,
+                total: totalSlots
+            };
+        });
+
+        return result;
+    }, [cabinetDataByStation]);
 
     // Fetch address autocomplete suggestions using Goong API
     const fetchAddressSuggestions = async (input) => {
@@ -672,7 +745,11 @@ const StationManagement = () => {
                                             <div className="flex items-center gap-2">
                                                 <Battery className="h-4 w-4 text-orange-600" />
                                                 <span className="text-sm text-gray-900">
-                                                    {station.current_battery_count || 0}/{station.max_battery_capacity || 0}
+                                                    {cabinetLoadingByStation[station.id] ? (
+                                                        '...'
+                                                    ) : (
+                                                        `${batteryCountsByStation[station.id]?.available || 0}/${batteryCountsByStation[station.id]?.total || 0}`
+                                                    )}
                                                 </span>
                                             </div>
                                         </td>

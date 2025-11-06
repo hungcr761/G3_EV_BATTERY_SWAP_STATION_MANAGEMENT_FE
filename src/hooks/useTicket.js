@@ -92,7 +92,6 @@ export default function useTicket() {
         error,
         message,
         isSubmitting,
-
         fetchTickets,
         createTicket
     };

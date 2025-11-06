@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useShifts } from '@/hooks/useShifts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,6 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeftRight, Plus, RefreshCcw, Search, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import useTransfer from '@/hooks/useTransfer';
-import { useShifts } from '@/hooks/useShifts';
 
 export default function TransferManagement() {
     const { shift, loading: shiftLoading, error: shiftError } = useShifts();
@@ -70,34 +70,29 @@ export default function TransferManagement() {
             ) : shiftError ? (
                 <div className="p-6 text-red-600">{shiftError}</div>
             ) : (
-            <div className="flex items-center justify-between pb-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-blue-50">
-                        <ArrowLeftRight className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Quản lý điều phối</h1>
-                        <div className="mt-0.5 text-sm text-slate-600 flex items-center gap-2">
-                            {fromStation && (
-                                <>
-                                    <span className="text-slate-500">Trạm</span>
-                                    <span className="font-medium">{fromStation.name}</span>
-                                    <span className="text-slate-400">•</span>
-                                    <span className="font-mono">ID: {fromStation.id}</span>
-                                </>
-                            )}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-50">
+                            <ArrowLeftRight className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold">Transfer Management</h1>
+                            <div className="text-sm text-slate-600">
+                                {fromStation && (
+                                    <>Trạm: <span className="font-medium">{fromStation.name}</span> — ID: {fromStation.id}</>
+                                )}
+                            </div>
                         </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={fetchTransfers}>
+                            <RefreshCcw className="w-4 h-4 mr-2" /> Tải lại
+                        </Button>
+                        <Button className="bg-blue-600 hover:bg-blue-700" disabled={!fromStation} onClick={() => setOpenCreate(true)}>
+                            <Plus className="w-4 h-4 mr-2" /> Create Request
+                        </Button>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={fetchTransfers}>
-                        <RefreshCcw className="w-4 h-4 mr-2" /> Tải lại
-                    </Button>
-                    <Button className="bg-blue-600 hover:bg-blue-700" disabled={!fromStation} onClick={() => setOpenCreate(true)}>
-                        <Plus className="w-4 h-4 mr-2" /> Create Request
-                    </Button>
-                </div>
-            </div>
             )}
 
             {/* Alert Message (similar to VehicleManagement) */}
@@ -133,8 +128,8 @@ export default function TransferManagement() {
                             <Input
                                 className="pl-8"
                                 placeholder="Mã yêu cầu, ghi chú..."
-                                // value={filters.search}
-                                // onChange={(e) => updateFilters({ search: e.target.value })}
+                            // value={filters.search}
+                            // onChange={(e) => updateFilters({ search: e.target.value })}
                             />
                         </div>
                     </div>
@@ -314,18 +309,18 @@ export default function TransferManagement() {
                     <div className="space-y-3">
                         <div>
                             <Label className="text-sm">Lý do điều phối</Label>
-                            <Input value={createForm.reason} onChange={(e)=>setCreateForm(f=>({...f, reason: e.target.value}))} placeholder="Nhập lý do..." />
+                            <Input value={createForm.reason} onChange={(e) => setCreateForm(f => ({ ...f, reason: e.target.value }))} placeholder="Nhập lý do..." />
                         </div>
                         <div>
                             <Label className="text-sm">Số lượng pin</Label>
-                            <Input type="number" min={1} value={createForm.quantity} onChange={(e)=>setCreateForm(f=>({...f, quantity: parseInt(e.target.value)||1}))} />
+                            <Input type="number" min={1} value={createForm.quantity} onChange={(e) => setCreateForm(f => ({ ...f, quantity: parseInt(e.target.value) || 1 }))} />
                         </div>
                         {apiError && (
                             <div className="text-sm text-red-600">{apiError}</div>
                         )}
                         <div className="flex justify-end gap-2 pt-2">
-                            <Button variant="outline" onClick={()=>setOpenCreate(false)}>Huỷ</Button>
-                            <Button className="bg-blue-600 hover:bg-blue-700" onClick={async ()=>{
+                            <Button variant="outline" onClick={() => setOpenCreate(false)}>Huỷ</Button>
+                            <Button className="bg-blue-600 hover:bg-blue-700" onClick={async () => {
                                 if (!fromStation?.id) return;
                                 try {
                                     await handleAddTransfer(
@@ -338,7 +333,7 @@ export default function TransferManagement() {
                                 } catch (e) {
                                     console.error('Create transfer failed', e);
                                 }
-                            }} disabled={isSubmitting || (parseInt(createForm.quantity,10)||0) <= 0}>
+                            }} disabled={isSubmitting || (parseInt(createForm.quantity, 10) || 0) <= 0}>
                                 {isSubmitting ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

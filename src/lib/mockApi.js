@@ -766,6 +766,8 @@ export const mockApi = {
         const updatedData = {
             fullname: profileData.fullname,
             phone_number: profileData.phone || profileData.phone_number,
+            citizen_id: profileData.citizen_id,
+            driving_license: profileData.driving_license,
         };
 
         // Update user data in mock database

@@ -141,12 +141,17 @@ export const batteryAPI = {
 export const analysisAPI = {
     getRevenue: (params) => api.get('/analysis/revenue', { params }),
     getSwaps: (params) => api.get('/analysis/swaps', { params }),
+    getSubscriptions: (params) => api.get('/analysis/subscriptions', { params }),
+    exportReport: (params) => api.get('/analysis/export', {
+        params,
+        responseType: 'blob' // Set response type to blob for binary file download
+    }),
 };
 
 
 // Shift API 
 export const shiftAPI = {
-    getCurrentShift: (params) => api.get('/shifts/current', {params}),
+    getCurrentShift: (params) => api.get('/shifts/current', { params }),
     getAll: (params) => api.get('/shifts', { params })
 };
 
@@ -160,5 +165,5 @@ export const transferAPI = {
 
 // Cabinet API (Station cabinets with slots & batteries)
 export const cabinetAPI = {
-    getByStation: (stationId) => api.get(`/cabinets/station/${stationId}`)
+    getByStation: (stationId) => api.get(`/cabinets?station_id=${stationId}`)
 };

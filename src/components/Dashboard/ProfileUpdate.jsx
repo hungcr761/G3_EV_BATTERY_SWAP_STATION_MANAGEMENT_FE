@@ -80,39 +80,73 @@ const ProfileUpdate = ({ onBack }) => {
                     type: 'error',
                     text: 'Account information not found. Please log in again.'
                 });
+                setLoading(false);
                 return;
             }
 
             // Validate form data
-            const validatedData = profileUpdateSchema.parse(formData);
+            let validatedData;
+            try {
+                validatedData = profileUpdateSchema.parse(formData);
+            } catch (validationError) {
+                if (validationError.name === 'ZodError') {
+                    // Handle validation errors
+                    const fieldErrors = {};
+                    validationError.errors.forEach((err) => {
+                        fieldErrors[err.path[0]] = err.message;
+                    });
+                    setErrors(fieldErrors);
+                    setMessage({
+                        type: 'error',
+                        text: 'Please check the information entered'
+                    });
+                    setLoading(false);
+                    return;
+                }
+                throw validationError;
+            }
 
+            // Make API call
             const response = await userAPI.updateProfile(validatedData);
 
-            if (response.data.success === true || response.data.success || response.data.account) {
-                // Update user in AuthContext - response format: account or payload.account
-                const updatedAccount = response.data.account || response.data.payload?.account;
-                if (updateUser && updatedAccount) {
-                    updateUser(updatedAccount);
+            // Check response structure
+            if (response?.data) {
+                const responseData = response.data;
+
+                // Check for success indicators
+                if (responseData.success === true || responseData.success || responseData.account || responseData.payload?.account) {
+                    // Update user in AuthContext - response format: account or payload.account
+                    const updatedAccount = responseData.account || responseData.payload?.account;
+                    if (updateUser && updatedAccount) {
+                        updateUser(updatedAccount);
+                    }
+
+                    setMessage({
+                        type: 'success',
+                        text: 'Profile updated successfully!'
+                    });
+
+                    // Auto close message after 6 seconds
+                    setTimeout(() => {
+                        setMessage({ type: '', text: '' });
+                    }, 6000);
+                } else {
+                    setMessage({
+                        type: 'error',
+                        text: responseData.message || 'Failed to update profile. Please try again.'
+                    });
                 }
-
-                setMessage({
-                    type: 'success',
-                    text: 'Profile updated successfully!'
-                });
-
-                // Auto close message after 6 seconds
-                setTimeout(() => {
-                    setMessage({ type: '', text: '' });
-                }, 6000);
             } else {
                 setMessage({
                     type: 'error',
-                    text: 'Failed to update profile. Please try again.'
+                    text: 'Invalid response from server. Please try again.'
                 });
             }
         } catch (error) {
+            console.error('Profile update error:', error);
+
             if (error.name === 'ZodError') {
-                // Handle validation errors
+                // Handle validation errors (shouldn't reach here as we catch it earlier, but just in case)
                 const fieldErrors = {};
                 error.errors.forEach((err) => {
                     fieldErrors[err.path[0]] = err.message;
@@ -122,10 +156,23 @@ const ProfileUpdate = ({ onBack }) => {
                     type: 'error',
                     text: 'Please check the information entered'
                 });
-            } else {
+            } else if (error.response) {
+                // API error response
                 setMessage({
                     type: 'error',
-                    text: error.response?.data?.message || 'An error occurred while updating information'
+                    text: error.response?.data?.message || error.response?.data?.error || 'An error occurred while updating information'
+                });
+            } else if (error.request) {
+                // Network error
+                setMessage({
+                    type: 'error',
+                    text: 'Network error. Please check your connection and try again.'
+                });
+            } else {
+                // Other errors
+                setMessage({
+                    type: 'error',
+                    text: error.message || 'An error occurred while updating information'
                 });
             }
         } finally {
