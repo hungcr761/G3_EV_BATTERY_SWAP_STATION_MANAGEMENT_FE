@@ -9,30 +9,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-    CreditCard, 
-    Package, 
-    Search, 
-    Calendar, 
-    Receipt, 
+import {
+    CreditCard,
+    Package,
+    Search,
+    Calendar,
+    Receipt,
     CheckCircle2,
     FileText,
     Car,
-    Clock
+    Clock,
+    ArrowLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router';
 
 export default function PaymentHistory() {
     const {
-        payments,
+        filteredPayments,
         loading,
         error,
         filters,
         updateFilters,
         formatPrice,
         formatDate,
-        getTotals
+        getTotals,
     } = usePaymentHistory();
 
+    const navigate = useNavigate();
     const [selectedPayment, setSelectedPayment] = useState(null);
     const [showDetailDialog, setShowDetailDialog] = useState(false);
 
@@ -76,6 +79,14 @@ export default function PaymentHistory() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Header */}
+                <Button
+                    variant='ghost'
+                    onClick={() => navigate('/dashboard')}
+                    className='mb-6 hover:bg-white/60 transition-all duration-200'
+                >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back To Dashboard
+                </Button>
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg">
                         <CreditCard className="w-8 h-8 text-white" />
@@ -122,7 +133,7 @@ export default function PaymentHistory() {
                 </div>
 
                 {/* Filters */}
-                <Card className="bg-white/80 backdrop-blur-sm border-slate-200/60 shadow-md">
+                {/* <Card className="bg-white/80 backdrop-blur-sm border-slate-200/60 shadow-md">
                     <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
                             <Search className="w-5 h-5" />
@@ -168,10 +179,10 @@ export default function PaymentHistory() {
                             </div>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Payment List */}
-                {payments.length === 0 ? (
+                {filteredPayments.length === 0 ? (
                     <Card className="bg-white/80 backdrop-blur-sm border-slate-200/60 shadow-md">
                         <CardContent className="py-12">
                             <div className="text-center">
@@ -187,7 +198,7 @@ export default function PaymentHistory() {
                     </Card>
                 ) : (
                     <div className="space-y-4">
-                        {payments.map((payment) => (
+                        {filteredPayments.map((payment) => (
                             <Card
                                 key={payment.payment_id}
                                 className="bg-white/80 backdrop-blur-sm border-slate-200/60 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300"

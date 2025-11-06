@@ -40,7 +40,9 @@ import StaffDashboard from './pages/staff/StaffBatteryManagement.jsx';
 import TransferManagement from './pages/staff/TransferManagement.jsx';
 import StaffBatteryManagement from './pages/staff/StaffBatteryManagement.jsx';
 import ShiftManagement from './pages/staff/ShiftManagement.jsx';
-import SwapManagement from './pages/EVDriver/SwapManagement.jsx';
+import SwapManagement from './pages/EVDriver/SwapHistory.jsx';
+import AdminTransferManagement from './pages/Admin/AdminTransferManagement.jsx';
+import SwapHistory from './pages/EVDriver/SwapHistory.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -187,10 +189,10 @@ function App() {
             </RoleProtectedRoute>
           } />
 
-          <Route path="/swapManagement" element={
+          <Route path="/swapHistory" element={
             <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
-                <SwapManagement/>
+                <SwapHistory/>
               </Layout>
             </RoleProtectedRoute>
           }/>
@@ -276,6 +278,13 @@ function App() {
               </AdminLayout>
             </RoleProtectedRoute>
           } />
+          <Route path="/admin/transfer" element={
+            <RoleProtectedRoute allowedRoute={['admin']}>
+              <AdminLayout>
+                <AdminTransferManagement/>
+              </AdminLayout>
+            </RoleProtectedRoute>
+          }/>
           <Route path="/admin/settings" element={
             <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
