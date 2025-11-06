@@ -9,7 +9,8 @@ export const useShifts = (options = {}) => {
         pageSize = null,
         autoFetch = true
     } = options;
-
+    // Current shift for the logged-in staff
+    const [shift , setShift] = useState(null);
     const [shifts, setShifts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -74,12 +75,46 @@ export const useShifts = (options = {}) => {
         }
     }, [fetchShifts, autoFetch]);
 
+    // Get current shift of the logged-in staff
+    const fetchCurrentShift = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // Get user info
+            const userInfor = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+            if (!userInfor) {
+                throw new Error('User not authenticated');
+            }
+
+            const user = JSON.parse(userInfor);
+
+            const res = await shiftAPI.getCurrentShift({ staff_id: user.account_id });
+            const raw = res?.data?.payload?.shift?.data || res?.data?.payload?.shift || null;
+            const normalized = Array.isArray(raw) ? (raw[0] || null) : raw;
+            setShift(normalized);
+            return normalized;
+        } catch (e) {
+            setError(e?.response?.data?.message || e?.message || 'Failed to fetch current shift');
+            setShift(null);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchCurrentShift();
+    },[fetchCurrentShift]);
+
+
     return {
         shifts,
+        shift,
         loading,
         error,
         pagination,
         fetchShifts,
+        fetchCurrentShift,
         refetch: fetchShifts
     };
 };

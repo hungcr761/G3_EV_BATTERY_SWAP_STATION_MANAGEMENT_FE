@@ -25,7 +25,12 @@ import {
     LayoutDashboard,
     Menu,
     X,
-    ChevronDown
+    ChevronDown,
+    CalendarPlus,
+    Motorbike,
+    CreditCard,
+    LifeBuoy,
+    BadgePercent
 } from 'lucide-react';
 
 const Header = () => {
@@ -39,9 +44,10 @@ const Header = () => {
     };
 
     const navigationItems = [
+        { label: 'Dashboard' , href: '/Dashboard'},
         { label: 'Booking', href: '/booking' },
         { label: 'Services', href: '/services' },
-        { label: 'Support', href: '/support' },
+        { label: 'Support', href: '/support' }
     ];
 
     return (
@@ -106,12 +112,37 @@ const Header = () => {
                                                 </div>
                                             </DropdownMenuLabel>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem asChild>
-                                                <Link to="/dashboard" className="cursor-pointer">
-                                                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                                                    <span>Dashboard</span>
-                                                </Link>
-                                            </DropdownMenuItem>
+                                            {/* Quick Actions inside user menu (driver) */}
+                                            {user?.role === 'driver' && (
+                                                <>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                                                    <DropdownMenuItem asChild>
+                                                        <Link to="/vehiclesManagement" className="cursor-pointer">
+                                                            <Motorbike className="mr-2 h-4 w-4" />
+                                                            <span>Vehicles Management</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem asChild>
+                                                        <Link to="/subscriptionManagement" className="cursor-pointer">
+                                                            <BadgePercent className="mr-2 h-4 w-4" />
+                                                            <span>Subscriptions Management</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem asChild>
+                                                        <Link to="/paymentHistory" className="cursor-pointer">
+                                                            <CreditCard className="mr-2 h-4 w-4" />
+                                                            <span>Payments Management</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem asChild>
+                                                        <Link to="/swapManagement" className="cursor-pointer">
+                                                            <LifeBuoy className="mr-2 h-4 w-4" />
+                                                            <span>Swap Management</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                </>
+                                            )}
                                             <DropdownMenuItem asChild>
                                                 <Link to="/profile" className="cursor-pointer">
                                                     <User className="mr-2 h-4 w-4" />
@@ -176,14 +207,28 @@ const Header = () => {
                                         <p className="text-sm font-medium">{user?.fullname}</p>
                                         <p className="text-xs text-muted-foreground">{user?.email}</p>
                                     </div>
-                                    <Link
-                                        to="/dashboard"
-                                        className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        <LayoutDashboard className="h-4 w-4 mr-2" />
-                                        Dashboard
-                                    </Link>
+                                    {user?.role === 'driver' && (
+                                        <>
+                                            <p className="px-3 text-xs font-semibold text-muted-foreground uppercase">Quick Actions</p>
+                                            <div className="grid grid-cols-2 gap-2 px-1">
+                                                <Link to="/booking" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
+                                                    <CalendarPlus className="h-4 w-4 mr-2" /> Booking
+                                                </Link>
+                                                <Link to="/vehiclesManagement" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
+                                                    <Motorbike className="h-4 w-4 mr-2" /> Vehicles
+                                                </Link>
+                                                <Link to="/subscriptionManagement" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
+                                                    <BadgePercent className="h-4 w-4 mr-2" /> Subscriptions
+                                                </Link>
+                                                <Link to="/paymentHistory" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
+                                                    <CreditCard className="h-4 w-4 mr-2" /> Payments
+                                                </Link>
+                                                <Link to="/support" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
+                                                    <LifeBuoy className="h-4 w-4 mr-2" /> Support
+                                                </Link>
+                                            </div>
+                                        </>
+                                    )}
                                     <Link
                                         to="/profile"
                                         className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"

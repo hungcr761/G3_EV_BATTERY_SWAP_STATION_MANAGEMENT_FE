@@ -1,9 +1,9 @@
 import { transferAPI } from '@/lib/apiServices';
 import React, { useCallback, useEffect, useState } from 'react'
-import useShift from './useShift';
+import { useShifts } from './useShifts';
 
 export default function useTransfer() {
-  const { shift } = useShift(); 
+  const { shift } = useShifts(); 
   const [transfer, setTransfer] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({type: '', text: ''});

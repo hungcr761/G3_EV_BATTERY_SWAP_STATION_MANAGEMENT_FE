@@ -146,14 +146,19 @@ export const analysisAPI = {
 
 // Shift API 
 export const shiftAPI = {
-    getCurrentShift: () => api.get('/shifts/current'),
+    getCurrentShift: (params) => api.get('/shifts/current', {params}),
     getAll: (params) => api.get('/shifts', { params })
 };
 
 // Transfer API
 export const transferAPI = {
-    getByStation: () => api.get('/transfers/request'),
+    getByStation: (params) => api.get('/transfers/request', { params }),
     create: (data) => api.post('/transfers/request', data),
     cancel: (id) => USE_MOCK_API ? mockApi.cancelTransferRequest(id) : api.patch(`/transfers/${id}/cancel`),
     confirmArrival: (id) => USE_MOCK_API ? mockApi.confirmTransferArrival(id) : api.patch(`/transfers/${id}/confirm-arrival`),
+};
+
+// Cabinet API (Station cabinets with slots & batteries)
+export const cabinetAPI = {
+    getByStation: (stationId) => api.get(`/cabinets/station/${stationId}`)
 };
