@@ -153,6 +153,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             const response = await bookingAPI.create(bookingData);
 
             if (response.data && response.data.booking) {
+                console.log('Booking created successfully:', response.data.booking);
                 const bookingResponse = response.data.booking;
                 setBookingId(bookingResponse.booking_id);
                 setBookingData({
@@ -175,7 +176,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     driver: bookingResponse.driver,
                     batteries: bookingResponse.batteries,
                     create_time: bookingResponse.create_time,
-                    scheduled_end_time: bookingResponse.scheduled_end_time
+                    expired_time: bookingResponse.expired_time
                 });
 
                 // Set correct step based on vehicle type
