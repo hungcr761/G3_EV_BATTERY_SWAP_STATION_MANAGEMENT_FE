@@ -45,8 +45,8 @@ export default function useTransfer() {
     }
     try {
       const res = await batteryAPI.getSummaryByStation(stationId);
-      // Accept flexible response shapes
       const data = res?.data?.data || res?.data?.payload || res?.data || {};
+      console.log(data);
       setShortage({
         TotalBatteries: Number(data.TotalBatteries) || 0,
         AvailableForSwap: Number(data.AvailableForSwap) || 0,

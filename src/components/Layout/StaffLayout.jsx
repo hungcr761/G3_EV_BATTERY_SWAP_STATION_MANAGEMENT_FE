@@ -175,10 +175,10 @@ export default function StaffLayout({ children }) {
                                         </DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem asChild>
-                                            <Link to="/settings" className="cursor-pointer">
+                                            {/* <Link to="/settings" className="cursor-pointer">
                                                 <Settings className="mr-2 h-4 w-4" />
                                                 <span>Settings</span>
-                                            </Link>
+                                            </Link> */}
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
