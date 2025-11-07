@@ -104,7 +104,7 @@ export default function StaffBatteryManagement() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex items-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Đang tải dữ liệu...</span>
+          <span>Loading data...</span>
         </div>
       </div>
     );
@@ -115,11 +115,11 @@ export default function StaffBatteryManagement() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Lỗi tải dữ liệu</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load data</h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <Button onClick={refetch} className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" />
-            Thử lại
+            Retry
           </Button>
         </div>
       </div>
@@ -131,20 +131,20 @@ export default function StaffBatteryManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý pin tại trạm</h1>
-          <p className="mt-2 text-gray-600">Xem danh sách tủ và ô chứa pin của trạm bạn đang trực</p>
+          <h1 className="text-3xl font-bold text-gray-900">Station Battery Management</h1>
+          <p className="mt-2 text-gray-600">View cabinets and battery slots at your current station</p>
           {inShift && (
             <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
               <MapPin className="h-4 w-4" />
               <span>
-                Ca hiện tại tại trạm: <span className="font-medium text-gray-700">{shift?.station?.station_name || `#${shift?.station_id}`}</span>
+                Current shift at station: <span className="font-medium text-gray-700">{shift?.station?.station_name || `#${shift?.station_id}`}</span>
               </span>
             </div>
           )}
         </div>
         <Button variant="outline" onClick={refetch} className="flex items-center gap-2">
           <RefreshCw className="h-4 w-4" />
-          Tải lại
+          Refresh
         </Button>
       </div>
 
@@ -154,7 +154,7 @@ export default function StaffBatteryManagement() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-yellow-800">
               <AlertTriangle className="h-5 w-5" />
-              <p className="text-sm">Bạn hiện không trong ca làm – danh sách sẽ trống.</p>
+              <p className="text-sm">You are not currently on shift — the list will be empty.</p>
             </div>
           </CardContent>
         </Card>
@@ -169,7 +169,7 @@ export default function StaffBatteryManagement() {
                 <Box className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng số tủ</p>
+                <p className="text-sm font-medium text-gray-600">Total cabinets</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.totalCabinets}</p>
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function StaffBatteryManagement() {
                 <Battery className="h-6 w-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tổng số pin</p>
+                <p className="text-sm font-medium text-gray-600">Total batteries</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.totalBatteries}</p>
               </div>
             </div>
@@ -193,7 +193,7 @@ export default function StaffBatteryManagement() {
                 <CheckCircle className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Ô đã sử dụng</p>
+                <p className="text-sm font-medium text-gray-600">Occupied slots</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.occupiedSlots}</p>
               </div>
             </div>
@@ -205,7 +205,7 @@ export default function StaffBatteryManagement() {
                 <Activity className="h-6 w-6 text-orange-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Ô còn trống</p>
+                <p className="text-sm font-medium text-gray-600">Available slots</p>
                 <p className="text-2xl font-semibold text-gray-900">{stats.availableSlots}</p>
               </div>
             </div>
@@ -221,7 +221,7 @@ export default function StaffBatteryManagement() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Tìm kiếm theo serial pin hoặc mã tủ..."
+                  placeholder="Search by battery serial or cabinet code..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -234,7 +234,7 @@ export default function StaffBatteryManagement() {
                 onChange={(e) => setFilterCabinet(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
-                <option value="all">Tất cả tủ</option>
+                <option value="all">All cabinets</option>
                 {cabinetCodes.map(code => (
                   <option key={code} value={code}>{code}</option>
                 ))}
@@ -249,7 +249,7 @@ export default function StaffBatteryManagement() {
         <Card className="overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold">
-              Danh sách pin tại trạm {shift?.station?.station_name || `#${shift?.station_id}`}
+              Batteries at station {shift?.station?.station_name || `#${shift?.station_id}`}
             </CardTitle>
           </CardHeader>
           <CardContent className="overflow-x-auto">
@@ -257,7 +257,7 @@ export default function StaffBatteryManagement() {
               <div className="flex items-center justify-center p-12">
                 <div className="text-center text-gray-500">
                   <Battery className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p>{searchTerm || filterCabinet !== 'all' ? 'Không tìm thấy pin phù hợp' : 'Chưa có pin trong các tủ tại trạm'}</p>
+                  <p>{searchTerm || filterCabinet !== 'all' ? 'No matching batteries found' : 'No batteries in station cabinets yet'}</p>
                 </div>
               </div>
             ) : (
@@ -278,16 +278,16 @@ export default function StaffBatteryManagement() {
                         SoH
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tủ
+                        Cabinet
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ô
+                        Slot
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Điện áp (V)
+                        Voltage (V)
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Dòng (A)
+                        Current (A)
                       </th>
                     </tr>
                   </thead>
@@ -328,7 +328,7 @@ export default function StaffBatteryManagement() {
       {/* Cabinets Grid */}
       {inShift && filteredCabinets.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Chi tiết các tủ pin</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Cabinet details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-8 gap-10">
             {filteredCabinets.map((cab) => {
               const occupiedCount = (cab.slots || []).filter(s => s?.battery).length;
@@ -348,7 +348,7 @@ export default function StaffBatteryManagement() {
                     <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Battery className="h-4 w-4" />
-                        <span>Sức chứa: {totalSlots}</span>
+                        <span>Capacity: {totalSlots}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Zap className="h-4 w-4" />
@@ -357,7 +357,7 @@ export default function StaffBatteryManagement() {
                     </div>
                     <div className="mt-2">
                       <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                        <span>Đã sử dụng: {occupiedCount}/{totalSlots}</span>
+                        <span>Occupied: {occupiedCount}/{totalSlots}</span>
                         <span>{totalSlots > 0 ? Math.round((occupiedCount / totalSlots) * 100) : 0}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -380,7 +380,7 @@ export default function StaffBatteryManagement() {
                               ? 'bg-emerald-50 border-emerald-300 hover:bg-emerald-100'
                               : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                               }`}
-                            title={occupied ? `${slot?.battery?.battery_serial} • SoC ${slot?.battery?.current_soc}% • SoH ${slot?.battery?.current_soh}%` : 'Ô trống'}
+                            title={occupied ? `${slot?.battery?.battery_serial} • SoC ${slot?.battery?.current_soc}% • SoH ${slot?.battery?.current_soh}%` : 'Empty slot'}
                           >
                             <div className="flex items-center justify-between mb-2 gap-1">
                               <span className="font-semibold text-gray-900 whitespace-nowrap">#{slot.slot_number}</span>
@@ -408,7 +408,7 @@ export default function StaffBatteryManagement() {
                                 </div>
                               </div>
                             ) : (
-                              <div className="text-gray-400 text-xs pt-1 text-center">Ô trống</div>
+                              <div className="text-gray-400 text-xs pt-1 text-center">Empty slot</div>
                             )}
                           </div>
                         );
@@ -427,7 +427,7 @@ export default function StaffBatteryManagement() {
         <Card>
           <CardContent className="py-12 text-center">
             <Box className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600">Không có dữ liệu tủ pin.</p>
+            <p className="text-gray-600">No cabinet data.</p>
           </CardContent>
         </Card>
       )}

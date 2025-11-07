@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import {
     Battery,
-    Plus,
     Search,
     Filter,
     MoreVertical,
-    Edit,
     Trash2,
     Eye,
     AlertTriangle,
     CheckCircle,
     Clock,
     TrendingUp,
-    TrendingDown,
     MapPin,
     Activity,
     Zap
@@ -23,6 +20,7 @@ import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { useApi } from '../../hooks/useApi';
 import { batteryAPI, batteryTypeAPI, stationAPI } from '../../lib/apiServices';
+// Removed transfer management from this page; handled in AdminTransferManagement
 
 const BatteryManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -30,9 +28,9 @@ const BatteryManagement = () => {
     const [filterStation, setFilterStation] = useState('all');
 
 
-    const { data: apiBatteries, loading: batteriesLoading, error: batteriesError } = useApi(batteryAPI.getAll, []);
-    const { data: apiBatteryTypes, loading: batteryTypesLoading, error: batteryTypesError } = useApi(batteryTypeAPI.getAll, []);
-    const { data: apiStations, loading: stationsLoading, error: stationsError } = useApi(stationAPI.getAll, []);
+    const { data: apiBatteries } = useApi(batteryAPI.getAll, []);
+    const { data: apiBatteryTypes } = useApi(batteryTypeAPI.getAll, []);
+    const { data: apiStations, loading: stationsLoading } = useApi(stationAPI.getAll, []);
 
     // Create a map of battery types by battery_type_id for quick lookup
     const batteryTypeMap = React.useMemo(() => {
@@ -204,13 +202,14 @@ const BatteryManagement = () => {
         return matchesSearch && matchesStatus && matchesStation;
     });
 
+
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Battery Management</h1>
-                    <p className="mt-2 text-gray-600">Monitor and manage battery inventory and health</p>
+                    <p className="mt-2 text-gray-600">Monitor and manage battery inventory and health.</p>
                 </div>
             </div>
 
@@ -234,7 +233,7 @@ const BatteryManagement = () => {
                             onChange={(e) => setFilterStatus(e.target.value)}
                             className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                         >
-                            <option value="all">All Status</option>
+                            <option value="all">All Statuses</option>
                             <option value="available">Available</option>
                             <option value="charging">Charging</option>
                             <option value="in_use">In Use</option>
@@ -260,6 +259,8 @@ const BatteryManagement = () => {
                     </div>
                 </div>
             </Card>
+
+            {/* Transfer requests are now managed on AdminTransferManagement page */}
 
             {/* Batteries Grid */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
@@ -297,13 +298,13 @@ const BatteryManagement = () => {
                             {/* Health Metrics */}
                             <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200">
                                 <div>
-                                    <p className="text-xs text-gray-500">State of Health</p>
+                                    <p className="text-xs text-gray-500">State of Health (SOH)</p>
                                     <p className={`text-lg font-semibold ${getSohColor(battery.soh)}`}>
                                         {battery.soh}%
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-gray-500">State of Charge</p>
+                                    <p className="text-xs text-gray-500">State of Charge (SOC)</p>
                                     <p className={`text-lg font-semibold ${getSocColor(battery.soc)}`}>
                                         {battery.soc}%
                                     </p>
@@ -313,7 +314,7 @@ const BatteryManagement = () => {
                             {/* Technical Specs */}
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <p className="text-gray-500">Battery Type</p>
+                                    <p className="text-gray-500">Battery Type Code</p>
                                     <p className="font-medium">{battery.model ?? 'N/A'}</p>
                                 </div>
                                 <div>
@@ -321,11 +322,11 @@ const BatteryManagement = () => {
                                     <p className="font-medium">{battery.cellChemistry ?? 'N/A'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-gray-500">Capacity</p>
+                                    <p className="text-gray-500">Nominal Capacity</p>
                                     <p className="font-medium">{battery.capacity != null ? `${battery.capacity} Ah` : 'N/A'}</p>
                                 </div>
                                 <div>
-                                    <p className="text-gray-500">Voltage</p>
+                                    <p className="text-gray-500">Nominal Voltage</p>
                                     <p className="font-medium">{battery.voltage != null ? `${battery.voltage}V` : 'N/A'}</p>
                                 </div>
                             </div>
@@ -405,10 +406,10 @@ const BatteryManagement = () => {
             {/* Health Trends */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Battery Health Distribution</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Battery Health Distribution (Sample)</h3>
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Excellent (90-100%)</span>
+                            <span className="text-sm text-gray-600">Excellent (90–100%)</span>
                             <div className="flex items-center gap-2">
                                 <div className="w-32 bg-gray-200 rounded-full h-2">
                                     <div className="bg-green-500 h-2 rounded-full" style={{ width: '60%' }}></div>
@@ -417,7 +418,7 @@ const BatteryManagement = () => {
                             </div>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Good (80-89%)</span>
+                            <span className="text-sm text-gray-600">Good (80–89%)</span>
                             <div className="flex items-center gap-2">
                                 <div className="w-32 bg-gray-200 rounded-full h-2">
                                     <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '20%' }}></div>
@@ -426,7 +427,7 @@ const BatteryManagement = () => {
                             </div>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Fair (70-79%)</span>
+                            <span className="text-sm text-gray-600">Fair (70–79%)</span>
                             <div className="flex items-center gap-2">
                                 <div className="w-32 bg-gray-200 rounded-full h-2">
                                     <div className="bg-orange-500 h-2 rounded-full" style={{ width: '20%' }}></div>
@@ -447,26 +448,26 @@ const BatteryManagement = () => {
                 </Card>
 
                 <Card className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Maintenance Alerts</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Maintenance Alerts (Sample)</h3>
                     <div className="space-y-3">
                         <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                             <div className="flex items-center gap-2">
                                 <AlertTriangle className="h-4 w-4 text-red-600" />
-                                <span className="text-sm font-medium text-red-800">BAT005 - Degraded</span>
+                                <span className="text-sm font-medium text-red-800">BAT005 – Degraded</span>
                             </div>
                             <span className="text-xs text-red-600">Urgent</span>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                             <div className="flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-yellow-600" />
-                                <span className="text-sm font-medium text-yellow-800">BAT003 - Maintenance Due</span>
+                                <span className="text-sm font-medium text-yellow-800">BAT003 – Maintenance Due</span>
                             </div>
                             <span className="text-xs text-yellow-600">Jan 25</span>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                             <div className="flex items-center gap-2">
                                 <CheckCircle className="h-4 w-4 text-blue-600" />
-                                <span className="text-sm font-medium text-blue-800">BAT001 - Healthy</span>
+                                <span className="text-sm font-medium text-blue-800">BAT001 – Healthy</span>
                             </div>
                             <span className="text-xs text-blue-600">Good</span>
                         </div>
