@@ -132,13 +132,13 @@ const Header = () => {
                                                     <DropdownMenuItem asChild>
                                                         <Link to="/paymentHistory" className="cursor-pointer">
                                                             <CreditCard className="mr-2 h-4 w-4" />
-                                                            <span>Payments Management</span>
+                                                            <span>Payments History</span>
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>
-                                                        <Link to="/swapManagement" className="cursor-pointer">
+                                                        <Link to="/swapHistory" className="cursor-pointer">
                                                             <LifeBuoy className="mr-2 h-4 w-4" />
-                                                            <span>Swap Management</span>
+                                                            <span>Swap History</span>
                                                         </Link>
                                                     </DropdownMenuItem>
                                                 </>

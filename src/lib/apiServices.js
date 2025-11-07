@@ -123,6 +123,7 @@ export const swapAPI = {
     executeWithBooking: (data) => api.post('/swap/execute-with-booking', data),
     executeFirstTimeWithBooking: (data) => api.post('/swap/execute-first-time-with-booking', data),
     checkFirstTimePickup: (vehicleId) => api.get(`/swap/check-first-time-pickup?vehicle_id=${vehicleId}`),
+    getSwapRecordsByDriver: (driverId) => api.get(`/swap-records/driver/${driverId}`),
 };
 
 // Ticket APIs 
@@ -167,3 +168,4 @@ export const transferAPI = {
 export const cabinetAPI = {
     getByStation: (stationId) => api.get(`/cabinets?station_id=${stationId}`)
 };
+
