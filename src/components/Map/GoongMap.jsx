@@ -7,7 +7,7 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
     const mapInstanceRef = useRef(null);
     const markersRef = useRef([]);
     const [isLoaded, setIsLoaded] = useState(false);
-    const [userLocation, setUserLocation] = useState(null);
+    // const [userLocation, setUserLocation] = useState(null);
     const [mapInitialized, setMapInitialized] = useState(false);
     
     // Use station hook
@@ -67,6 +67,7 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
                 mapInstanceRef.current = null;
             }
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Initialize map
@@ -148,7 +149,7 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
-                    setUserLocation([longitude, latitude]); // Use [lng, lat] format
+                    // setUserLocation([longitude, latitude]); // Use [lng, lat] format
 
                     if (mapInstanceRef.current) {
                         mapInstanceRef.current.setCenter([longitude, latitude]);
@@ -262,6 +263,7 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
         if (isLoaded && mapInstanceRef.current) {
             addStationMarkers();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [processedStations, isLoaded]);
 
     // Center map on selected station
@@ -291,7 +293,7 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                         <p className="text-muted-foreground">
-                            {!isLoaded ? 'Đang tải bản đồ...' : 'Đang tải dữ liệu trạm...'}
+                            {!isLoaded ? 'Loading map...' : 'Loading station data...'}
                         </p>
                     </div>
                 </div>
@@ -300,9 +302,9 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
             {stationsError && (
                 <div className="absolute inset-0 bg-muted rounded-lg flex items-center justify-center">
                     <div className="text-center">
-                        <p className="text-red-500 mb-2">Lỗi tải dữ liệu trạm</p>
+                        <p className="text-red-500 mb-2">Failed to load station data</p>
                         <p className="text-sm text-muted-foreground">
-                            {stationsError || 'Không thể kết nối đến server'}
+                            {stationsError || 'Cannot connect to server'}
                         </p>
                     </div>
                 </div>
@@ -314,7 +316,7 @@ const GoongMap = ({ onStationSelect, selectedStation, nearestStation }) => {
                     <button
                         onClick={getCurrentLocation}
                         className="bg-white rounded-lg shadow-lg p-2 hover:bg-gray-50 transition-colors"
-                        title="Vị trí hiện tại"
+                        title="Current location"
                     >
                         <Navigation className="h-4 w-4 text-gray-600" />
                     </button>

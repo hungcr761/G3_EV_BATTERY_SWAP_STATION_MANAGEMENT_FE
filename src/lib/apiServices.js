@@ -136,6 +136,7 @@ export const batteryAPI = {
     getAll: () => api.get('/batteries/all'),
     getByVehicleId: (vehicleId) => api.get(`/batteries/vehicle/${vehicleId}`),
     createForVehicle: (vehicleId) => api.post(`/batteries/vehicle/${vehicleId}`),
+    getSummaryByStation: (stationId) => api.get(`/batteries/station/${stationId}`),
 };
 
 // Analysis APIs
@@ -162,6 +163,9 @@ export const transferAPI = {
     create: (data) => api.post('/transfers/request', data),
     cancel: (id) => USE_MOCK_API ? mockApi.cancelTransferRequest(id) : api.patch(`/transfers/${id}/cancel`),
     confirmArrival: (id) => USE_MOCK_API ? mockApi.confirmTransferArrival(id) : api.patch(`/transfers/${id}/confirm-arrival`),
+    reject: (id) => api.post(`/transfers/${id}/reject`),
+    approve: (id, data) => api.post(`/transfers/${id}/approve`, data),
+    confirmOrder: (orderId) => api.post(`/transfers/${orderId}/confirm`),
 };
 
 // Cabinet API (Station cabinets with slots & batteries)

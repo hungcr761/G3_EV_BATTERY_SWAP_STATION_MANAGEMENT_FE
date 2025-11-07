@@ -10,13 +10,16 @@ const SwapStatus = () => {
     const { stationId, bookingId, userId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    // eslint-disable-next-line no-unused-vars
     const [currentStep, setCurrentStep] = useState(0);
+    // eslint-disable-next-line no-unused-vars
     const [swapComplete, setSwapComplete] = useState(false);
     const [bookingData, setBookingData] = useState(null);
     const [userData, setUserData] = useState(null);
     const [emptySlots, setEmptySlots] = useState([]);
     const [selectedSlots, setSelectedSlots] = useState([]);
     const [vehicleBatteries, setVehicleBatteries] = useState([]);
+    // eslint-disable-next-line no-unused-vars
     const [bookedBatteries, setBookedBatteries] = useState([]);
     const [validationData, setValidationData] = useState(null);
     const [swapResult, setSwapResult] = useState(null);
@@ -82,7 +85,7 @@ const SwapStatus = () => {
                             vehiclePlate: booking.vehicle?.license_plate || 'N/A',
                             batteryType: booking.vehicle?.model?.batteryType?.battery_type_code || 'Type 2',
                             batteryTypeId: booking.vehicle?.model?.batteryType?.battery_type_id,
-                            stationName: booking.station?.station_name || `Trạm #${stationId}`,
+                            stationName: booking.station?.station_name || `Station #${stationId}`,
                             scheduledTime: new Date(booking.scheduled_time).toLocaleString('en-US'),
                             vehicleId: booking.vehicle?.vehicle_id,
                             requestedQuantity: booking.batteries?.length || 1,
@@ -103,7 +106,7 @@ const SwapStatus = () => {
                             vehiclePlate: booking.vehicle?.license_plate || 'N/A',
                             batteryType: booking.vehicle?.model?.batteryType?.battery_type_code || 'Type 2',
                             batteryTypeId: booking.vehicle?.model?.batteryType?.battery_type_id,
-                            stationName: booking.station?.station_name || `Trạm #${stationId}`,
+                            stationName: booking.station?.station_name || `Station #${stationId}`,
                             scheduledTime: new Date(booking.scheduled_time).toLocaleString('en-US'),
                             vehicleId: booking.vehicle?.vehicle_id,
                             requestedQuantity: booking.batteries?.length || 1,
@@ -249,6 +252,7 @@ const SwapStatus = () => {
         if ((isUserFlow && userData) || (!isUserFlow && bookingData)) {
             startSwapProcess();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isUserFlow, userData, bookingData]);
 
     const startSwapProcess = async () => {
