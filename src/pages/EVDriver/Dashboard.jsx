@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth'
 import { useApi } from '@/hooks/useApi';
-import { bookingAPI } from '@/lib/apiServices';
+import { bookingAPI, swapAPI, subscriptionAPI, subscriptionPlanAPI } from '@/lib/apiServices';
 import ProfileUpdate from '@/components/Dashboard/ProfileUpdate';
 import QRCodeLib from 'qrcode';
 import {
@@ -30,7 +30,7 @@ import {
 const Dashboard = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
- 
+
     const toTitleCase = (s) => {
         if (!s) return '';
         return s
@@ -47,27 +47,61 @@ const Dashboard = () => {
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [showQRCode, setShowQRCode] = useState(false);
     const largeQrCodeRef = useRef(null);
+    const qrCodeRetryRef = useRef(null);
 
     // Generate large QR code for modal
     useEffect(() => {
-        if (selectedBooking?.id && showQRCode && largeQrCodeRef.current) {
-            // Small delay to ensure canvas is rendered
-            const timer = setTimeout(() => {
-                QRCodeLib.toCanvas(largeQrCodeRef.current, selectedBooking.id.toString(), {
-                    width: 300,
-                    margin: 2,
-                    color: {
-                        dark: '#000000',
-                        light: '#FFFFFF'
-                    }
-                }).catch(err => {
-                    console.error('Error generating large QR code:', err);
-                });
-            }, 100);
+        if (selectedBooking && showQRCode) {
+            const bookingId = selectedBooking.id?.toString() || selectedBooking.booking_id?.toString();
 
-            return () => clearTimeout(timer);
+            if (bookingId) {
+                // Clear any existing retry timer
+                if (qrCodeRetryRef.current) {
+                    clearTimeout(qrCodeRetryRef.current);
+                }
+
+                let retryCount = 0;
+                const maxRetries = 10;
+
+                // Wait for canvas to be fully rendered in the DOM
+                const generateQR = () => {
+                    const canvas = largeQrCodeRef.current;
+                    if (canvas && canvas.getContext) {
+                        console.log('Generating QR code for booking:', bookingId);
+                        QRCodeLib.toCanvas(canvas, bookingId, {
+                            width: 300,
+                            margin: 2,
+                            color: {
+                                dark: '#000000',
+                                light: '#FFFFFF'
+                            }
+                        }).then(() => {
+                            console.log('QR code generated successfully');
+                        }).catch(err => {
+                            console.error('Error generating large QR code:', err);
+                        });
+                    } else if (retryCount < maxRetries) {
+                        // Retry after a short delay if canvas isn't ready
+                        retryCount++;
+                        console.log(`Retrying QR code generation, attempt ${retryCount}`);
+                        qrCodeRetryRef.current = setTimeout(generateQR, 100);
+                    } else {
+                        console.error('Failed to generate QR code: canvas not available after max retries');
+                    }
+                };
+
+                // Initial delay to ensure dialog is fully rendered
+                const timer = setTimeout(generateQR, 300);
+
+                return () => {
+                    clearTimeout(timer);
+                    if (qrCodeRetryRef.current) {
+                        clearTimeout(qrCodeRetryRef.current);
+                    }
+                };
+            }
         }
-    }, [selectedBooking?.id, showQRCode]);
+    }, [selectedBooking?.id, selectedBooking?.booking_id, showQRCode]);
 
     // Reset QR code state when dialog closes
     useEffect(() => {
@@ -79,11 +113,105 @@ const Dashboard = () => {
     // Fetch bookings from API
     const { data: bookingsData, loading: bookingsLoading, error: bookingsError, refetch: refetchBookings } = useApi(bookingAPI.getMyBookings);
 
+    // Fetch swap records from API
+    const getSwapRecords = useMemo(() => {
+        return () => {
+            if (!user?.account_id) {
+                return Promise.resolve({ data: { success: true, count: 0, data: [] } });
+            }
+            return swapAPI.getSwapRecordsByDriver(user.account_id);
+        };
+    }, [user?.account_id]);
+
+    const { data: swapRecordsData, loading: swapRecordsLoading } = useApi(getSwapRecords, [user?.account_id]);
+
+    // Fetch subscription plans
+    const { data: subscriptionPlansData } = useApi(subscriptionPlanAPI.getAll);
+
+    // Fetch subscriptions by driver ID
+    const getSubscriptions = useMemo(() => {
+        return () => {
+            if (!user?.account_id) {
+                return Promise.resolve({ data: { success: true, payload: { subscription: [] } } });
+            }
+            return subscriptionAPI.getByDriverId(user.account_id);
+        };
+    }, [user?.account_id]);
+
+    const { data: subscriptionsData } = useApi(getSubscriptions, [user?.account_id]);
+
+    // Calculate stats from swap records
+    const swapStats = useMemo(() => {
+        if (!swapRecordsData || !swapRecordsData.data || !Array.isArray(swapRecordsData.data)) {
+            return {
+                totalSwaps: 0,
+                thisMonthSwaps: 0
+            };
+        }
+
+        const swapRecords = swapRecordsData.data;
+        const totalSwaps = swapRecordsData.count || swapRecords.length;
+
+        // Calculate this month's swaps
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const thisMonthSwaps = swapRecords.filter(record => {
+            if (!record.swap_time) return false;
+            const swapDate = new Date(record.swap_time);
+            return swapDate.getMonth() === currentMonth && swapDate.getFullYear() === currentYear;
+        }).length;
+
+        return {
+            totalSwaps,
+            thisMonthSwaps
+        };
+    }, [swapRecordsData]);
+
+    // Calculate monthly cost from active subscriptions
+    const monthlyCost = useMemo(() => {
+        if (!subscriptionPlansData || !subscriptionsData) {
+            return 0;
+        }
+
+        // Get all subscription plans as a map for quick lookup
+        // useApi returns response.data, so we need to access payload.subscriptionPlans
+        const plans = subscriptionPlansData?.payload?.subscriptionPlans || [];
+        const planMap = new Map();
+        plans.forEach(plan => {
+            if (plan.plan_id) {
+                planMap.set(plan.plan_id, plan);
+            }
+        });
+
+        // Get active subscriptions
+        // useApi returns response.data, so we need to access payload.subscription
+        const subscriptions = subscriptionsData?.payload?.subscription || [];
+        const activeSubscriptions = subscriptions.filter(sub =>
+            sub && String(sub?.status).toLowerCase() === 'active'
+        );
+
+        // Sum up plan fees for active subscriptions
+        const totalCost = activeSubscriptions.reduce((sum, subscription) => {
+            if (!subscription.plan_id) return sum;
+
+            const plan = planMap.get(subscription.plan_id);
+            if (plan && plan.plan_fee) {
+                const fee = parseFloat(plan.plan_fee) || 0;
+                return sum + fee;
+            }
+            return sum;
+        }, 0);
+
+        return totalCost;
+    }, [subscriptionPlansData, subscriptionsData]);
+
     const userStats = {
-        totalSwaps: 45,
-        thisMonthSwaps: 8,
+        totalSwaps: swapStats.totalSwaps,
+        thisMonthSwaps: swapStats.thisMonthSwaps,
         currentBatterySoH: 87,
-        monthlyCost: 150000,
+        monthlyCost: monthlyCost,
         nextSwapPrediction: '3 ngày'
     };
 
@@ -174,7 +302,7 @@ const Dashboard = () => {
                         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
                     }} />
                 </div>
-                
+
                 {/* Header */}
                 <div className="mb-8">
                     <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
@@ -200,7 +328,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
@@ -229,7 +357,7 @@ const Dashboard = () => {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group">
+                    {/* <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -241,7 +369,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         </CardContent>
-                    </Card>
+                    </Card> */}
 
                     <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group">
                         <CardContent className="p-6">
@@ -635,8 +763,13 @@ const Dashboard = () => {
                             </DialogDescription>
                         </DialogHeader>
                         <div className="flex flex-col items-center space-y-4 py-6">
-                            <div className="bg-white p-6 rounded-xl border-2 border-slate-300 shadow-lg">
-                                <canvas ref={largeQrCodeRef} className="block" />
+                            <div className="bg-white p-6 rounded-xl border-2 border-slate-300 shadow-lg flex items-center justify-center">
+                                <canvas
+                                    ref={largeQrCodeRef}
+                                    className="block"
+                                    width={300}
+                                    height={300}
+                                />
                             </div>
                             {selectedBooking && (
                                 <div className="text-center space-y-2 bg-slate-50 p-4 rounded-lg border border-slate-200 w-full">

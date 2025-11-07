@@ -210,7 +210,7 @@ const UserVehicleSelection = () => {
                                             <div className="text-sm text-muted-foreground">
                                                 <p>Battery slots: {vehicle.batterySlots} {vehicle.batterySlots === 1 ? 'battery' : 'batteries'}</p>
                                                 {!vehicle.hasActiveSubscription && (
-                                                    <p className="text-red-600 font-semibold">Need to register package to use</p>
+                                                    <p className="text-red-600 font-semibold">Need to buy subscription to use</p>
                                                 )}
                                             </div>
                                         </div>

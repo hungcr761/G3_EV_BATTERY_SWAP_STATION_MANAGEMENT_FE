@@ -753,8 +753,8 @@ const AnalyticsReports = () => {
                 setBatterySohLoading(true);
                 const response = await batteryAPI.getAll();
 
-                if (response.data && Array.isArray(response.data)) {
-                    const batteries = response.data;
+                if (response.data.batteries && Array.isArray(response.data.batteries)) {
+                    const batteries = response.data.batteries;
                     // Filter batteries that have current_soh and calculate average
                     const sohValues = batteries
                         .map(b => b?.current_soh != null ? parseFloat(b.current_soh) : null)

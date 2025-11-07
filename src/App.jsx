@@ -94,12 +94,12 @@ const RoleProtectedRoute = ({ children, allowedRoute = [], redirectTo = '/dashbo
     );
   }
 
-  if(!isAuthenticated){
-    return <Navigate to="/login" replace/>
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
   }
 
-  if(!allowedRoute.includes(user?.role)){
-    return <Navigate to={redirectTo} replace/>
+  if (!allowedRoute.includes(user?.role)) {
+    return <Navigate to={redirectTo} replace />
   }
 
   return children;
@@ -192,12 +192,12 @@ function App() {
           <Route path="/swapHistory" element={
             <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
-                <SwapHistory/>
+                <SwapHistory />
               </Layout>
             </RoleProtectedRoute>
-          }/>
+          } />
           <Route path="/settings" element={
-            <RoleProtectedRoute allowedRoute={['driver']}>
+            <RoleProtectedRoute allowedRoute={['driver', 'admin', 'staff']}>
               <Layout>
                 <Settings />
               </Layout>
@@ -211,23 +211,23 @@ function App() {
               <StaffLayout>
                 <StaffBatteryManagement />
               </StaffLayout>
-            </RoleProtectedRoute>    
+            </RoleProtectedRoute>
           }
           />
           <Route path="/staff/shift-calendar" element={
             <RoleProtectedRoute allowedRoute={['staff']}>
               <StaffLayout>
-                <ShiftManagement/>
+                <ShiftManagement />
               </StaffLayout>
             </RoleProtectedRoute>
-          }/>
+          } />
           <Route path="/staff/transfer-management" element={
             <RoleProtectedRoute allowedRoute={['staff']}>
               <StaffLayout>
                 <TransferManagement />
               </StaffLayout>
             </RoleProtectedRoute>
-          } 
+          }
           />
 
           {/* Kiosk routes - separate layout, no auth required */}
@@ -281,10 +281,10 @@ function App() {
           <Route path="/admin/transfer" element={
             <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
-                <AdminTransferManagement/>
+                <AdminTransferManagement />
               </AdminLayout>
             </RoleProtectedRoute>
-          }/>
+          } />
           <Route path="/admin/settings" element={
             <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>

@@ -26,11 +26,11 @@ const BookingSuccess = ({ bookingData, onClose }) => {
 
     // Update countdown every second
     useEffect(() => {
-        console.log('Countdown effect triggered, scheduled_end_time:', bookingData?.scheduled_end_time);
-        if (bookingData?.scheduled_end_time) {
+        console.log('Countdown effect triggered, expired_time:', bookingData?.expired_time);
+        if (bookingData?.expired_time) {
             const updateCountdown = () => {
                 const now = new Date();
-                const endTime = new Date(bookingData.scheduled_end_time);
+                const endTime = new Date(bookingData.expired_time);
                 const timeDiff = endTime.getTime() - now.getTime();
                 const seconds = Math.max(0, Math.floor(timeDiff / 1000));
                 console.log('Countdown update:', seconds, 'seconds');
@@ -42,9 +42,9 @@ const BookingSuccess = ({ bookingData, onClose }) => {
 
             return () => clearInterval(interval);
         } else {
-            console.log('No scheduled_end_time, countdown not started');
+            console.log('No expired_time, countdown not started');
         }
-    }, [bookingData?.scheduled_end_time]);
+    }, [bookingData?.expired_time]);
 
     const formatTime = (timeString) => {
         if (!timeString) return '';
@@ -70,15 +70,15 @@ const BookingSuccess = ({ bookingData, onClose }) => {
     const getActiveTimeRange = () => {
         console.log('getActiveTimeRange called');
         console.log('create_time exists:', !!bookingData?.create_time);
-        console.log('scheduled_end_time exists:', !!bookingData?.scheduled_end_time);
+        console.log('expired_time exists:', !!bookingData?.expired_time);
 
-        if (!bookingData?.create_time || !bookingData?.scheduled_end_time) {
+        if (!bookingData?.create_time || !bookingData?.expired_time) {
             console.log('Missing time data, returning empty');
             return { start: '', end: '' };
         }
 
         const startTime = new Date(bookingData.create_time);
-        const endTime = new Date(bookingData.scheduled_end_time);
+        const endTime = new Date(bookingData.expired_time);
 
         console.log('startTime:', startTime);
         console.log('endTime:', endTime);
@@ -123,7 +123,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                     Booking Successful!
                 </h2>
                 <p className="text-muted-foreground">
-                    Booking has been created and will be active until {bookingData?.scheduled_end_time ? formatTime(bookingData.scheduled_end_time) : 'N/A'}
+                    Booking has been created and will be active until {bookingData?.expired_time ? formatTime(bookingData.expired_time) : 'N/A'}
                 </p>
             </div>
 
@@ -140,8 +140,8 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                         {/* Active Time Range */}
                         {(() => {
                             const hasCreateTime = !!bookingData?.create_time;
-                            const hasEndTime = !!bookingData?.scheduled_end_time;
-                            console.log('Active Time Range check:', { hasCreateTime, hasEndTime, create_time: bookingData?.create_time, scheduled_end_time: bookingData?.scheduled_end_time });
+                            const hasEndTime = !!bookingData?.expired_time;
+                            console.log('Active Time Range check:', { hasCreateTime, hasEndTime, create_time: bookingData?.create_time, expired_time: bookingData?.expired_time });
                             return hasCreateTime && hasEndTime;
                         })() && (
                                 <div className="p-4 rounded-lg border bg-blue-50 border-blue-200 mb-4">
@@ -192,7 +192,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">End Time:</span>
                                     <span className="font-medium">
-                                        {bookingData?.scheduled_end_time ? formatTime(bookingData.scheduled_end_time) : 'N/A'}
+                                        {bookingData?.expired_time ? formatTime(bookingData.expired_time) : 'N/A'}
                                     </span>
                                 </div>
                             </div>
@@ -295,7 +295,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                     <div className="space-y-3">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Station Name:</span>
-                            <span className="font-medium">{bookingData?.station?.name || 'N/A'}</span>
+                            <span className="font-medium">{bookingData?.station?.station_name || bookingData?.station?.name || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Address:</span>
