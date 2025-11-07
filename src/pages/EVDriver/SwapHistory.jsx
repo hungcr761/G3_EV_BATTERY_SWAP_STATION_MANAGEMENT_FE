@@ -165,10 +165,6 @@ export default function SwapHistory() {
                       <span className="font-semibold">Station ID:</span>
                       <span className="ml-2">{r.station?.id || 'N/A'}</span>
                     </div>
-                    <div>
-                      <span className="font-semibold">Driver:</span>
-                      <span className="ml-2">{r?.driver?.fullname || ''}</span>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
