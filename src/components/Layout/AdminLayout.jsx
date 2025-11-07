@@ -185,12 +185,12 @@ const AdminLayout = ({ children }) => {
                                             </div>
                                         </DropdownMenuLabel>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem asChild>
+                                        {/* <DropdownMenuItem asChild>
                                             <Link to="/settings" className="cursor-pointer">
                                                 <Settings className="mr-2 h-4 w-4" />
                                                 <span>Settings</span>
                                             </Link>
-                                        </DropdownMenuItem>
+                                        </DropdownMenuItem> */}
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
                                             <LogOut className="mr-2 h-4 w-4" />

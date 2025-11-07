@@ -64,11 +64,13 @@ const ForgotPassword = () => {
         return (
             <>
                 <SimpleHeader />
-                <OTPResetPassword
-                    email={submittedEmail}
-                    onBack={handleBackToForm}
-                    onSuccess={handleOTPSuccess}
-                />
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+                    <OTPResetPassword
+                        email={submittedEmail}
+                        onBack={handleBackToForm}
+                        onSuccess={handleOTPSuccess}
+                    />
+                </div>
             </>
         );
     }
@@ -76,7 +78,8 @@ const ForgotPassword = () => {
     return (
         <>
             <SimpleHeader />
-            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+                <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-md w-full space-y-8">
                     <Card>
                         <CardHeader className="text-center">
@@ -175,6 +178,7 @@ const ForgotPassword = () => {
                             )}
                         </CardContent>
                     </Card>
+                </div>
                 </div>
             </div>
         </>

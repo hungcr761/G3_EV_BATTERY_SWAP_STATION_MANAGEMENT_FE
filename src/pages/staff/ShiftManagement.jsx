@@ -127,7 +127,7 @@ export default function ShiftManagement() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* View toggle */}
-          <div className="inline-flex rounded-md border p-1">
+          {/* <div className="inline-flex rounded-md border p-1">
             <Button
               type="button"
               variant={view === 'list' ? 'secondary' : 'ghost'}
@@ -148,7 +148,7 @@ export default function ShiftManagement() {
             >
               <LayoutList className="mr-2 h-4 w-4" /> By day
             </Button>
-          </div>
+          </div> */}
 
           {/* Station filter */}
           <Select value={String(stationFilter)} onValueChange={(v) => { setStationFilter(v); setPage(1); }}>

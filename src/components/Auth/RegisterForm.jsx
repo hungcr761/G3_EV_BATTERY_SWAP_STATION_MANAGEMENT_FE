@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { authAPI, userAPI } from '../../lib/apiServices';
+import { authAPI } from '../../lib/apiServices';
 import { registerSchema } from '../../lib/validations';
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import OTPVerification from './OTPVerification';
@@ -27,12 +27,9 @@ const RegisterForm = () => {
         register,
         handleSubmit,
         formState: { errors },
-        watch,
     } = useForm({
         resolver: zodResolver(registerSchema),
     });
-
-    const password = watch('password');
 
     const onSubmit = async (data) => {
         console.log('RegisterForm: onSubmit called with data:', data);
@@ -42,7 +39,7 @@ const RegisterForm = () => {
 
         try {
             // Remove confirmPassword from data before sending
-            const { confirmPassword, ...userData } = data;
+            const { confirmPassword: _omit, ...userData } = data;
             console.log('RegisterForm: userData after removing confirmPassword:', userData);
 
             // Call request verification API to send OTP
@@ -90,7 +87,7 @@ const RegisterForm = () => {
 
     if (success) {
         return (
-            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-md w-full">
                     <Card>
                         <CardContent className="pt-6">
@@ -117,7 +114,7 @@ const RegisterForm = () => {
     }
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <Card>
                     <CardHeader className="text-center">

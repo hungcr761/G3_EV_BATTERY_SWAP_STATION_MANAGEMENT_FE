@@ -23,7 +23,6 @@ const LoginForm = () => {
         register,
         handleSubmit,
         formState: { errors },
-        setError: setFormError,
     } = useForm({
         resolver: zodResolver(loginSchema),
     });
@@ -48,6 +47,7 @@ const LoginForm = () => {
                 setError(result.error);
             }
         } catch (err) {
+            console.error(err);
             setError('An error occurred. Please try again.');
         } finally {
             setIsLoading(false);
@@ -55,7 +55,7 @@ const LoginForm = () => {
     };
 
     return (
-        <div className="min-h-[calc(100vh-4rem)]  flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <Card>
                     <CardHeader className="text-center">

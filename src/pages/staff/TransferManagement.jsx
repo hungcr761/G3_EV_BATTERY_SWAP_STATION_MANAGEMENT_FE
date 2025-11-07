@@ -75,7 +75,60 @@ export default function TransferManagement() {
     const [confirmingOrderId, setConfirmingOrderId] = useState(null);
     const [orderBatteries, setOrderBatteries] = useState({}); // { [orderId]: Battery[] }
 
+    // Local notice when user attempts to create while shortage = 0
+    const [attemptNotice, setAttemptNotice] = useState(null); // { type: 'warn'|'error', text: string }
+    useEffect(() => {
+        if (!attemptNotice) return;
+        const t = setTimeout(() => setAttemptNotice(null), 5000);
+        return () => clearTimeout(t);
+    }, [attemptNotice]);
+
     const requestCancelled = String(selectedRequest?.status || '').toLowerCase() === 'cancelled';
+
+    // Filters: date (from/to), quantity (min/max), status
+    const [filters] = useState({
+        status: 'all',
+        dateFrom: '',
+        dateTo: '',
+        qtyMin: '',
+        qtyMax: ''
+    });
+
+    // Derived filtered list (client-side)
+    const filteredTransfers = useMemo(() => {
+        if (!Array.isArray(transfers)) return [];
+        const { status, dateFrom, dateTo, qtyMin, qtyMax } = filters;
+
+        // Normalize date bounds
+        const fromTs = dateFrom ? new Date(dateFrom).setHours(0, 0, 0, 0) : null;
+        const toTs = dateTo ? new Date(dateTo).setHours(23, 59, 59, 999) : null;
+
+        const minQ = qtyMin !== '' ? Number(qtyMin) : null;
+        const maxQ = qtyMax !== '' ? Number(qtyMax) : null;
+
+        return transfers.filter((r) => {
+            // Status
+            if (status !== 'all') {
+                if (String(r.status || '').toLowerCase() !== String(status).toLowerCase()) return false;
+            }
+
+            // Date
+            const ts = r?.request_time ? new Date(r.request_time).getTime() : null;
+            if (fromTs && (ts === null || ts < fromTs)) return false;
+            if (toTs && (ts === null || ts > toTs)) return false;
+
+            // Quantity: use approved orders sum if present, else requested quantity
+            const hasOrders = Array.isArray(r.transferOrders) && r.transferOrders.length > 0;
+            const qty = hasOrders
+                ? r.transferOrders.reduce((s, it) => s + Number(it.transfer_quantity || 0), 0)
+                : Number(r.request_quantity || 0);
+
+            if (minQ !== null && qty < minQ) return false;
+            if (maxQ !== null && qty > maxQ) return false;
+
+            return true;
+        });
+    }, [transfers, filters]);
 
     return (
         <div>
@@ -103,7 +156,18 @@ export default function TransferManagement() {
                         <Button variant="outline" onClick={fetchTransfers}>
                             <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
                         </Button>
-                        <Button className="bg-blue-600 hover:bg-blue-700" disabled={!fromStation || !canCreateRequest} onClick={() => setOpenCreate(true)}>
+                        <Button
+                            className="bg-blue-600 hover:bg-blue-700"
+                            disabled={!fromStation}
+                            onClick={() => {
+                                if (!fromStation) return;
+                                if (!canCreateRequest) {
+                                    setAttemptNotice({ type: 'warn', text: 'The station is not short of batteries. You cannot create a new transfer request.' });
+                                    return;
+                                }
+                                setOpenCreate(true);
+                            }}
+                        >
                             <Plus className="w-4 h-4 mr-2" /> Create Request
                         </Button>
                     </div>
@@ -129,28 +193,44 @@ export default function TransferManagement() {
                 </div>
             )}
 
-            {/* Filter */}
+            {/* Attempt notice (auto hides after 5s) */}
+            {attemptNotice?.text && (
+                <div className="mb-4 p-4 rounded-xl flex items-start space-x-3 backdrop-blur-sm border shadow-md transition-all duration-300 bg-amber-50/90 text-amber-900 border-amber-200">
+                    <div className="p-2 rounded-lg bg-amber-100">
+                        <AlertCircle className="h-5 w-5" />
+                    </div>
+                    <p className="font-medium">{attemptNotice.text}</p>
+                </div>
+            )}
 
-            <Card>
+            {/* Filters: Date, Quantity, Status */}
+
+            {/* <Card>
                 <CardHeader className="pb-0">
                     <CardTitle className="text-sm font-semibold">Filters</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4 grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-3">
-                    <div className="md:col-span-3 lg:col-span-5">
-                        <Label className="text-xs text-slate-500">Search</Label>
-                        <div className="relative">
-                            <Search className="w-4 h-4 text-slate-400 absolute left-2 top-2.5" />
-                            <Input
-                                className="pl-8"
-                                placeholder="Request ID, notes..."
-                            // value={filters.search}
-                            // onChange={(e) => updateFilters({ search: e.target.value })}
-                            />
-                        </div>
+
+                    <div className="md:col-span-2 lg:col-span-3">
+                        <Label className="text-xs text-slate-500">Date from</Label>
+                        <Input
+                            type="date"
+                            value={filters.dateFrom}
+                            onChange={(e) => updateFilters({ dateFrom: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="md:col-span-2 lg:col-span-3">
+                        <Label className="text-xs text-slate-500">Date to</Label>
+                        <Input
+                            type="date"
+                            value={filters.dateTo}
+                            onChange={(e) => updateFilters({ dateTo: e.target.value })}
+                        />
                     </div>
                     <div className="md:col-span-2 lg:col-span-2">
                         <Label className="text-xs text-slate-500">Status</Label>
-                        <Select>
+                        <Select value={filters.status} onValueChange={(v) => updateFilters({ status: v })}>
                             <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All</SelectItem>
@@ -162,33 +242,40 @@ export default function TransferManagement() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="md:col-span-2 lg:col-span-2">
-                        <Label className="text-xs text-slate-500">Time</Label>
-                        <Select>
-                            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All</SelectItem>
-                                <SelectItem value="today">Today</SelectItem>
-                                <SelectItem value="this_week">This week</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
                     <div className="md:col-span-1 lg:col-span-1">
                         <Label className="text-xs text-slate-500">Quantity from</Label>
-                        <Input type="number" min={0} placeholder="Min" />
+                        <Input
+                            type="number"
+                            min={0}
+                            placeholder="Min"
+                            value={filters.qtyMin}
+                            onChange={(e) => updateFilters({ qtyMin: e.target.value })}
+                        />
                     </div>
                     <div className="md:col-span-1 lg:col-span-1">
                         <Label className="text-xs text-slate-500">Quantity to</Label>
-                        <Input type="number" min={0} placeholder="Max" />
+                        <Input
+                            type="number"
+                            min={0}
+                            placeholder="Max"
+                            value={filters.qtyMax}
+                            onChange={(e) => updateFilters({ qtyMax: e.target.value })}
+                        />
                     </div>
                     <div className="flex items-end md:col-span-1 lg:col-span-1">
-                        <Button variant="outline" className="w-full">Clear</Button>
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setFilters({ status: 'all', dateFrom: '', dateTo: '', qtyMin: '', qtyMax: '' })}
+                        >
+                            Clear
+                        </Button>
                     </div>
                 </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Shortage Banner */}
-            {canCreateRequest && shortageWarning && (
+            {/* {canCreateRequest && shortageWarning && (
                 <div className="mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 mt-0.5" />
                     <div>
@@ -201,7 +288,7 @@ export default function TransferManagement() {
                     <CheckCircle className="h-4 w-4 mt-0.5" />
                     <div>The station is not short of batteries. You cannot create a new transfer request.</div>
                 </div>
-            )}
+            )} */}
 
             {/* Transfer List */}
             <Card className="mt-4">
@@ -211,8 +298,8 @@ export default function TransferManagement() {
                 <CardContent className="overflow-x-auto">
                     {listLoading ? (
                         <div className="p-6 text-slate-600">Loading...</div>
-                    ) : transfers.length === 0 ? (
-                        <div className="p-6 text-slate-500">No requests yet.</div>
+                    ) : filteredTransfers.length === 0 ? (
+                        <div className="p-6 text-slate-500">No matching requests.</div>
                     ) : (
                         <table className="w-full text-sm">
                             <thead className="border-b bg-slate-50 sticky top-0 z-[1]">
@@ -228,7 +315,7 @@ export default function TransferManagement() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {transfers.map((r, i) => {
+                                {filteredTransfers.map((r, i) => {
                                     const hasOrders = Array.isArray(r.transferOrders) && r.transferOrders.length > 0;
                                     const qty = hasOrders
                                         ? r.transferOrders.reduce((s, it) => s + Number(it.transfer_quantity || 0), 0)

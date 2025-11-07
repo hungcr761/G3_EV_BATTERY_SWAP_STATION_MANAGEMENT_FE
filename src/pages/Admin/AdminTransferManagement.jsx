@@ -15,8 +15,8 @@ export default function AdminTransferManagement() {
   const [rejectingId, setRejectingId] = useState(null);
   const [approvingId, setApprovingId] = useState(null);
   const [feedback, setFeedback] = useState({ type: '', text: '' });
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [page] = useState(1);
+  const [pageSize] = useState(20);
   const [total, setTotal] = useState(0);
 
   // Basic client-side filters (optional UI placeholders)
@@ -30,9 +30,20 @@ export default function AdminTransferManagement() {
   // Remove summaryLoading (not used currently)
   const [approveError, setApproveError] = useState('');
 
+  // Admin direct-create state
+  const [openCreate, setOpenCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    transfer_orders: [
+      { source_station_id: '', target_station_id: '', transfer_quantity: '' }
+    ]
+  });
+
   const fetchAllRequests = useCallback(async () => {
     setLoading(true);
     setError('');
+    // Clear any lingering feedback when refreshing list
+    setFeedback({ type: '', text: '' });
     try {
       const res = await transferAPI.getByStation({ page, pageSize });
       const data = res?.data?.payload?.transfers || {};
@@ -104,7 +115,7 @@ export default function AdminTransferManagement() {
       setFeedback({ type: 'error', text: e?.response?.data?.message || 'Reject failed.' });
     } finally {
       setRejectingId(null);
-      setTimeout(() => setFeedback({ type: '', text: '' }), 3500);
+      setTimeout(() => setFeedback({ type: '', text: '' }), 3000);
     }
   };
 
@@ -195,6 +206,7 @@ export default function AdminTransferManagement() {
         setFeedback({ type: 'success', text: 'Request approved successfully.' });
         setOpenApprove(false);
         await fetchAllRequests();
+        setTimeout(() => setFeedback({ type: '', text: '' }), 3000);
       } else {
         setApproveError(res?.data?.message || 'Approve failed.');
       }
@@ -213,6 +225,7 @@ export default function AdminTransferManagement() {
           <p className="text-sm text-slate-600">View and manage all battery transfer requests from stations.</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* <Button onClick={() => setOpenCreate(true)} disabled={loading}>Create Transfer Orders</Button> */}
           <Button variant="outline" onClick={fetchAllRequests} disabled={loading}>
             <RefreshCcw className="w-4 h-4 mr-2" /> Refresh
           </Button>
@@ -241,7 +254,7 @@ export default function AdminTransferManagement() {
               </SelectContent>
             </Select>
           </div>
-          <div className="md:col-span-2 lg:col-span-2">
+          {/* <div className="md:col-span-2 lg:col-span-2">
             <Select value={String(pageSize)} onValueChange={(v)=>{ setPageSize(parseInt(v,10)); setPage(1); }}>
               <SelectTrigger><SelectValue placeholder="Page size" /></SelectTrigger>
               <SelectContent>
@@ -251,7 +264,7 @@ export default function AdminTransferManagement() {
                 <SelectItem value="100">100 / page</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
           <div className="flex items-center md:col-span-2 lg:col-span-2">
             <div className="text-sm text-slate-600">Total: <b>{total}</b> requests</div>
           </div>
@@ -302,14 +315,16 @@ export default function AdminTransferManagement() {
                         {r.status}
                       </Badge>
                     </td>
-                    <td className="py-2 px-3 space-x-2">
+                    <td className="py-2 px-3">
                       {String(r.status).toLowerCase() === 'requested' ? (
-                        <>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => openApproveModal(r)}
-                          >Approve</Button>
+                          >
+                            Approve
+                          </Button>
                           <Button
                             variant="destructive"
                             size="sm"
@@ -318,7 +333,7 @@ export default function AdminTransferManagement() {
                           >
                             {rejectingId === r.transfer_request_id ? 'Rejecting...' : 'Reject'}
                           </Button>
-                        </>
+                        </div>
                       ) : (
                         <span className="text-xs text-slate-400">—</span>
                       )}
@@ -400,6 +415,133 @@ export default function AdminTransferManagement() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin Create Transfer Orders Dialog */}
+      <Dialog open={openCreate} onOpenChange={setOpenCreate}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Create Transfer Orders (Admin)</DialogTitle>
+            <DialogDescription>
+              Create one or more transfer orders directly without a prior staff request.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {createForm.transfer_orders.map((o, idx) => (
+              <div key={idx} className="border rounded-md p-3 bg-slate-50 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Source Station ID</label>
+                    <Input
+                      placeholder="e.g. 2"
+                      value={o.source_station_id}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCreateForm(f => {
+                          const list = [...f.transfer_orders];
+                          list[idx] = { ...list[idx], source_station_id: v };
+                          return { ...f, transfer_orders: list };
+                        })
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Target Station ID</label>
+                    <Input
+                      placeholder="e.g. 5"
+                      value={o.target_station_id}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCreateForm(f => {
+                          const list = [...f.transfer_orders];
+                          list[idx] = { ...list[idx], target_station_id: v };
+                          return { ...f, transfer_orders: list };
+                        })
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Transfer Quantity</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      placeholder="Qty"
+                      value={o.transfer_quantity}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCreateForm(f => {
+                          const list = [...f.transfer_orders];
+                          list[idx] = { ...list[idx], transfer_quantity: v };
+                          return { ...f, transfer_orders: list };
+                        })
+                      }}
+                    />
+                  </div>
+                </div>
+                {createForm.transfer_orders.length > 1 && (
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCreateForm(f => ({ ...f, transfer_orders: f.transfer_orders.filter((_, i) => i !== idx) }))}
+                    >Remove</Button>
+                  </div>
+                )}
+              </div>
+            ))}
+            <div className="flex justify-between items-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateForm(f => ({ ...f, transfer_orders: [...f.transfer_orders, { source_station_id: '', target_station_id: '', transfer_quantity: '' }] }))}
+              >Add Order</Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setOpenCreate(false)}>Cancel</Button>
+                <Button
+                  onClick={async () => {
+                    // Simple validation
+                    const invalid = createForm.transfer_orders.some(({ source_station_id, target_station_id, transfer_quantity }) => {
+                      const src = Number(source_station_id);
+                      const tgt = Number(target_station_id);
+                      const qty = Number(transfer_quantity);
+                      return !src || !tgt || src === tgt || !qty || qty <= 0;
+                    });
+                    if (invalid) { setFeedback({ type: 'error', text: 'Please fill valid station IDs (different) and positive quantities.' }); return; }
+                    setCreating(true);
+                    setFeedback({ type: '', text: '' });
+                    try {
+                      const payload = {
+                        transfer_orders: createForm.transfer_orders.map(({ source_station_id, target_station_id, transfer_quantity }) => ({
+                          source_station_id: Number(source_station_id),
+                          target_station_id: Number(target_station_id),
+                          transfer_quantity: Number(transfer_quantity)
+                        }))
+                      };
+                      const res = await transferAPI.createDirect(payload);
+                      const ok = res?.status === 200 || res?.status === 201 || res?.data?.success === true;
+                      if (ok) {
+                        setFeedback({ type: 'success', text: 'Transfer orders created successfully.' });
+                        setOpenCreate(false);
+                        setCreateForm({ transfer_orders: [ { source_station_id: '', target_station_id: '', transfer_quantity: '' } ] });
+                        await fetchAllRequests();
+                      } else {
+                        setFeedback({ type: 'error', text: res?.data?.message || 'Create failed.' });
+                      }
+                    } catch (e) {
+                      setFeedback({ type: 'error', text: e?.response?.data?.message || 'Create failed.' });
+                    } finally {
+                      setCreating(false);
+                      setTimeout(() => setFeedback({ type: '', text: '' }), 3500);
+                    }
+                  }}
+                  disabled={creating}
+                >
+                  {creating ? 'Creating...' : 'Create'}
+                </Button>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

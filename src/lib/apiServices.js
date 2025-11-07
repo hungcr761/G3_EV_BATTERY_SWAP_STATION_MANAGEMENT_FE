@@ -161,6 +161,11 @@ export const shiftAPI = {
 export const transferAPI = {
     getByStation: (params) => api.get('/transfers/request', { params }),
     create: (data) => api.post('/transfers/request', data),
+    // Admin direct-create transfer orders without a prior staff request
+    // Payload shape:
+    // { transfer_orders: [{ source_station_id, target_station_id, transfer_quantity }] }
+    // Adjust endpoint if your backend differs.
+    createDirect: (data) => api.post('/transfers/orders', data),
     cancel: (id) => USE_MOCK_API ? mockApi.cancelTransferRequest(id) : api.patch(`/transfers/${id}/cancel`),
     confirmArrival: (id) => USE_MOCK_API ? mockApi.confirmTransferArrival(id) : api.patch(`/transfers/${id}/confirm-arrival`),
     reject: (id) => api.post(`/transfers/${id}/reject`),

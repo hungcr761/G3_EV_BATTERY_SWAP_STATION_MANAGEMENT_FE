@@ -6,7 +6,9 @@ const Login = () => {
     return (
         <>
             <SimpleHeader />
-            <LoginForm />
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+                <LoginForm />
+            </div>
         </>
     );
 };

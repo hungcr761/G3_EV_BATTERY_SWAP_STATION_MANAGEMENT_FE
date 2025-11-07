@@ -6,7 +6,9 @@ const Register = () => {
     return (
         <>
             <SimpleHeader />
-            <RegisterForm />
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+                <RegisterForm />
+            </div>
         </>
     );
 };
