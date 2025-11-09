@@ -261,7 +261,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                             {bookingData.batteries.map((battery, index) => (
                                 <div key={battery.battery_id} className="p-3 bg-gray-50 rounded-lg">
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm font-medium text-muted-foreground">Pin #{index + 1}</span>
+                                        <span className="text-sm font-medium text-muted-foreground">Battery #{index + 1}</span>
                                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                                             {battery.current_soc}% SOC
                                         </Badge>

@@ -3,7 +3,6 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { bookingAPI } from '../../lib/apiServices';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import VehicleSelection from './VehicleSelection';
 import BatterySelection from './BatterySelection';
 import BookingConfirmation from './BookingConfirmation';
 import BookingSuccess from './BookingSuccess';

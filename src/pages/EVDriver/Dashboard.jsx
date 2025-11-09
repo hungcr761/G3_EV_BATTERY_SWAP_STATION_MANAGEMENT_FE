@@ -155,12 +155,11 @@ const Dashboard = () => {
         // Calculate this month's swaps
         const now = new Date();
         const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
 
         const thisMonthSwaps = swapRecords.filter(record => {
             if (!record.swap_time) return false;
             const swapDate = new Date(record.swap_time);
-            return swapDate.getMonth() === currentMonth && swapDate.getFullYear() === currentYear;
+            return swapDate.getMonth() === currentMonth;
         }).length;
 
         return {

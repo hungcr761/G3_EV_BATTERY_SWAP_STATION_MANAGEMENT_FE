@@ -37,10 +37,10 @@ const BatterySelection = ({
         <div className="space-y-6">
             <div className="text-center">
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                    Chọn số lượng pin cần đổi
+                    Select the number of batteries to swap
                 </h2>
                 <p className="text-muted-foreground">
-                    Chọn số lượng pin mà bạn muốn đổi cho xe {selectedVehicle?.modelName}
+                    Choose how many batteries you want to swap for {selectedVehicle?.modelName || 'your vehicle'}
                 </p>
             </div>
 
@@ -49,10 +49,10 @@ const BatterySelection = ({
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <Battery className="h-5 w-5" />
-                        <span>Chọn số lượng pin</span>
+                        <span>Select battery quantity</span>
                     </CardTitle>
                     <CardDescription>
-                        Bạn có thể chọn từ 1 đến {maxBatteries} pin để đổi cùng lúc
+                        You can choose between 1 and {maxBatteries} {maxBatteries === 1 ? 'battery' : 'batteries'} per swap
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -74,7 +74,7 @@ const BatterySelection = ({
                                     {batteryQuantity}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                    {batteryQuantity === 1 ? 'pin' : 'pin'}
+                                    {batteryQuantity === 1 ? 'battery' : 'batteries'}
                                 </div>
                             </div>
 
@@ -98,7 +98,7 @@ const BatterySelection = ({
                                     onClick={() => setBatteryQuantity(quantity)}
                                     className="h-12"
                                 >
-                                    {quantity} {quantity === 1 ? 'pin' : 'pin'}
+                                    {quantity} {quantity === 1 ? 'battery' : 'batteries'}
                                 </Button>
                             ))}
                         </div>
@@ -110,7 +110,7 @@ const BatterySelection = ({
             {/* Action Buttons */}
             <div className="flex justify-between pt-4">
                 <Button variant="outline" onClick={onBack}>
-                    Quay lại
+                    Back
                 </Button>
                 <Button
                     onClick={handleNext}
@@ -119,7 +119,7 @@ const BatterySelection = ({
                     className="min-w-[140px]"
                 >
                     <ArrowRight className="mr-2 h-4 w-4" />
-                    Tiếp tục
+                    Continue
                 </Button>
             </div>
         </div>

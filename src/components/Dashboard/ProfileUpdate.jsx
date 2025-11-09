@@ -92,9 +92,15 @@ const ProfileUpdate = ({ onBack }) => {
                 if (validationError.name === 'ZodError') {
                     // Handle validation errors
                     const fieldErrors = {};
-                    validationError.errors.forEach((err) => {
-                        fieldErrors[err.path[0]] = err.message;
-                    });
+                    // ZodError uses 'issues' property, not 'errors'
+                    if (validationError.issues && Array.isArray(validationError.issues)) {
+                        validationError.issues.forEach((err) => {
+                            const fieldName = err.path[0];
+                            if (fieldName) {
+                                fieldErrors[fieldName] = err.message;
+                            }
+                        });
+                    }
                     setErrors(fieldErrors);
                     setMessage({
                         type: 'error',
@@ -148,9 +154,15 @@ const ProfileUpdate = ({ onBack }) => {
             if (error.name === 'ZodError') {
                 // Handle validation errors (shouldn't reach here as we catch it earlier, but just in case)
                 const fieldErrors = {};
-                error.errors.forEach((err) => {
-                    fieldErrors[err.path[0]] = err.message;
-                });
+                // ZodError uses 'issues' property, not 'errors'
+                if (error.issues && Array.isArray(error.issues)) {
+                    error.issues.forEach((err) => {
+                        const fieldName = err.path[0];
+                        if (fieldName) {
+                            fieldErrors[fieldName] = err.message;
+                        }
+                    });
+                }
                 setErrors(fieldErrors);
                 setMessage({
                     type: 'error',
