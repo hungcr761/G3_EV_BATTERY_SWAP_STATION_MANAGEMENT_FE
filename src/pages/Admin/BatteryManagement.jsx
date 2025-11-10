@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Battery,
     Search,
@@ -12,7 +12,10 @@ import {
     Activity,
     Zap,
     ArrowUpNarrowWide,
-    ArrowDownNarrowWide
+    ArrowDownNarrowWide,
+    ChevronLeft,
+    ChevronRight,
+    Loader2
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -28,12 +31,107 @@ const BatteryManagement = () => {
     const [filterStation, setFilterStation] = useState('all');
     const [sortField, setSortField] = useState('none');
     const [sortDirection, setSortDirection] = useState('desc');
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(12);
+    const [pagination, setPagination] = useState({
+        page: 1,
+        pageSize: 12,
+        total: 0,
+        totalPages: 0
+    });
+    const [batteriesData, setBatteriesData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-
-    const { data: apiBatteries } = useApi(batteryAPI.getAll, []);
     const { data: apiBatteryTypes } = useApi(batteryTypeAPI.getAll, []);
     const { data: apiStations, loading: stationsLoading } = useApi(stationAPI.getAll, []);
     const { data: apiCabinets } = useApi(() => cabinetAPI.getAll({ page: 1, pageSize: 100 }), []);
+
+    // Fetch batteries with pagination
+    const fetchBatteries = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const params = {
+                page,
+                pageSize,
+                ...(filterStatus !== 'all' && { status: filterStatus }),
+                ...(filterStation !== 'all' && { station_id: filterStation }),
+                ...(searchTerm && searchTerm.trim() && { search: searchTerm.trim() })
+            };
+
+            const response = await batteryAPI.getAll(params);
+
+            if (response.data?.success && response.data?.payload) {
+                const batteriesArray = response.data.payload.data || response.data.payload.batteries?.data || [];
+                const total = response.data.payload.total || response.data.payload.batteries?.total || 0;
+                const pageSizeFromApi = response.data.payload.pageSize || response.data.payload.batteries?.pageSize || pageSize;
+                const totalPages = Math.ceil(total / pageSizeFromApi);
+
+                setBatteriesData(batteriesArray);
+                setPagination({
+                    page,
+                    pageSize: pageSizeFromApi,
+                    total,
+                    totalPages
+                });
+            } else if (response.data?.payload?.batteries) {
+                // Handle nested structure: payload.batteries.data
+                const batteriesArray = Array.isArray(response.data.payload.batteries.data)
+                    ? response.data.payload.batteries.data
+                    : Array.isArray(response.data.payload.batteries)
+                        ? response.data.payload.batteries
+                        : [];
+                const total = response.data.payload.batteries.total || batteriesArray.length;
+                const totalPages = Math.ceil(total / pageSize);
+
+                setBatteriesData(batteriesArray);
+                setPagination({
+                    page,
+                    pageSize,
+                    total,
+                    totalPages
+                });
+            } else if (Array.isArray(response.data)) {
+                // Handle direct array response
+                setBatteriesData(response.data);
+                setPagination({
+                    page: 1,
+                    pageSize: response.data.length,
+                    total: response.data.length,
+                    totalPages: 1
+                });
+            } else {
+                setBatteriesData([]);
+                setPagination(prev => ({ ...prev, total: 0, totalPages: 0 }));
+            }
+        } catch (err) {
+            console.error('Error fetching batteries:', err);
+            setError(err.response?.data?.message || err.message || 'Failed to fetch batteries');
+            setBatteriesData([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [page, pageSize, filterStatus, filterStation, searchTerm]);
+
+    useEffect(() => {
+        fetchBatteries();
+    }, [fetchBatteries]);
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setPage(1);
+    }, [filterStatus, filterStation]);
+
+    // Debounce search and reset page
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            setPage(1);
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm]);
 
     // Create a map of battery types by battery_type_id for quick lookup
     const batteryTypeMap = (() => {
@@ -174,12 +272,8 @@ const BatteryManagement = () => {
         return map;
     })();
 
-    // Handle batteries response structure - could be direct array or in payload
-    const batteriesArray = Array.isArray(apiBatteries)
-        ? apiBatteries
-        : (apiBatteries?.payload?.batteries || apiBatteries?.batteries || []);
-
-    const batteries = batteriesArray.map((b) => {
+    // Process batteries data
+    const batteries = batteriesData.map((b) => {
         const batteryTypeId = b?.battery_type_id;
         // Try both number and string keys for lookup
         const batteryType = batteryTypeId ?
@@ -281,22 +375,13 @@ const BatteryManagement = () => {
         return 'text-red-600';
     };
 
+    // Apply client-side sorting only (filtering is done server-side via API)
     const filteredBatteries = (() => {
-        const filtered = batteries.filter(battery => {
-            const matchesSearch = (battery.id ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (battery.serialNumber ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (battery.model ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesStatus = filterStatus === 'all' || (battery.status === filterStatus);
-            const matchesStation = filterStation === 'all' ||
-                (battery.stationId != null && (String(battery.stationId) === String(filterStation) || battery.stationId === Number(filterStation)));
-            return matchesSearch && matchesStatus && matchesStation;
-        });
-
         if (sortField === 'none') {
-            return filtered;
+            return batteries;
         }
 
-        const sorted = [...filtered];
+        const sorted = [...batteries];
 
         const getSortValue = (battery) => {
             const value = sortField === 'soc' ? battery.soc : battery.soh;
@@ -325,6 +410,18 @@ const BatteryManagement = () => {
     const toggleSortDirection = () => {
         setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
     };
+
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handlePageSizeChange = (newPageSize) => {
+        setPageSize(parseInt(newPageSize));
+        setPage(1);
+    };
+
+    // Debounce search term - removed to avoid conflicts with fetchBatteries dependency
 
 
     return (
@@ -376,6 +473,16 @@ const BatteryManagement = () => {
                                 </option>
                             ))}
                         </select>
+                        <select
+                            value={pageSize}
+                            onChange={(e) => handlePageSizeChange(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        >
+                            <option value="12">12 per page</option>
+                            <option value="24">24 per page</option>
+                            <option value="48">48 per page</option>
+                            <option value="96">96 per page</option>
+                        </select>
                         <div className="flex items-center gap-2">
                             <select
                                 value={sortField}
@@ -413,97 +520,168 @@ const BatteryManagement = () => {
 
             {/* Transfer requests are now managed on AdminTransferManagement page */}
 
+            {/* Error Message */}
+            {error && (
+                <Card className="p-4 bg-red-50 border-l-4 border-red-400">
+                    <div className="flex items-center">
+                        <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+                        <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                </Card>
+            )}
+
             {/* Batteries Grid */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-                {filteredBatteries.map((battery) => (
-                    <Card key={battery.serialNumber} className="p-6 hover:shadow-lg transition-shadow">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-2">
-                                <Battery className="h-5 w-5 text-blue-600" />
-                                <h3 className="font-semibold text-gray-900 text-md">{battery.serialNumber}</h3>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <Badge className={getStatusColor(battery.status)}>
-                                    <div className="flex items-center gap-1">
-                                        {getStatusIcon(battery.status)}
-                                        {getStatusText(battery.status)}
+            {loading ? (
+                <Card className="p-12">
+                    <div className="flex items-center justify-center">
+                        <div className="flex items-center gap-2 text-gray-500">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                            <span>Loading batteries...</span>
+                        </div>
+                    </div>
+                </Card>
+            ) : filteredBatteries.length === 0 ? (
+                <Card className="p-12">
+                    <div className="flex items-center justify-center">
+                        <div className="text-center text-gray-500">
+                            <Battery className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                            <p>No batteries found</p>
+                        </div>
+                    </div>
+                </Card>
+            ) : (
+                <>
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+                        {filteredBatteries.map((battery) => (
+                            <Card key={battery.serialNumber} className="p-6 hover:shadow-lg transition-shadow">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <Battery className="h-5 w-5 text-blue-600" />
+                                        <h3 className="font-semibold text-gray-900 text-md">{battery.serialNumber}</h3>
                                     </div>
-                                </Badge>
-                            </div>
-                        </div>
+                                    <div className="flex items-center gap-1">
+                                        <Badge className={getStatusColor(battery.status)}>
+                                            <div className="flex items-center gap-1">
+                                                {getStatusIcon(battery.status)}
+                                                {getStatusText(battery.status)}
+                                            </div>
+                                        </Badge>
+                                    </div>
+                                </div>
 
-                        <div className="space-y-3">
-                            <div className="text-sm text-gray-600">
-                                <p className="text-xs">ID: {battery.id}</p>
-                            </div>
+                                <div className="space-y-3">
+                                    <div className="text-sm text-gray-600">
+                                        <p className="text-xs">ID: {battery.id}</p>
+                                    </div>
 
-                            {/* Location */}
-                            <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{battery.location}</span>
-                            </div>
+                                    {/* Location */}
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-gray-400" />
+                                        <span className="text-sm text-gray-600">{battery.location}</span>
+                                    </div>
 
-                            {/* Health Metrics */}
-                            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200">
-                                <div>
-                                    <p className="text-xs text-gray-500">State of Health (SOH)</p>
-                                    <p className={`text-lg font-semibold ${getSohColor(battery.soh)}`}>
-                                        {battery.soh}%
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500">State of Charge (SOC)</p>
-                                    <p className={`text-lg font-semibold ${getSocColor(battery.soc)}`}>
-                                        {battery.soc}%
-                                    </p>
-                                </div>
-                            </div>
+                                    {/* Health Metrics */}
+                                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-200">
+                                        <div>
+                                            <p className="text-xs text-gray-500">State of Health (SOH)</p>
+                                            <p className={`text-lg font-semibold ${getSohColor(battery.soh)}`}>
+                                                {battery.soh}%
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500">State of Charge (SOC)</p>
+                                            <p className={`text-lg font-semibold ${getSocColor(battery.soc)}`}>
+                                                {battery.soc}%
+                                            </p>
+                                        </div>
+                                    </div>
 
-                            {/* Technical Specs */}
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p className="text-gray-500">Battery Type Code</p>
-                                    <p className="font-medium">{battery.model ?? 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-gray-500">Cell Chemistry</p>
-                                    <p className="font-medium">{battery.cellChemistry ?? 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-gray-500">Nominal Capacity</p>
-                                    <p className="font-medium">{battery.capacity != null ? `${battery.capacity} Ah` : 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-gray-500">Nominal Voltage</p>
-                                    <p className="font-medium">{battery.voltage != null ? `${battery.voltage}V` : 'N/A'}</p>
-                                </div>
-                            </div>
+                                    {/* Technical Specs */}
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <p className="text-gray-500">Battery Type Code</p>
+                                            <p className="font-medium">{battery.model ?? 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-500">Cell Chemistry</p>
+                                            <p className="font-medium">{battery.cellChemistry ?? 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-500">Nominal Capacity</p>
+                                            <p className="font-medium">{battery.capacity != null ? `${battery.capacity} Ah` : 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-500">Nominal Voltage</p>
+                                            <p className="font-medium">{battery.voltage != null ? `${battery.voltage}V` : 'N/A'}</p>
+                                        </div>
+                                    </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex gap-2 pt-3">
-                                <Button variant="outline" size="sm" className="flex-1">
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    View
-                                </Button>
-                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-2 pt-3">
+                                        <Button variant="outline" size="sm" className="flex-1">
+                                            <Eye className="h-4 w-4 mr-1" />
+                                            View
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {pagination.totalPages > 1 && (
+                        <Card className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm text-gray-700">
+                                    Showing <span className="font-medium">{(pagination.page - 1) * pagination.pageSize + 1}</span> to{' '}
+                                    <span className="font-medium">
+                                        {Math.min(pagination.page * pagination.pageSize, pagination.total)}
+                                    </span> of{' '}
+                                    <span className="font-medium">{pagination.total}</span> results
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePageChange(pagination.page - 1)}
+                                        disabled={pagination.page === 1 || loading}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                        Previous
+                                    </Button>
+                                    <div className="text-sm text-gray-700">
+                                        Page <span className="font-medium">{pagination.page}</span> of{' '}
+                                        <span className="font-medium">{pagination.totalPages}</span>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePageChange(pagination.page + 1)}
+                                        disabled={pagination.page >= pagination.totalPages || loading}
+                                    >
+                                        Next
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                    </Card>
-                ))}
-            </div>
+                        </Card>
+                    )}
+                </>
+            )}
 
             {/* Summary Stats */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <Card className="p-6">
                     <div className="flex items-center">
                         <div className="p-3 bg-blue-50 rounded-lg">
-                            <Battery className="h-6 w-6 text-blue-a" />
+                            <Battery className="h-6 w-6 text-blue-600" />
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Batteries</p>
-                            <p className="text-2xl font-semibold text-gray-900">{batteries.length}</p>
+                            <p className="text-2xl font-semibold text-gray-900">{pagination.total}</p>
                         </div>
                     </div>
                 </Card>
@@ -516,7 +694,7 @@ const BatteryManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Available</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {batteries.filter(b => b.status === 'available').length}
+                                {filteredBatteries.filter(b => b.status === 'available').length}
                             </p>
                         </div>
                     </div>
@@ -530,7 +708,7 @@ const BatteryManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Need Maintenance</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {batteries.filter(b => b.status === 'maintenance' || b.status === 'degraded').length}
+                                {filteredBatteries.filter(b => b.status === 'maintenance' || b.status === 'degraded').length}
                             </p>
                         </div>
                     </div>
@@ -544,7 +722,7 @@ const BatteryManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Avg SOC</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {batteries.length > 0 ? Math.round(batteries.reduce((sum, b) => sum + (b.soc ?? 0), 0) / batteries.length) : 0}
+                                {filteredBatteries.length > 0 ? Math.round(filteredBatteries.reduce((sum, b) => sum + (b.soc ?? 0), 0) / filteredBatteries.length) : 0}
                             </p>
                         </div>
                     </div>

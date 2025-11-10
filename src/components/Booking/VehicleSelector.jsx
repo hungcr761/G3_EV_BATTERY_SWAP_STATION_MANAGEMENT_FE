@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -10,21 +10,69 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        // If vehicles are provided via props, use them directly
-        if (vehicles && vehicles.length > 0) {
-            setInternalVehicles(vehicles);
+    // Helper function to filter vehicles to only show those with subscriptions
+    const filterVehiclesWithSubscription = useCallback(async (vehiclesToFilter) => {
+        try {
+            setLoading(true);
+            // Fetch vehicles without subscription to filter them out
+            const vehiclesWithoutSubscriptionResponse = await vehicleAPI.getWithoutSubscription();
+            const vehiclesWithoutSubscription = vehiclesWithoutSubscriptionResponse.data?.payload?.vehicles ||
+                vehiclesWithoutSubscriptionResponse.data?.vehicles || [];
+
+            // Get vehicle IDs without subscription
+            const vehicleIdsWithoutSubscription = new Set(
+                vehiclesWithoutSubscription.map(v => v.vehicle_id || v.id)
+            );
+
+            // Filter to only show vehicles WITH subscriptions (not in the "without subscription" list)
+            const vehiclesWithSubscription = vehiclesToFilter.filter(vehicle => {
+                const vehicleId = vehicle.vehicle_id || vehicle.id;
+                return !vehicleIdsWithoutSubscription.has(vehicleId);
+            });
+
+            setInternalVehicles(vehiclesWithSubscription);
+        } catch (error) {
+            console.error('Error filtering vehicles:', error);
+            // If filtering fails, show all vehicles as fallback
+            setInternalVehicles(vehiclesToFilter);
+        } finally {
             setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        // If vehicles are provided via props, filter them to only show vehicles with subscriptions
+        if (vehicles && vehicles.length > 0) {
+            filterVehiclesWithSubscription(vehicles);
             return;
         }
 
-        // Fetch vehicles - API now returns all necessary information
+        // Fetch vehicles and filter to only show vehicles with subscriptions
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await vehicleAPI.getAll();
-                const vehiclesData = response.data?.vehicles || [];
-                setInternalVehicles(vehiclesData);
+                // Fetch all vehicles and vehicles without subscription in parallel
+                const [allVehiclesResponse, vehiclesWithoutSubscriptionResponse] = await Promise.all([
+                    vehicleAPI.getAll(),
+                    vehicleAPI.getWithoutSubscription()
+                ]);
+
+                const allVehicles = allVehiclesResponse.data?.vehicles || [];
+                const vehiclesWithoutSubscription = vehiclesWithoutSubscriptionResponse.data?.payload?.vehicles ||
+                    vehiclesWithoutSubscriptionResponse.data?.vehicles || [];
+
+                // Get vehicle IDs without subscription
+                const vehicleIdsWithoutSubscription = new Set(
+                    vehiclesWithoutSubscription.map(v => v.vehicle_id || v.id)
+                );
+
+                // Filter to only show vehicles WITH subscriptions (not in the "without subscription" list)
+                const vehiclesWithSubscription = allVehicles.filter(vehicle => {
+                    const vehicleId = vehicle.vehicle_id || vehicle.id;
+                    return !vehicleIdsWithoutSubscription.has(vehicleId);
+                });
+
+                setInternalVehicles(vehiclesWithSubscription);
             } catch (error) {
                 console.error('Error fetching data:', error);
                 setError('Unable to load vehicle list');
@@ -34,7 +82,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
         };
 
         fetchData();
-    }, [vehicles]);
+    }, [vehicles, filterVehiclesWithSubscription]);
 
 
     const handleVehicleSelect = (vehicle) => {
@@ -61,12 +109,17 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
         );
     }
 
-    if (internalVehicles.length === 0) {
+    if (internalVehicles.length === 0 && !loading) {
         return (
             <div className="text-center py-8">
                 <Motorbike className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">You don't have any registered vehicles</p>
-                <Button variant="outline">Add New Vehicle</Button>
+                <p className="text-muted-foreground mb-2">No vehicles with active subscription found</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                    You need to subscribe to a plan for your vehicle before booking a battery swap
+                </p>
+                <Button variant="outline" onClick={() => window.location.href = '/services'}>
+                    View Subscription Plans
+                </Button>
             </div>
         );
     }
