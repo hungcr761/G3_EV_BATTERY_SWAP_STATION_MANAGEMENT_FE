@@ -45,10 +45,44 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                 selectedVehicle.vehicle_id
             );
 
-            setAvailabilityData(response.data);
+            console.log('Availability check response:', response.data);
 
-            if (!response.data.available) {
-                setError('Station does not have this battery type or is out of space');
+            // Extract availableBatteries from response (handle various response structures)
+            // API might return: response.data, response.data.data, or response.data.payload
+            const responseData = response.data;
+
+            // Try multiple possible response structures
+            const data = responseData?.payload ?? responseData?.data ?? responseData;
+
+            // Extract availableBatteries with comprehensive fallback options
+            let availableBatteries = data?.availableBatteries ??
+                data?.available_batteries ??
+                data?.availability_details?.available_batteries ??
+                responseData?.availableBatteries ??
+                responseData?.available_batteries ??
+                responseData?.availability_details?.available_batteries ??
+                0;
+
+            // Convert to number if it's a string, and ensure it's a valid number
+            if (typeof availableBatteries === 'string') {
+                availableBatteries = parseInt(availableBatteries, 10);
+            }
+            if (isNaN(availableBatteries) || availableBatteries < 0) {
+                availableBatteries = 0;
+            }
+
+            console.log('Extracted availableBatteries:', availableBatteries, 'from data:', data, 'responseData:', responseData);
+
+            // Store the full response data for use in other components
+            setAvailabilityData(data || responseData);
+
+            // Only set error if no batteries are available (availableBatteries must be > 0 to book)
+            if (availableBatteries > 0) {
+                setError(null); // Clear error if batteries are available
+                console.log('Batteries available, clearing error');
+            } else {
+                setError('Station does not have available batteries for this vehicle type');
+                console.log('No batteries available, setting error');
             }
         } catch (error) {
             console.error('Error checking availability:', error);
