@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {
     Battery,
     Search,
-    Filter,
-    MoreVertical,
     Trash2,
     Eye,
     AlertTriangle,
@@ -12,34 +10,38 @@ import {
     TrendingUp,
     MapPin,
     Activity,
-    Zap
+    Zap,
+    ArrowUpNarrowWide,
+    ArrowDownNarrowWide
 } from 'lucide-react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { useApi } from '../../hooks/useApi';
-import { batteryAPI, batteryTypeAPI, stationAPI } from '../../lib/apiServices';
+import { batteryAPI, batteryTypeAPI, stationAPI, cabinetAPI } from '../../lib/apiServices';
 // Removed transfer management from this page; handled in AdminTransferManagement
 
 const BatteryManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterStation, setFilterStation] = useState('all');
+    const [sortField, setSortField] = useState('none');
+    const [sortDirection, setSortDirection] = useState('desc');
 
 
     const { data: apiBatteries } = useApi(batteryAPI.getAll, []);
     const { data: apiBatteryTypes } = useApi(batteryTypeAPI.getAll, []);
     const { data: apiStations, loading: stationsLoading } = useApi(stationAPI.getAll, []);
+    const { data: apiCabinets } = useApi(() => cabinetAPI.getAll({ page: 1, pageSize: 100 }), []);
 
     // Create a map of battery types by battery_type_id for quick lookup
-    const batteryTypeMap = React.useMemo(() => {
+    const batteryTypeMap = (() => {
         if (!apiBatteryTypes) {
             console.log('BatteryManagement: apiBatteryTypes is null/undefined');
             return {};
         }
 
-        // Handle response structure: { success: true, payload: { batteryTypes: [...] } }
         const types = apiBatteryTypes?.payload?.batteryTypes ||
             (Array.isArray(apiBatteryTypes) ? apiBatteryTypes : []);
 
@@ -58,7 +60,6 @@ const BatteryManagement = () => {
 
         const map = types.reduce((acc, type) => {
             if (type?.battery_type_id != null) {
-                // Use both string and number keys to handle type mismatches
                 acc[type.battery_type_id] = type;
                 acc[String(type.battery_type_id)] = type;
                 acc[Number(type.battery_type_id)] = type;
@@ -68,13 +69,11 @@ const BatteryManagement = () => {
 
         console.log('BatteryManagement: batteryTypeMap created with keys:', Object.keys(map));
         return map;
-    }, [apiBatteryTypes]);
+    })();
 
-    // Process stations from API response
-    const stations = React.useMemo(() => {
+    const stations = (() => {
         if (!apiStations) return [{ id: 'all', name: 'All Stations' }];
 
-        // Handle response structure: { success: true, payload: { stations: [...] } }
         const stationsData = apiStations?.payload?.stations ||
             (Array.isArray(apiStations) ? apiStations : []);
 
@@ -82,31 +81,98 @@ const BatteryManagement = () => {
             return [{ id: 'all', name: 'All Stations' }];
         }
 
-        // Transform stations to include 'All Stations' option
-        const transformedStations = [
+        return [
             { id: 'all', name: 'All Stations' },
             ...stationsData.map(station => ({
                 id: station.station_id || station.id,
                 name: station.station_name || station.name || 'Unknown Station'
             }))
         ];
+    })();
 
-        return transformedStations;
-    }, [apiStations]);
-
-    // Create a map of station IDs to station names for battery location lookup
-    const stationMap = React.useMemo(() => {
+    const stationMap = (() => {
         const map = {};
         stations.forEach(station => {
             if (station.id !== 'all') {
                 map[station.id] = station.name;
-                // Handle both string and number keys
                 map[String(station.id)] = station.name;
                 map[Number(station.id)] = station.name;
             }
         });
         return map;
-    }, [stations]);
+    })();
+
+    const cabinets = (() => {
+        if (!apiCabinets) return [];
+
+        const payloadCabinets = apiCabinets?.payload?.cabinets;
+        const dataArray = Array.isArray(payloadCabinets?.data)
+            ? payloadCabinets.data
+            : Array.isArray(payloadCabinets)
+                ? payloadCabinets
+                : Array.isArray(apiCabinets?.cabinets?.data)
+                    ? apiCabinets.cabinets.data
+                    : Array.isArray(apiCabinets?.cabinets)
+                        ? apiCabinets.cabinets
+                        : Array.isArray(apiCabinets)
+                            ? apiCabinets
+                            : [];
+
+        return Array.isArray(dataArray) ? dataArray : [];
+    })();
+
+    const batteryLocationMap = (() => {
+        const map = {};
+
+        const addEntry = (key, value) => {
+            if (key == null) return;
+            map[key] = value;
+            map[String(key)] = value;
+            const numericKey = Number(key);
+            if (!Number.isNaN(numericKey)) {
+                map[numericKey] = value;
+            }
+        };
+
+        cabinets.forEach(cabinet => {
+            const stationId =
+                cabinet?.station_id ??
+                cabinet?.stationId ??
+                cabinet?.station?.station_id ??
+                cabinet?.station?.id ??
+                null;
+
+            const cabinetInfo = {
+                cabinetId: cabinet?.cabinet_id ?? cabinet?.id ?? null,
+                cabinetCode: cabinet?.cabinet_code ?? cabinet?.code ?? null,
+                stationId
+            };
+
+            (cabinet?.slots ?? []).forEach(slot => {
+                const battery = slot?.battery;
+                if (!battery) {
+                    return;
+                }
+
+                const locationInfo = {
+                    ...cabinetInfo,
+                    slotId: slot?.slot_id ?? slot?.id ?? null,
+                    slotNumber: slot?.slot_number ?? slot?.slotNumber ?? null
+                };
+
+                const possibleKeys = [
+                    battery?.battery_id,
+                    battery?.id,
+                    battery?.battery_serial,
+                    battery?.batteryId
+                ];
+
+                possibleKeys.forEach(key => addEntry(key, locationInfo));
+            });
+        });
+
+        return map;
+    })();
 
     // Handle batteries response structure - could be direct array or in payload
     const batteriesArray = Array.isArray(apiBatteries)
@@ -125,10 +191,33 @@ const BatteryManagement = () => {
         }
 
         // Get station name from station_id
-        const stationId = b?.station_id;
-        const stationName = stationId ?
-            (stationMap[stationId] || stationMap[String(stationId)] || stationMap[Number(stationId)] || null) :
+        const slotId = b?.slot_id ?? b?.slotId ?? null;
+        const vehicleId = b?.vehicle_id ?? b?.vehicleId ?? null;
+        const batteryId = b?.battery_id ?? b?.id ?? b?.battery_serial ?? null;
+
+        const locationInfo = batteryLocationMap[batteryId] ||
+            (batteryId != null ? batteryLocationMap[String(batteryId)] : null) ||
+            (batteryId != null ? batteryLocationMap[Number(batteryId)] : null);
+
+        const resolvedStationId = locationInfo?.stationId ??
+            b?.station_id ??
+            b?.stationId ??
             null;
+
+        const stationName = resolvedStationId != null ?
+            (stationMap[resolvedStationId] ||
+                stationMap[String(resolvedStationId)] ||
+                stationMap[Number(resolvedStationId)] ||
+                null) :
+            null;
+
+        let location = 'Unknown';
+
+        if (!slotId) {
+            location = 'Vehicle';
+        } else if (vehicleId == null) {
+            location = stationName ? `${stationName}` : 'Station';
+        }
 
         return {
             id: b?.battery_id ?? b?.battery_serial ?? null,
@@ -137,8 +226,8 @@ const BatteryManagement = () => {
             soh: b?.current_soh != null ? parseFloat(b.current_soh) : null,
             soc: b?.current_soc != null ? parseFloat(b.current_soc) : null,
             model: batteryType?.battery_type_code ?? null,
-            location: stationName,
-            stationId: stationId,
+            location,
+            stationId: resolvedStationId,
             capacity: batteryType?.nominal_capacity ?? null,
             voltage: batteryType?.nominal_voltage ?? null,
             cellChemistry: batteryType?.cell_chemistry ?? null
@@ -192,15 +281,50 @@ const BatteryManagement = () => {
         return 'text-red-600';
     };
 
-    const filteredBatteries = batteries.filter(battery => {
-        const matchesSearch = (battery.id ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (battery.serialNumber ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (battery.model ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === 'all' || (battery.status === filterStatus);
-        const matchesStation = filterStation === 'all' ||
-            (battery.stationId != null && (String(battery.stationId) === String(filterStation) || battery.stationId === Number(filterStation)));
-        return matchesSearch && matchesStatus && matchesStation;
-    });
+    const filteredBatteries = (() => {
+        const filtered = batteries.filter(battery => {
+            const matchesSearch = (battery.id ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (battery.serialNumber ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (battery.model ?? '').toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = filterStatus === 'all' || (battery.status === filterStatus);
+            const matchesStation = filterStation === 'all' ||
+                (battery.stationId != null && (String(battery.stationId) === String(filterStation) || battery.stationId === Number(filterStation)));
+            return matchesSearch && matchesStatus && matchesStation;
+        });
+
+        if (sortField === 'none') {
+            return filtered;
+        }
+
+        const sorted = [...filtered];
+
+        const getSortValue = (battery) => {
+            const value = sortField === 'soc' ? battery.soc : battery.soh;
+            return typeof value === 'number' && !Number.isNaN(value) ? value : null;
+        };
+
+        sorted.sort((a, b) => {
+            const aVal = getSortValue(a);
+            const bVal = getSortValue(b);
+
+            const aHas = aVal != null;
+            const bHas = bVal != null;
+
+            if (!aHas && !bHas) return 0;
+            if (!aHas) return 1;
+            if (!bHas) return -1;
+
+            if (aVal === bVal) return 0;
+
+            return sortDirection === 'asc' ? (aVal - bVal) : (bVal - aVal);
+        });
+
+        return sorted;
+    })();
+
+    const toggleSortDirection = () => {
+        setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    };
 
 
     return (
@@ -252,10 +376,37 @@ const BatteryManagement = () => {
                                 </option>
                             ))}
                         </select>
-                        <Button variant="outline" className="flex items-center gap-2">
-                            <Filter className="h-4 w-4" />
-                            More Filters
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={sortField}
+                                onChange={(e) => setSortField(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            >
+                                <option value="none">Default</option>
+                                <option value="soh">SOH</option>
+                                <option value="soc">SOC</option>
+                            </select>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className={`flex items-center gap-1 px-3 ${sortField === 'none' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                onClick={toggleSortDirection}
+                                aria-label="Toggle sort direction"
+                                disabled={sortField === 'none'}
+                            >
+                                {sortDirection === 'asc' ? (
+                                    <>
+                                        <ArrowDownNarrowWide className="h-4 w-4" />
+                                        {/* <span className="text-sm">Asc</span> */}
+                                    </>
+                                ) : (
+                                    <>
+                                        <ArrowUpNarrowWide className="h-4 w-4" />
+                                        {/* <span className="text-sm">Desc</span> */}
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </Card>
@@ -269,7 +420,7 @@ const BatteryManagement = () => {
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-2">
                                 <Battery className="h-5 w-5 text-blue-600" />
-                                <h3 className="font-semibold text-gray-900">{battery.serialNumber}</h3>
+                                <h3 className="font-semibold text-gray-900 text-md">{battery.serialNumber}</h3>
                             </div>
                             <div className="flex items-center gap-1">
                                 <Badge className={getStatusColor(battery.status)}>
@@ -278,9 +429,6 @@ const BatteryManagement = () => {
                                         {getStatusText(battery.status)}
                                     </div>
                                 </Badge>
-                                <Button variant="ghost" size="sm">
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
                             </div>
                         </div>
 

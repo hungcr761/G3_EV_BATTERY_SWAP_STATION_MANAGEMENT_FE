@@ -473,7 +473,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Users</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {loading ? '...' : pagination.total}
+                                {pagination.total}
                             </p>
                         </div>
                     </div>
@@ -487,7 +487,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Active Users</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {loading ? '...' : users.filter(u => u.status === 'active').length}
+                                {users.filter(u => u.status === 'active').length}
                             </p>
                         </div>
                     </div>
@@ -501,7 +501,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Drivers</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {loading ? '...' : users.filter(u => u.role === 'driver').length}
+                                {users.filter(u => u.role === 'driver').length}
                             </p>
                         </div>
                     </div>
@@ -515,7 +515,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Staff Members</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {loading ? '...' : users.filter(u => u.role === 'staff').length}
+                                {users.filter(u => u.role === 'staff').length}
                             </p>
                         </div>
                     </div>

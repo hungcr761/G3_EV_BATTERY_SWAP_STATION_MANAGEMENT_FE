@@ -29,8 +29,7 @@ import {
     DialogTitle,
 } from '../../components/ui/dialog';
 import { useStation } from '../../hooks/useStation';
-import { useApi } from '../../hooks/useApi';
-import { batteryAPI, cabinetAPI } from '../../lib/apiServices';
+import { cabinetAPI } from '../../lib/apiServices';
 import { useUser } from '../../hooks/useUser';
 import { useShifts } from '../../hooks/useShifts';
 
@@ -66,9 +65,6 @@ const StationManagement = () => {
     const addressInputRef = useRef(null);
     const suggestionsRef = useRef(null);
 
-    // Fetch all batteries
-    const { data: batteriesData, loading: batteriesLoading } = useApi(batteryAPI.getAll, []);
-
     // Fetch all staff with role filter
     const { pagination: staffPagination, loading: staffLoading } = useUser({
         page: 1,
@@ -84,8 +80,6 @@ const StationManagement = () => {
     // State to store cabinet data per station
     const [cabinetDataByStation, setCabinetDataByStation] = useState({});
     const [cabinetLoadingByStation, setCabinetLoadingByStation] = useState({});
-
-    const totalBatteries = batteriesData?.length || 0;
 
     // Get total staff from pagination
     const totalStaff = staffPagination?.total || 0;
@@ -133,7 +127,7 @@ const StationManagement = () => {
             // Fetch cabinet data for each station
             const promises = stations.map(async (station) => {
                 try {
-                    const response = await cabinetAPI.getByStation(station.id);
+                    const response = await cabinetAPI.getAll({ station_id: station.id });
                     const cabinets = response.data?.payload?.cabinets?.data || response.data?.cabinets?.data || [];
                     newCabinetData[station.id] = cabinets;
                 } catch (err) {
@@ -184,6 +178,14 @@ const StationManagement = () => {
 
         return result;
     }, [cabinetDataByStation]);
+
+    const totalSwapBatteries = useMemo(() => {
+        return Object.values(batteryCountsByStation).reduce((sum, counts) => {
+            return sum + (counts?.available || 0);
+        }, 0);
+    }, [batteryCountsByStation]);
+
+
 
     // Fetch address autocomplete suggestions using Goong API
     const fetchAddressSuggestions = async (input) => {
@@ -823,9 +825,9 @@ const StationManagement = () => {
                             <Battery className="h-6 w-6 text-orange-600" />
                         </div>
                         <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Total Batteries</p>
+                            <p className="text-sm font-medium text-gray-600">Available Swap Batteries</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {batteriesLoading ? '...' : totalBatteries}
+                                {totalSwapBatteries}
                             </p>
                         </div>
                     </div>
