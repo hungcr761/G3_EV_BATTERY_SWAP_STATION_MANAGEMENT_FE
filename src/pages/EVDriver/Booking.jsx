@@ -570,7 +570,7 @@ const Stations = () => {
                                                             <div className="text-right">
                                                                 <div className="flex items-center space-x-1">
                                                                     <span className="text-sm font-medium">
-                                                                        {stationAvailability[station.id].availableCount}
+                                                                        {stationAvailability[station.id].totalBatteriesReady}
                                                                     </span>
                                                                     <span className="text-xs text-muted-foreground">
                                                                         / {stationAvailability[station.id].totalSlots}
