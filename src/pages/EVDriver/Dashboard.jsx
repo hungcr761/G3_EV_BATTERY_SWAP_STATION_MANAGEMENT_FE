@@ -24,7 +24,9 @@ import {
     AlertCircle,
     QrCode,
     ChevronRight,
-    Loader2
+    Loader2,
+    Bell,
+    LifeBuoy
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -101,7 +103,7 @@ const Dashboard = () => {
                 };
             }
         }
-    }, [selectedBooking?.id, selectedBooking?.booking_id, showQRCode]);
+    }, [selectedBooking, showQRCode]);
 
     // Reset QR code state when dialog closes
     useEffect(() => {
@@ -123,7 +125,7 @@ const Dashboard = () => {
         };
     }, [user?.account_id]);
 
-    const { data: swapRecordsData, loading: swapRecordsLoading } = useApi(getSwapRecords, [user?.account_id]);
+    const { data: swapRecordsData, loading: _swapRecordsLoading } = useApi(getSwapRecords, [user?.account_id]);
 
     // Fetch subscription plans
     const { data: subscriptionPlansData } = useApi(subscriptionPlanAPI.getAll);
@@ -304,23 +306,24 @@ const Dashboard = () => {
 
                 {/* Header */}
                 <div className="mb-8">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
-                        <div className="absolute inset-0 opacity-10">
-                            <div className="absolute inset-0" style={{
-                                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-                            }} />
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <div className="h-20 w-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg flex items-center justify-center">
-                                <User className="h-10 w-10 text-white" />
+                    <div className="welcome-card rounded-2xl shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="wc-avatar">
+                                    <User className="h-8 w-8 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="wc-title">Xin chào, {toTitleCase(user?.fullname)}!</h1>
+                                    <div className="wc-sub mt-2 flex items-center gap-3">
+                                        <span className="px-2 py-0.5 rounded-full bg-white/20 text-xs">Tài xế EV</span>
+                                        <span className="text-sm opacity-90">{user?.email}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                                    Welcome, {toTitleCase(user?.fullname)}!
-                                </h1>
-                                <p className="text-slate-600 mt-1 text-lg">
-                                    {user?.role === 'driver' ? 'EV Driver' : 'Administrator'} • {user?.email}
-                                </p>
+                            <div className="flex items-center gap-3">
+                                <Button variant="ghost" className="bg-white/10 text-white rounded-full px-3 py-2 border border-white/20">
+                                    <Bell className="mr-2 h-4 w-4" /> Thông báo
+                                </Button>
                             </div>
                         </div>
                     </div>
