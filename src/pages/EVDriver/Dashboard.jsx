@@ -740,7 +740,7 @@ const Dashboard = () => {
                                     disabled={isCancelling}
                                     className="bg-red-600 hover:bg-red-700 shadow-md hover:shadow-lg transition-all duration-200"
                                 >
-                                    {isCancelling ? 'Đang hủy...' : 'Có, hủy lịch'}
+                                    {isCancelling ? 'Cancelling...' : 'Yes, Cancel Booking'}
                                 </Button>
                             </div>
                         </div>
