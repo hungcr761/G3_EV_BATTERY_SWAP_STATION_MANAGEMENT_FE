@@ -189,21 +189,122 @@ export const profileUpdateSchema = z.object({
         .min(1, 'Citizen ID is required')
         .regex(/^[0-9]{12}$/, 'Citizen ID must have exactly 12 digits')
         .refine((val) => {
-            // Check province code in citizen ID (first 2 digits)
-            const provinceCode = parseInt(val.substring(0, 2));
-            return provinceCode >= 1 && provinceCode <= 96;
+            // Format: AAA B CC DDDDDD
+            // AAA: Province/city code (001-096)
+            const provinceCode = parseInt(val.substring(0, 3));
+            if (provinceCode < 1 || provinceCode > 96) {
+                return false;
+            }
+            // Exclude reserved/invalid province codes
+            const excludedCodes = [42, 44, 45, 46, 87, 91, 96];
+            if (excludedCodes.includes(provinceCode)) {
+                return false;
+            }
+            return true;
         }, {
-            message: 'Invalid province code in citizen ID'
+            message: 'Invalid province code in citizen ID (must be 001-096, excluding 042, 044, 045, 046, 087, 091, 096)'
+        })
+        .refine((val) => {
+            // B: Century and gender code (4th digit, 0-9)
+            const centuryGenderCode = parseInt(val[3]);
+            if (centuryGenderCode < 0 || centuryGenderCode > 9) {
+                return false;
+            }
+            return true;
+        }, {
+            message: 'Invalid century/gender code in citizen ID (4th digit must be 0-9)'
+        })
+        .refine((val) => {
+            // CC: Last two digits of birth year (5th-6th digits, 00-99)
+            const birthYearLastTwo = parseInt(val.substring(4, 6));
+            if (birthYearLastTwo < 0 || birthYearLastTwo > 99) {
+                return false;
+            }
+            return true;
+        }, {
+            message: 'Invalid birth year in citizen ID (5th-6th digits must be 00-99)'
+        })
+        .refine((val) => {
+            // DDDDDD: Unique personal identifier (last 6 digits, 000000-999999)
+            const personalId = parseInt(val.substring(6, 12));
+            if (personalId < 0 || personalId > 999999) {
+                return false;
+            }
+            return true;
+        }, {
+            message: 'Invalid personal identifier in citizen ID (last 6 digits must be 000000-999999)'
         }),
     driving_license: z.string()
         .min(1, 'Driving license is required')
         .regex(/^[0-9]{12}$/, 'Driving license must have exactly 12 digits')
         .refine((val) => {
-            // Check province code in driving license (first 2 digits)
+            // Format: XX YY MM DD NNNN
+            // XX: Province code (first 2 digits, 01-96)
             const provinceCode = parseInt(val.substring(0, 2));
-            return provinceCode >= 1 && provinceCode <= 96;
+            if (provinceCode < 1 || provinceCode > 96) {
+                return false;
+            }
+            // Exclude reserved/invalid province codes
+            const excludedCodes = [42, 44, 45, 46, 87, 91, 96];
+            if (excludedCodes.includes(provinceCode)) {
+                return false;
+            }
+            return true;
         }, {
-            message: 'Invalid province code in driving license'
+            message: 'Invalid province code in driving license (must be 01-96, excluding 42, 44, 45, 46, 87, 91, 96)'
+        })
+        .refine((val) => {
+            // YY: Year of issue (3rd-4th digits, last 2 digits of year)
+            const issueYear = parseInt(val.substring(2, 4));
+            // Valid years: 00-99 (representing 1900-2099, but typically 70-99 for 1970-2099)
+            // We'll accept 00-99 but warn if it's before 70 (might be old license)
+            if (issueYear < 0 || issueYear > 99) {
+                return false;
+            }
+            return true;
+        }, {
+            message: 'Invalid issue year in driving license (3rd-4th digits must be 00-99)'
+        })
+        .refine((val) => {
+            // MM: Month of issue (5th-6th digits, 01-12)
+            const issueMonth = parseInt(val.substring(4, 6));
+            if (issueMonth < 1 || issueMonth > 12) {
+                return false;
+            }
+            return true;
+        }, {
+            message: 'Invalid issue month in driving license (5th-6th digits must be 01-12)'
+        })
+        .refine((val) => {
+            // DD: Day of issue (7th-8th digits, 01-31)
+            const issueDay = parseInt(val.substring(6, 8));
+            if (issueDay < 1 || issueDay > 31) {
+                return false;
+            }
+            const issueMonth = parseInt(val.substring(4, 6));
+            // Validate day based on month
+            const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            if (issueDay > daysInMonth[issueMonth - 1]) {
+                return false;
+            }
+            // Check for February (month 2) - day 29 is only valid in leap years
+            // We'll allow day 29 for February as it could be a leap year
+            if (issueMonth === 2 && issueDay > 29) {
+                return false;
+            }
+            return true;
+        }, {
+            message: 'Invalid issue day in driving license (7th-8th digits must be valid day for the given month, 01-31)'
+        })
+        .refine((val) => {
+            // NNNN: Sequential number (last 4 digits, 0001-9999)
+            const sequentialNumber = parseInt(val.substring(8, 12));
+            if (sequentialNumber < 1 || sequentialNumber > 9999) {
+                return false;
+            }
+            return true;
+        }, {
+            message: 'Invalid sequential number in driving license (last 4 digits must be 0001-9999)'
         })
 });
 

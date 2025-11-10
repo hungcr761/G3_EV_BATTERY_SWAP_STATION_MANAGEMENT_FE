@@ -21,40 +21,11 @@ const BookingConfirmation = ({
     onBack,
     isSubmitting = false
 }) => {
-    const [countdown, setCountdown] = useState(0);
     const [bookingStartTime] = useState(new Date());
     const [bookingEndTime] = useState(() => {
         const now = new Date();
         return new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
     });
-
-    React.useEffect(() => {
-        // Calculate countdown to end time (30 minutes from now)
-        const now = new Date();
-        const endTime = bookingEndTime;
-        const timeDiff = endTime.getTime() - now.getTime();
-        const secondsDiff = Math.max(0, Math.floor(timeDiff / 1000));
-
-        setCountdown(secondsDiff);
-
-        const interval = setInterval(() => {
-            setCountdown(prev => {
-                if (prev <= 0) {
-                    clearInterval(interval);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [bookingEndTime]);
-
-    const formatCountdown = (seconds) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    };
 
     const formatTime = (time) => {
         if (!time) return '';
@@ -75,7 +46,6 @@ const BookingConfirmation = ({
         });
     };
 
-    const isTimeExpired = countdown <= 0;
     const getActiveTimeRange = () => {
         return {
             start: formatTime(bookingStartTime),
@@ -105,13 +75,6 @@ const BookingConfirmation = ({
                 <p className="text-center text-sm mt-1 text-blue-600">
                     Booking command active time
                 </p>
-                {countdown > 0 && (
-                    <div className="mt-2 text-center">
-                        <p className="text-sm text-blue-600">
-                            Time remaining: {formatCountdown(countdown)} to reach station
-                        </p>
-                    </div>
-                )}
             </div>
 
             {/* Vehicle Information */}
@@ -213,7 +176,7 @@ const BookingConfirmation = ({
                 </Button>
                 <Button
                     onClick={onConfirm}
-                    disabled={isSubmitting || isTimeExpired}
+                    disabled={isSubmitting}
                     size="lg"
                     className="min-w-[140px]"
                 >
@@ -231,13 +194,6 @@ const BookingConfirmation = ({
                 </Button>
             </div>
 
-            {isTimeExpired && (
-                <div className="text-center py-4">
-                    <p className="text-red-600 font-medium">
-                        Booking time has expired. Please select a new time.
-                    </p>
-                </div>
-            )}
         </div>
     );
 };

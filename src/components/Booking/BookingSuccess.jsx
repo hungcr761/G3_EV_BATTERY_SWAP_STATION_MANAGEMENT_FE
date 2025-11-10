@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -7,8 +7,6 @@ import QRCodeLib from 'qrcode';
 
 const BookingSuccess = ({ bookingData, onClose }) => {
     const qrCodeRef = useRef(null);
-    const [countdown, setCountdown] = useState(0);
-
     useEffect(() => {
         if (bookingData?.booking_id && qrCodeRef.current) {
             QRCodeLib.toCanvas(qrCodeRef.current, bookingData.booking_id, {
@@ -18,33 +16,9 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                     dark: '#000000',
                     light: '#FFFFFF'
                 }
-            }).catch(err => {
-                console.error('Error generating QR code:', err);
-            });
+            }).catch(() => { });
         }
     }, [bookingData?.booking_id]);
-
-    // Update countdown every second
-    useEffect(() => {
-        console.log('Countdown effect triggered, expired_time:', bookingData?.expired_time);
-        if (bookingData?.expired_time) {
-            const updateCountdown = () => {
-                const now = new Date();
-                const endTime = new Date(bookingData.expired_time);
-                const timeDiff = endTime.getTime() - now.getTime();
-                const seconds = Math.max(0, Math.floor(timeDiff / 1000));
-                console.log('Countdown update:', seconds, 'seconds');
-                setCountdown(seconds);
-            };
-
-            updateCountdown();
-            const interval = setInterval(updateCountdown, 1000);
-
-            return () => clearInterval(interval);
-        } else {
-            console.log('No expired_time, countdown not started');
-        }
-    }, [bookingData?.expired_time]);
 
     const formatTime = (timeString) => {
         if (!timeString) return '';
@@ -66,40 +40,6 @@ const BookingSuccess = ({ bookingData, onClose }) => {
             day: 'numeric'
         });
     };
-
-    const getActiveTimeRange = () => {
-        console.log('getActiveTimeRange called');
-        console.log('create_time exists:', !!bookingData?.create_time);
-        console.log('expired_time exists:', !!bookingData?.expired_time);
-
-        if (!bookingData?.create_time || !bookingData?.expired_time) {
-            console.log('Missing time data, returning empty');
-            return { start: '', end: '' };
-        }
-
-        const startTime = new Date(bookingData.create_time);
-        const endTime = new Date(bookingData.expired_time);
-
-        console.log('startTime:', startTime);
-        console.log('endTime:', endTime);
-
-        const result = {
-            start: formatTime(startTime.toISOString()),
-            end: formatTime(endTime.toISOString())
-        };
-
-        console.log('Active time range result:', result);
-        return result;
-    };
-
-    const formatCountdown = (seconds) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    };
-
-    console.log('Rendering BookingSuccess component');
-    console.log('bookingData exists:', !!bookingData);
 
     if (!bookingData) {
         console.warn('WARNING: bookingData is null/undefined');
@@ -137,32 +77,6 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        {/* Active Time Range */}
-                        {(() => {
-                            const hasCreateTime = !!bookingData?.create_time;
-                            const hasEndTime = !!bookingData?.expired_time;
-                            console.log('Active Time Range check:', { hasCreateTime, hasEndTime, create_time: bookingData?.create_time, expired_time: bookingData?.expired_time });
-                            return hasCreateTime && hasEndTime;
-                        })() && (
-                                <div className="p-4 rounded-lg border bg-blue-50 border-blue-200 mb-4">
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <Clock className="h-5 w-5 text-blue-600" />
-                                        <span className="font-bold text-lg text-blue-700">
-                                            {getActiveTimeRange().start} - {getActiveTimeRange().end}
-                                        </span>
-                                    </div>
-                                    <p className="text-center text-sm mt-1 text-blue-600">
-                                        Booking active time
-                                    </p>
-                                    {countdown > 0 && (
-                                        <div className="mt-2 text-center">
-                                            <p className="text-sm text-blue-600">
-                                                Time remaining: {formatCountdown(countdown)} to reach station
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-3">
                                 <div className="flex justify-between">
@@ -261,7 +175,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                             {bookingData.batteries.map((battery, index) => (
                                 <div key={battery.battery_id} className="p-3 bg-gray-50 rounded-lg">
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm font-medium text-muted-foreground">Pin #{index + 1}</span>
+                                        <span className="text-sm font-medium text-muted-foreground">Battery #{index + 1}</span>
                                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                                             {battery.current_soc}% SOC
                                         </Badge>

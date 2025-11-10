@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { bookingAPI } from '../../lib/apiServices';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import VehicleSelection from './VehicleSelection';
 import BatterySelection from './BatterySelection';
 import BookingConfirmation from './BookingConfirmation';
 import BookingSuccess from './BookingSuccess';
@@ -14,12 +13,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
     const [availabilityData, setAvailabilityData] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
-    const [bookingId, setBookingId] = useState(null);
-    const [isBookingActive, setIsBookingActive] = useState(false);
     const [bookingData, setBookingData] = useState(null);
-
-    const timerRef = useRef(null);
-    const deleteTimerRef = useRef(null);
 
     // Check availability when vehicle is selected
     useEffect(() => {
@@ -27,26 +21,6 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             checkAvailability();
         }
     }, [selectedVehicle, selectedStation]);
-
-
-    // Handle booking timer when booking is created
-    useEffect(() => {
-        if (bookingId) {
-            // Booking is active immediately when created
-            setIsBookingActive(true);
-
-            // Set timer to cancel booking at end time (30 minutes from creation)
-            const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
-            deleteTimerRef.current = setTimeout(() => {
-                handleAutoDeleteBooking();
-            }, thirtyMinutes);
-        }
-
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-            if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
-        };
-    }, [bookingId]);
 
     const checkAvailability = async () => {
         try {
@@ -155,7 +129,6 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
             if (response.data && response.data.booking) {
                 console.log('Booking created successfully:', response.data.booking);
                 const bookingResponse = response.data.booking;
-                setBookingId(bookingResponse.booking_id);
                 setBookingData({
                     booking_id: bookingResponse.booking_id,
                     status: bookingResponse.status,
@@ -197,21 +170,7 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
         }
     };
 
-    const handleAutoDeleteBooking = async () => {
-        if (bookingId) {
-            try {
-                await bookingAPI.cancel(bookingId);
-                console.log('Booking automatically cancelled after scheduled time');
-            } catch (error) {
-                console.error('Error auto-cancelling booking:', error);
-            }
-        }
-    };
-
     const handleClose = () => {
-        // Clean up timers
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
         onClose?.();
     };
 
@@ -244,15 +203,12 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                         />
                     );
                 case 3:
-                    console.log('Rendering BookingSuccess for multi-slot, bookingData:', bookingData);
                     return (
                         <BookingSuccess
                             bookingData={bookingData}
                             onClose={handleClose}
                         />
                     );
-                default:
-                    return null;
             }
         } else {
             // Single-slot vehicle flow: Confirmation -> Success

@@ -155,12 +155,11 @@ const Dashboard = () => {
         // Calculate this month's swaps
         const now = new Date();
         const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
 
         const thisMonthSwaps = swapRecords.filter(record => {
             if (!record.swap_time) return false;
             const swapDate = new Date(record.swap_time);
-            return swapDate.getMonth() === currentMonth && swapDate.getFullYear() === currentYear;
+            return swapDate.getMonth() === currentMonth;
         }).length;
 
         return {
@@ -741,7 +740,7 @@ const Dashboard = () => {
                                     disabled={isCancelling}
                                     className="bg-red-600 hover:bg-red-700 shadow-md hover:shadow-lg transition-all duration-200"
                                 >
-                                    {isCancelling ? 'Đang hủy...' : 'Có, hủy lịch'}
+                                    {isCancelling ? 'Cancelling...' : 'Yes, Cancel Booking'}
                                 </Button>
                             </div>
                         </div>
