@@ -175,6 +175,6 @@ export const transferAPI = {
 
 // Cabinet API (Station cabinets with slots & batteries)
 export const cabinetAPI = {
-    getByStation: (stationId) => api.get(`/cabinets?station_id=${stationId}`)
+    getAll: (params = {}) => api.get('/cabinets', { params })
 };
 
