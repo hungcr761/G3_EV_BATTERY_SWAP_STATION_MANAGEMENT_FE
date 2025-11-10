@@ -86,35 +86,84 @@ export const registerSchema = z.object({
 });
 
 // Vehicle schemas
-export const vehicleSchema = z.object({
-    vin: z.string()
-        .min(1, 'VIN is required')
-        .length(17, 'VIN must be exactly 17 characters')
-        .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'VIN is invalid (only uppercase letters and numbers, no I, O, Q)')
-        .transform(val => val.toUpperCase()),
-    model: z.string()
-        .min(1, 'Please select a vehicle model')
-        .max(100, 'Model name cannot exceed 100 characters'),
-    license_plate: z.string()
-        .min(8, 'License plate is required')
-        .max(9, 'License plate cannot exceed 9 characters')
-        .regex(
-            /^[0-9]{2}[A-Z]-[0-9]{4,5}$/,
-            'License plate format is invalid (e.g., 20A-1234 or 20A-12345)'
-        )
-        .transform(val => val.toUpperCase())
-        .refine((val) => {
-            const provinceCode = parseInt(val.substring(0, 2));
-            const excludeCode = [42, 44, 45, 46, 87, 91, 96];
-            const hasInvalidProvince =
-                provinceCode < 11 || provinceCode > 99 || excludeCode.includes(provinceCode);
+export const vehicleSchema = z
+    .object({
+        vin: z.string()
+            .min(1, 'VIN is required')
+            .length(17, 'VIN must be exactly 17 characters')
+            .transform(val => (val || '').toUpperCase()),
+        model: z.string()
+            .min(1, 'Please select a vehicle model')
+            .max(100, 'Model name cannot exceed 100 characters'),
+        license_plate: z.string()
+            .min(8, 'License plate is required')
+            .max(9, 'License plate cannot exceed 9 characters')
+            .regex(
+                /^[0-9]{2}[A-Z]-[0-9]{4,5}$/,
+                'License plate format is invalid (e.g., 20A-1234 or 20A-12345)'
+            )
+            .transform(val => val.toUpperCase())
+            .refine((val) => {
+                const provinceCode = parseInt(val.substring(0, 2));
+                const excludeCode = [42, 44, 45, 46, 87, 91, 96];
+                const hasInvalidProvince =
+                    provinceCode < 11 || provinceCode > 99 || excludeCode.includes(provinceCode);
 
-            return !hasInvalidProvince;
-        }, {
-            message:
-                'Invalid license plate: province code must be between 11–99 and not one of 42, 44, 45, 46, 87, 91, 96.'
-        })
-});
+                return !hasInvalidProvince;
+            }, {
+                message:
+                    'Invalid license plate: province code must be between 11–99 and not one of 42, 44, 45, 46, 87, 91, 96.'
+            })
+    })
+    .superRefine((data, ctx) => {
+        const vin = (data.vin || '').toUpperCase();
+        const model = data.model;
+
+        // Map VinFast models to VDS codes
+        const modelVdsMap = {
+            'Ludo': 'LUD',
+            'Impes': 'IMP',
+            'Klara S': 'KLA',
+            'Theon S': 'TES',
+            'Vento': 'VEN',
+            'Theon': 'THE',
+            'Vento S': 'VES',
+            'Feliz S': 'FEL',
+            'Evo200': 'EVO',
+        };
+
+        // Basic structure: RL9 + VDS(3) + VIS(11 digits)
+        if (!vin.startsWith('RL9')) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['vin'],
+                message: 'VIN must start with "RL9".',
+            });
+        }
+
+        // Validate VDS by model if we know the mapping
+        const expectedVds = modelVdsMap[model];
+        if (expectedVds) {
+            const vds = vin.slice(3, 6);
+            if (vds !== expectedVds) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ['vin'],
+                    message: `VIN must contain model code "VDS list" at positions 4-6 for model.`,
+                });
+            }
+        }
+
+        // Validate VIS: last 11 must be digits (year + plant + serial)
+        const vis = vin.slice(6);
+        if (!/^\d{11}$/.test(vis)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['vin'],
+                message: 'VIN last 11 characters must be digits (year + plant + serial).',
+            });
+        }
+    });
 
 // Service package schemas
 export const servicePackageSchema = z.object({
