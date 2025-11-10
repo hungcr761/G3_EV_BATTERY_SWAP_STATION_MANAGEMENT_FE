@@ -119,48 +119,8 @@ const Settings = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Other Settings */}
-                    {/* <Card>
-                        <CardHeader>
-                            <CardTitle>Notifications</CardTitle>
-                            <CardDescription>
-                                Manage how you receive notifications
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium text-foreground">
-                                            Email Notifications
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Receive email notifications about transactions and activities
-                                        </p>
-                                    </div>
-                                    <Button variant="outline" size="sm">
-                                        Configure
-                                    </Button>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium text-foreground">
-                                            Push Notifications
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Receive push notifications on your device
-                                        </p>
-                                    </div>
-                                    <Button variant="outline" size="sm">
-                                        Configure
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card> */}
-
                     {/* Account Settings */}
-                    {/* <Card>
+                    <Card>
                         <CardHeader>
                             <CardTitle>Account</CardTitle>
                             <CardDescription>
@@ -182,22 +142,9 @@ const Settings = () => {
                                         Change
                                     </Button>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium text-foreground">
-                                            Two-Factor Authentication
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Enhance your account security
-                                        </p>
-                                    </div>
-                                    <Button variant="outline" size="sm">
-                                        Enable
-                                    </Button>
-                                </div>
                             </div>
                         </CardContent>
-                    </Card> */}
+                    </Card>
                 </div>
             </div>
         </div>
