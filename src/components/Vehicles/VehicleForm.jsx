@@ -66,9 +66,9 @@ export default function VehicleForm({ onSubmit, editingVehicle, vehicleModels = 
                             <p className="text-sm text-red-600 font-medium">{errors.vin.message}</p>
                             <p className="text-xs text-red-500 mt-1">
                                 ✓ Must be exactly 17 characters<br />
-                                ✓ Format: RL9 + VDS(3) + VIS(11 digits)<br />
+                                ✓ Format: RL9 + VDS(3) + VIS(11 alphanumeric)<br />
                                 ✓ VDS by model: Ludo=LUD, Impes=IMP, Klara S=KLA, Theon S=TES, Vento=VEN, Theon=THE, Vento S=VES, Feliz S=FEL, Evo200=EVO<br />
-                                ✓ VIS: 11 digits = year + plant + serial
+                                ✓ VIS: 11 characters (A–Z, 0–9 only, no special characters)
                             </p>
                         </div>
                     </div>

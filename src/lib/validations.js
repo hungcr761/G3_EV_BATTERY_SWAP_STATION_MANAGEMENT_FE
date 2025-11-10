@@ -132,7 +132,7 @@ export const vehicleSchema = z
             'Evo200': 'EVO',
         };
 
-        // Basic structure: RL9 + VDS(3) + VIS(11 digits)
+    // Basic structure: RL9 + VDS(3) + VIS(11 alphanumeric)
         if (!vin.startsWith('RL9')) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -154,13 +154,13 @@ export const vehicleSchema = z
             }
         }
 
-        // Validate VIS: last 11 must be digits (year + plant + serial)
+        // Validate VIS: last 11 must be alphanumeric (year + plant + serial)
         const vis = vin.slice(6);
-        if (!/^\d{11}$/.test(vis)) {
+        if (!/^[A-Z0-9]{11}$/.test(vis)) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 path: ['vin'],
-                message: 'VIN last 11 characters must be digits (year + plant + serial).',
+                message: 'VIN last 11 characters (VIS) must be only letters A-Z or numbers 0-9 (no special characters).',
             });
         }
     });
