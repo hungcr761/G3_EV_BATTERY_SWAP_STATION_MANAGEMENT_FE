@@ -148,7 +148,7 @@ export default function useTransfer() {
     apiError,
     shortage,
   shortageWarning: (shortage?.BatteryShortage || 0) > 0 ? `Station is short of ${shortage.BatteryShortage} batteries.` : '',
-    maxRequestQuantity: (shortage?.BatteryShortage || 0) > 0 ? Number(shortage.BatteryShortage) : null,
+    maxRequestQuantity: shortage?.BatteryShortage,
     canCreateRequest: (shortage?.BatteryShortage || 0) > 0,
     fetchTransfers,
     fetchShortage,

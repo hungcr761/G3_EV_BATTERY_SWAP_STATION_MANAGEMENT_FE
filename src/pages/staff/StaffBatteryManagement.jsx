@@ -16,13 +16,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import useCabinets from '@/hooks/useCabinets';
+import useTransfer from '@/hooks/useTransfer';
 
 export default function StaffBatteryManagement() {
   const { cabinets, batteries, loading, error, inShift, shift, refetch } = useCabinets();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCabinet, setFilterCabinet] = useState('all');
-
-  // Debug: log list data for verification
+  const {
+    maxRequestQuantity
+  } = useTransfer();
   useEffect(() => {
     if (!loading) {
       console.log('[StaffBatteryManagement] Cabinets:', cabinets);
@@ -35,14 +37,14 @@ export default function StaffBatteryManagement() {
     const totalBatteries = batteries.length;
     const totalSlots = cabinets.reduce((sum, cab) => sum + (cab.battery_capacity || 0), 0);
     const occupiedSlots = totalBatteries;
-    const availableSlots = totalSlots - occupiedSlots;
+    const emptySlots = totalSlots - occupiedSlots;
 
     return {
       totalCabinets,
       totalBatteries,
       totalSlots,
       occupiedSlots,
-      availableSlots
+      emptySlots
     };
   }, [cabinets, batteries]);
 
@@ -193,23 +195,23 @@ export default function StaffBatteryManagement() {
                 <CheckCircle className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Occupied slots</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.occupiedSlots}</p>
+                <p className="text-sm font-medium text-gray-600">Battery Shortage</p>
+                <p className="text-2xl font-semibold text-gray-900">{maxRequestQuantity}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
+          {/* <Card className="p-6">
             <div className="flex items-center">
               <div className="p-3 bg-orange-50 rounded-lg">
                 <Activity className="h-6 w-6 text-orange-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Available slots</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.availableSlots}</p>
+                <p className="text-sm font-medium text-gray-600">Empty slots</p>
+                <p className="text-2xl font-semibold text-gray-900">{stats.emptySlots}</p>
               </div>
             </div>
-          </Card>
+          </Card> */}
         </div>
       )}
 
