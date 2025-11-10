@@ -216,24 +216,29 @@ const Dashboard = () => {
         nextSwapPrediction: '3 ngày'
     };
 
-    const recentSwaps = [
-        {
-            id: 1,
-            station: 'Trạm ABC - Quận 1',
-            date: '2024-01-15',
-            batteryType: 'Type 1',
-            cost: 15000,
-            sohChange: -2
-        },
-        {
-            id: 2,
-            station: 'Trạm XYZ - Quận 3',
-            date: '2024-01-10',
-            batteryType: 'Type 1',
-            cost: 15000,
-            sohChange: -1
-        }
-    ];
+    // Derive up to 5 most recent swap records (newest first)
+    const recentSwaps = useMemo(() => {
+        const list = Array.isArray(swapRecordsData?.data) ? [...swapRecordsData.data] : [];
+        // Ensure sorted newest first (backend may already do this)
+        list.sort((a, b) => new Date(b.swap_time) - new Date(a.swap_time));
+        return list.slice(0, 5).map(r => {
+            const stationName = r.station?.station_name || 'Unknown station';
+            const batteryTypeCode = r.retrievedBattery?.batteryType?.battery_type_code || r.returnedBattery?.batteryType?.battery_type_code || 'N/A';
+            const sohIn = parseFloat(r.soh_in ?? r.returnedBattery?.current_soh ?? 0);
+            const sohOut = parseFloat(r.soh_out ?? r.retrievedBattery?.current_soh ?? 0);
+            const sohDelta = (isNaN(sohOut) || isNaN(sohIn)) ? null : (sohOut - sohIn);
+            return {
+                id: r.swap_id,
+                station: stationName,
+                swapTime: r.swap_time,
+                batteryType: batteryTypeCode,
+                sohIn,
+                sohOut,
+                sohDelta,
+                licensePlate: r.vehicle?.license_plate
+            };
+        });
+    }, [swapRecordsData]);
 
     // Show cancel confirmation
     const handleCancelClick = () => {
@@ -402,10 +407,15 @@ const Dashboard = () => {
                                             Recent Battery Swaps
                                         </CardTitle>
                                         <CardDescription className="text-slate-600 mt-1">
-                                            Your recent battery swap history
+                                            Latest battery swap activity (up to 5 records)
                                         </CardDescription>
                                     </div>
-                                    <Button variant="outline" size="sm" className="border-slate-300 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-200">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-slate-300 hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition-all duration-200"
+                                        onClick={() => navigate('/swapHistory')}
+                                    >
                                         <Eye className="mr-2 h-4 w-4" />
                                         View All
                                     </Button>
@@ -413,28 +423,39 @@ const Dashboard = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">
-                                    {recentSwaps.map((swap) => (
-                                        <div key={swap.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:shadow-md hover:border-blue-300 transition-all duration-200 bg-white">
-                                            <div className="flex items-center space-x-4">
-                                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-md flex items-center justify-center">
-                                                    <Battery className="h-6 w-6 text-white" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold text-slate-800">{swap.station}</p>
-                                                    <p className="text-sm text-slate-600">{swap.date}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200 mb-1">{swap.batteryType}</Badge>
-                                                <p className="text-sm text-slate-600 font-medium">
-                                                    {swap.cost.toLocaleString()}đ
-                                                </p>
-                                                <p className="text-xs text-red-600 font-medium">
-                                                    SoH: {swap.sohChange > 0 ? '+' : ''}{swap.sohChange}%
-                                                </p>
-                                            </div>
+                                    {recentSwaps.length === 0 ? (
+                                        <div className="p-6 text-center text-sm text-slate-500 border border-dashed border-slate-200 rounded-xl">
+                                            No swap records yet.
                                         </div>
-                                    ))}
+                                    ) : recentSwaps.map((swap) => {
+                                        const dt = swap.swapTime ? new Date(swap.swapTime) : null;
+                                        const dateStr = dt ? dt.toLocaleDateString('vi-VN') : '-';
+                                        const timeStr = dt ? dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+                                        const delta = swap.sohDelta;
+                                        const deltaDisplay = delta === null ? '-' : `${delta > 0 ? '+' : ''}${delta.toFixed(2)}%`;
+                                        return (
+                                            <div key={swap.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:shadow-md hover:border-blue-300 transition-all duration-200 bg-white">
+                                                <div className="flex items-center space-x-4">
+                                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-md flex items-center justify-center">
+                                                        <Battery className="h-6 w-6 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-slate-800">{swap.station}</p>
+                                                        <p className="text-xs text-slate-500">{dateStr} • {timeStr}</p>
+                                                        {swap.licensePlate && (
+                                                            <p className="text-xs text-slate-500">{swap.licensePlate}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200 mb-1">{swap.batteryType}</Badge>
+                                                    <p className="text-xs text-slate-600">SoH In: {isNaN(swap.sohIn) ? '-' : `${swap.sohIn}%`}</p>
+                                                    <p className="text-xs text-slate-600">SoH Out: {isNaN(swap.sohOut) ? '-' : `${swap.sohOut}%`}</p>
+                                                    <p className={`text-xs font-medium ${delta > 0 ? 'text-emerald-600' : (delta < 0 ? 'text-red-600' : 'text-slate-500')}`}>Δ {deltaDisplay}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </CardContent>
                         </Card>
