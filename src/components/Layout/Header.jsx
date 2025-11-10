@@ -44,7 +44,7 @@ const Header = () => {
     };
 
     const navigationItems = [
-        { label: 'Dashboard' , href: '/Dashboard'},
+        { label: 'Dashboard', href: '/Dashboard' },
         { label: 'Booking', href: '/booking' },
         { label: 'Services', href: '/services' },
         { label: 'Support', href: '/support' }
@@ -126,7 +126,7 @@ const Header = () => {
                                                     <DropdownMenuItem asChild>
                                                         <Link to="/subscriptionManagement" className="cursor-pointer">
                                                             <BadgePercent className="mr-2 h-4 w-4" />
-                                                            <span>Subscriptions Management</span>
+                                                            <span>Subscription Management</span>
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>

@@ -296,9 +296,9 @@ const Dashboard = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8">
-            <div className="container mx-auto px-4 max-w-7xl">
+            <div className="container mx-auto px-4 max-w-7xl relative">
                 {/* Background with welcome */}
-                <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0 opacity-10 z-0">
                     <div className="absolute inset-0" style={{
                         backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
                     }} />
@@ -530,7 +530,7 @@ const Dashboard = () => {
 
                 {/* Booking Details Dialog */}
                 <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
-                    <DialogContent className="max-w-4xl p-0 overflow-hidden">
+                    <DialogContent className="max-w-4xl p-0 overflow-hidden [&>button:last-child]:hidden">
                         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
