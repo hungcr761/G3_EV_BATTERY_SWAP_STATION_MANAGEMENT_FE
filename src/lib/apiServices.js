@@ -175,6 +175,14 @@ export const transferAPI = {
 
 // Cabinet API (Station cabinets with slots & batteries)
 export const cabinetAPI = {
-    getAll: (id) => api.get(`/cabinets${id}`)
+    getAll: (params) => api.get('/cabinets', { params })
+
+};
+
+// Config API (System Settings)
+export const configAPI = {
+    get: () => api.get('/config'),
+    update: (data) => api.put('/config', data),
+    reset: () => api.post('/config/reset'),
 };
 

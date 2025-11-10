@@ -451,7 +451,6 @@ const Dashboard = () => {
                                                     <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-200 mb-1">{swap.batteryType}</Badge>
                                                     <p className="text-xs text-slate-600">SoH In: {isNaN(swap.sohIn) ? '-' : `${swap.sohIn}%`}</p>
                                                     <p className="text-xs text-slate-600">SoH Out: {isNaN(swap.sohOut) ? '-' : `${swap.sohOut}%`}</p>
-                                                    <p className={`text-xs font-medium ${delta > 0 ? 'text-emerald-600' : (delta < 0 ? 'text-red-600' : 'text-slate-500')}`}>Δ {deltaDisplay}</p>
                                                 </div>
                                             </div>
                                         );

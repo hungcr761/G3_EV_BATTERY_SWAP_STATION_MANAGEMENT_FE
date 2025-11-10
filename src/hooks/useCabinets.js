@@ -25,7 +25,7 @@ export default function useCabinets() {
         return [];
       }
 
-      const res = await cabinetAPI.getByStation(stationId);
+      const res = await cabinetAPI.getAll({station_id: stationId});
       const list = res?.data?.payload?.cabinets?.data || res?.data?.payload?.cabinets || [];
       console.log('[useCabinets] fetched cabinets:', list);
       setCabinets(Array.isArray(list) ? list : []);
