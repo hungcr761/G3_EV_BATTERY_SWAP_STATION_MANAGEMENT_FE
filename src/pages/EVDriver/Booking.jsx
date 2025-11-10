@@ -69,21 +69,33 @@ const Stations = () => {
         const fetchUserVehicles = async () => {
             setVehiclesLoading(true);
             try {
-                // Fetch vehicle models and battery types first
-                const [modelsResponse, batteryResponse] = await Promise.all([
+                // Fetch vehicle models, battery types, and vehicles in parallel
+                const [modelsResponse, batteryResponse, vehiclesResponse, vehiclesWithoutSubscriptionResponse] = await Promise.all([
                     modelAPI.getAll(),
-                    batteryTypeAPI.getAll()
+                    batteryTypeAPI.getAll(),
+                    vehicleAPI.getAll(),
+                    vehicleAPI.getWithoutSubscription()
                 ]);
 
                 const models = modelsResponse.data?.payload?.vehicleModels || [];
                 const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
+                const vehiclesData = vehiclesResponse.data?.vehicles || [];
+                const vehiclesWithoutSubscription = vehiclesWithoutSubscriptionResponse.data?.payload?.vehicles ||
+                    vehiclesWithoutSubscriptionResponse.data?.vehicles || [];
 
-                // Then fetch vehicles
-                const response = await vehicleAPI.getAll();
-                const vehiclesData = response.data?.vehicles || [];
+                // Get vehicle IDs without subscription
+                const vehicleIdsWithoutSubscription = new Set(
+                    vehiclesWithoutSubscription.map(v => v.vehicle_id || v.id)
+                );
+
+                // Filter to only include vehicles WITH subscriptions
+                const vehiclesWithSubscription = vehiclesData.filter(vehicle => {
+                    const vehicleId = vehicle.vehicle_id || vehicle.id;
+                    return !vehicleIdsWithoutSubscription.has(vehicleId);
+                });
 
                 // Map vehicles with battery type information
-                const mappedVehicles = vehiclesData.map(vehicle => {
+                const mappedVehicles = vehiclesWithSubscription.map(vehicle => {
                     const modelName = vehicle.model?.name || 'Unknown Model';
                     const vehicleModel = models.find(vm => vm.model_id === vehicle.model_id);
 
@@ -387,17 +399,17 @@ const Stations = () => {
                                 <div className="flex items-center space-x-2">
                                     <Motorbike className="h-5 w-5 text-muted-foreground" />
                                     <div>
-                                        <p className="font-medium text-muted-foreground">No vehicles</p>
+                                        <p className="font-medium text-muted-foreground">No vehicles with subscription</p>
                                         <p className="text-sm text-muted-foreground">
-                                            Add a vehicle to use the service
+                                            Subscribe to a plan for your vehicle to book battery swaps
                                         </p>
                                     </div>
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => navigate('/dashboard')}
+                                        onClick={() => navigate('/services')}
                                     >
-                                        Add Vehicle
+                                        View Plans
                                     </Button>
                                 </div>
                             )}
