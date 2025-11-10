@@ -17,27 +17,16 @@ import {
     Clock,
     Star,
     Search,
+    Filter,
     Navigation,
     Calendar,
-    Motorbike,
-    ArrowUpDown,
-    ArrowDownNarrowWide,
-    ArrowUpNarrowWide
+    Motorbike
 } from 'lucide-react';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 
 const Stations = () => {
     const [selectedStation, setSelectedStation] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [batteryType, setBatteryType] = useState('');
-    const [sortBy, setSortBy] = useState('default');
-    const [sortDirection, setSortDirection] = useState('asc');
     const [stations, setStations] = useState([]);
     const [userLocation, setUserLocation] = useState(null);
     const [nearestStation, setNearestStation] = useState(null);
@@ -218,26 +207,23 @@ const Stations = () => {
                     console.error(`Error checking availability for station ${station.id}:`, error);
                     return {
                         stationId: station.id,
-                        data: { available: false, availableBatteries: 0, totalBatteriesOfType: 0 }
+                        data: { available: false, available_batteries_count: 0 }
                     };
                 }
             });
 
             const results = await Promise.all(promises);
 
-            // Process results - new API structure returns availableBatteries/totalBatteriesOfType
+            // Process results
             results.forEach(({ stationId, data }) => {
-                // Extract availableBatteries and totalBatteriesOfType from response
-                const availableBatteries = data.availableBatteries ?? data.available_batteries ?? data.availability_details?.available_batteries ?? 0;
-                const totalBatteriesOfType = data.totalBatteriesOfType ?? data.total_batteries_of_type ?? data.availability_details?.total_batteries_of_type ?? 0;
-
                 availabilityData[stationId] = {
-                    available: availableBatteries > 0, // Can book if availableBatteries > 0
-                    availableBatteries: availableBatteries,
+                    available: data.available,
+                    availableCount: data.availability_details?.available_now || 0,
                     totalSlots: data.availability_details?.total_slots || 0,
-                    totalBatteriesOfType: totalBatteriesOfType,
-                    stationStatus: data.availability_details?.station_status || data.stationStatus || 'unknown',
-                    batteryType: data.battery_type || data.batteryType,
+                    totalBatteriesReady: data.availability_details?.total_batteries_ready || 0,
+                    reservedByPendingBookings: data.availability_details?.reserved_by_pending_bookings || 0,
+                    stationStatus: data.availability_details?.station_status || 'unknown',
+                    batteryType: data.battery_type,
                     station: data.station,
                     message: data.message
                 };
@@ -258,60 +244,6 @@ const Stations = () => {
         const matchesStatus = !batteryType || station.status === batteryType;
         return matchesSearch && matchesStatus;
     });
-
-    // Sort filtered stations
-    const sortedStations = React.useMemo(() => {
-        if (sortBy === 'default') {
-            return filteredStations;
-        }
-
-        const stationsWithData = filteredStations.map(station => {
-            let distance = null;
-            if (userLocation) {
-                distance = calculateDistance(
-                    userLocation.lat,
-                    userLocation.lng,
-                    station.latitude,
-                    station.longitude
-                );
-            }
-
-            const availability = stationAvailability[station.id];
-            const totalBatteriesReady = availability?.totalBatteriesReady || 0;
-
-            return {
-                ...station,
-                distance,
-                totalBatteriesReady
-            };
-        });
-
-        const isAscending = sortDirection === 'asc';
-
-        if (sortBy === 'distance') {
-            return stationsWithData.sort((a, b) => {
-                if (a.distance === null && b.distance === null) return 0;
-                if (a.distance === null) return 1;
-                if (b.distance === null) return -1;
-                return isAscending ? a.distance - b.distance : b.distance - a.distance;
-            });
-        }
-
-        if (sortBy === 'totalBatteriesReady') {
-            return stationsWithData.sort((a, b) => {
-                return isAscending
-                    ? a.totalBatteriesReady - b.totalBatteriesReady
-                    : b.totalBatteriesReady - a.totalBatteriesReady;
-            });
-        }
-
-        return stationsWithData;
-    }, [filteredStations, sortBy, sortDirection, userLocation, stationAvailability]);
-
-    // Toggle sort direction
-    const toggleSortDirection = () => {
-        setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    };
 
     const handleStationSelect = (station) => {
         setSelectedStation(station);
@@ -472,6 +404,26 @@ const Stations = () => {
                         </div>
                     </div>
 
+                    {/* Vehicle Selection Prompt */}
+                    {!vehiclesLoading && userVehicles.length > 1 && !selectedVehicle && (
+                        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                                <Motorbike className="h-5 w-5 text-blue-600" />
+                                <span className="font-semibold text-blue-800">Select vehicle to continue</span>
+                            </div>
+                            <p className="text-blue-700 mt-1">
+                                You have {userVehicles.length} vehicles. Please select a vehicle to view battery status at stations.
+                            </p>
+                            <Button
+                                variant="default"
+                                size="sm"
+                                className="mt-2"
+                                onClick={handleShowVehicleSelector}
+                            >
+                                Select Vehicle Now
+                            </Button>
+                        </div>
+                    )}
 
                     {/* Nearest Station Info */}
                     {nearestStation && (
@@ -491,8 +443,8 @@ const Stations = () => {
                 {/* Search and Filter */}
                 <Card className="mb-8">
                     <CardContent className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-[6.5fr_1.2fr_2fr] gap-4">
-                            <div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="md:col-span-2">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -514,32 +466,11 @@ const Stations = () => {
                                     <option value="closed">Closed</option>
                                 </select>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Sort by" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="default">Default</SelectItem>
-                                        <SelectItem value="distance">Distance</SelectItem>
-                                        <SelectItem value="totalBatteriesReady">Total Batteries Ready</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {sortBy !== 'default' && (
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={toggleSortDirection}
-                                        className="flex-shrink-0"
-                                        title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
-                                    >
-                                        {sortDirection === 'asc' ? (
-                                            <ArrowUpNarrowWide className="h-4 w-4" />
-                                        ) : (
-                                            <ArrowDownNarrowWide className="h-4 w-4" />
-                                        )}
-                                    </Button>
-                                )}
+                            <div>
+                                <Button className="w-full">
+                                    <Filter className="mr-2 h-4 w-4" />
+                                    Filter
+                                </Button>
                             </div>
                         </div>
                     </CardContent>
@@ -571,12 +502,12 @@ const Stations = () => {
                 {!stationsLoading && !stationsError && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2 space-y-6 max-h-screen overflow-y-auto pr-2 scroll-smooth">
-                            {sortedStations.length === 0 ? (
+                            {filteredStations.length === 0 ? (
                                 <div className="text-center py-12">
                                     <p className="text-muted-foreground">No stations found</p>
                                 </div>
                             ) : (
-                                sortedStations.map((station) => (
+                                filteredStations.map((station) => (
                                     <Card
                                         key={station.id}
                                         id={`station-${station.id}`}
@@ -639,10 +570,10 @@ const Stations = () => {
                                                             <div className="text-right">
                                                                 <div className="flex items-center space-x-1">
                                                                     <span className="text-sm font-medium">
-                                                                        {stationAvailability[station.id].availableBatteries}
+                                                                        {stationAvailability[station.id].totalBatteriesReady}
                                                                     </span>
                                                                     <span className="text-xs text-muted-foreground">
-                                                                        / {stationAvailability[station.id].totalBatteriesOfType}
+                                                                        / {stationAvailability[station.id].totalSlots}
                                                                     </span>
                                                                 </div>
                                                                 <p className="text-xs text-muted-foreground">
@@ -650,7 +581,7 @@ const Stations = () => {
                                                                 </p>
                                                                 {stationAvailability[station.id].reservedByPendingBookings > 0 && (
                                                                     <p className="text-xs text-orange-600">
-                                                                        {stationAvailability[station.id].reservedByPendingBookings} batteries reserved
+                                                                        {stationAvailability[station.id].reservedByPendingBookings} pending
                                                                     </p>
                                                                 )}
                                                             </div>
@@ -694,15 +625,15 @@ const Stations = () => {
                                                         size="sm"
                                                         variant="outline"
                                                         className="flex-1"
-                                                        disabled={!selectedVehicle || !stationAvailability[station.id] || (stationAvailability[station.id]?.availableBatteries || 0) === 0}
+                                                        disabled={!selectedVehicle || !stationAvailability[station.id]?.available || (stationAvailability[station.id]?.availableCount || 0) === 0}
                                                         onClick={() => handleBooking(station)}
                                                     >
                                                         <Calendar className="mr-1 h-3 w-3" />
                                                         {!selectedVehicle
                                                             ? 'Select Vehicle First'
-                                                            : !stationAvailability[station.id]
-                                                                ? 'Checking...'
-                                                                : (stationAvailability[station.id]?.availableBatteries || 0) === 0
+                                                            : !stationAvailability[station.id]?.available
+                                                                ? 'Not Available'
+                                                                : (stationAvailability[station.id]?.availableCount || 0) === 0
                                                                     ? 'Out of Batteries'
                                                                     : 'Book Appointment'
                                                         }

@@ -162,7 +162,7 @@ const SwapStatus = () => {
     const fetchVehicleBatteries = async (vehicleId) => {
         try {
             const response = await batteryAPI.getByVehicleId(vehicleId);
-            const batteries = response.data.payload.batteries || [];
+            const batteries = response.data || [];
             setVehicleBatteries(batteries);
             return batteries;
         } catch (error) {
@@ -462,7 +462,6 @@ const SwapStatus = () => {
         // Move to next step
         setTimeout(async () => {
             if (currentAction.title === 'Insert Old Batteries') {
-                console.log('vehicleBatteries', vehicleBatteries);
                 // Step 5: Validate and prepare (different for user flow vs booking flow)
                 try {
                     setCurrentAction({

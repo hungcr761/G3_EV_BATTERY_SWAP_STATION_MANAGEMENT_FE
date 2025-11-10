@@ -179,10 +179,3 @@ export const cabinetAPI = {
 
 };
 
-// Config API (System Settings)
-export const configAPI = {
-    get: () => api.get('/config'),
-    update: (data) => api.put('/config', data),
-    reset: () => api.post('/config/reset'),
-};
-
