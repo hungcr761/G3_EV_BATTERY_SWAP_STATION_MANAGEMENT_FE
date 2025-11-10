@@ -320,11 +320,11 @@ const Dashboard = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
+                            {/* <div className="flex items-center gap-3">
                                 <Button variant="ghost" className="bg-white/10 text-white rounded-full px-3 py-2 border border-white/20">
                                     <Bell className="mr-2 h-4 w-4" /> Thông báo
                                 </Button>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </div>

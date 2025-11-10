@@ -37,7 +37,7 @@ const HowItWorksSection = () => {
             title: "Find Swap Station",
             description: "Search for the nearest battery swap station with available batteries",
             details: [
-                "Use Goong Maps API",
+                "Intergrated map view",
                 "View battery status at stations",
                 "View station address",
             ],
