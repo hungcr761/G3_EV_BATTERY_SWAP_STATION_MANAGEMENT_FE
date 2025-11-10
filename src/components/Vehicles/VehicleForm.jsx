@@ -50,7 +50,7 @@ export default function VehicleForm({ onSubmit, editingVehicle, vehicleModels = 
                 <Input
                     id="vin"
                     type="text"
-                    placeholder="Enter VIN (e.g., 1HGBH41JXMN109186)"
+                    placeholder="Enter VIN (e.g., RL9LUD20240000001)"
                     maxLength={17}
                     disabled={!!editingVehicle}
                     readOnly={!!editingVehicle}
@@ -66,8 +66,9 @@ export default function VehicleForm({ onSubmit, editingVehicle, vehicleModels = 
                             <p className="text-sm text-red-600 font-medium">{errors.vin.message}</p>
                             <p className="text-xs text-red-500 mt-1">
                                 ✓ Must be exactly 17 characters<br />
-                                ✓ Only uppercase letters (A-Z) and numbers (0-9)<br />
-                                ✓ Cannot contain I, O, or Q
+                                ✓ Format: RL9 + VDS(3) + VIS(11 digits)<br />
+                                ✓ VDS by model: Ludo=LUD, Impes=IMP, Klara S=KLA, Theon S=TES, Vento=VEN, Theon=THE, Vento S=VES, Feliz S=FEL, Evo200=EVO<br />
+                                ✓ VIS: 11 digits = year + plant + serial
                             </p>
                         </div>
                     </div>
