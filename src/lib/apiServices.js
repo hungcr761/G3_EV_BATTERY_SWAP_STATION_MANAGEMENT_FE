@@ -133,7 +133,7 @@ export const ticketAPI = {
 };
 // Battery APIs
 export const batteryAPI = {
-    getAll: () => api.get('/batteries/all'),
+    getAll: (params) => api.get('/batteries/all', { params }),
     getByVehicleId: (vehicleId) => api.get(`/batteries/vehicle/${vehicleId}`),
     createForVehicle: (vehicleId) => api.post(`/batteries/vehicle/${vehicleId}`),
     getSummaryByStation: (stationId) => api.get(`/batteries/station/${stationId}`),
