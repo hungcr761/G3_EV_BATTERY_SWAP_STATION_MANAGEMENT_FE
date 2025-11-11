@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router';
+import { Routes, Route, Navigate, RouterProvider } from 'react-router';
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout/Layout';
@@ -43,6 +43,8 @@ import ShiftManagement from './pages/staff/ShiftManagement.jsx';
 import SwapManagement from './pages/EVDriver/SwapHistory.jsx';
 import AdminTransferManagement from './pages/Admin/AdminTransferManagement.jsx';
 import SwapHistory from './pages/EVDriver/SwapHistory.jsx';
+import BookingManagement from './pages/EVDriver/BookingHistory.jsx';
+import BookingHistory from './pages/EVDriver/BookingHistory.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -181,6 +183,7 @@ function App() {
               </Layout>
             </RoleProtectedRoute>
           } />
+
           <Route path='/paymentHistory' element={
             <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
@@ -196,14 +199,22 @@ function App() {
               </Layout>
             </RoleProtectedRoute>
           } />
+
+          <Route path="/bookingHistory" element={
+            <RoleProtectedRoute allowedRoute={['driver']}>
+              <Layout>
+                <BookingHistory />
+              </Layout>
+            </RoleProtectedRoute>
+          }/>
+
           <Route path="/settings" element={
             <RoleProtectedRoute allowedRoute={['driver', 'admin', 'staff']}>
               <Layout>
-                <Settings />
+                <Settings/>
               </Layout>
             </RoleProtectedRoute>
-          } />
-
+          }/>
 
           {/* Staff routes */}
           <Route path="/staff" element={

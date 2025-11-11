@@ -141,6 +141,12 @@ const Header = () => {
                                                             <span>Swap History</span>
                                                         </Link>
                                                     </DropdownMenuItem>
+                                                    <DropdownMenuItem asChild>
+                                                        <Link to="/bookingHistory" className="cursor-pointer">
+                                                            <LifeBuoy className="mr-2 h-4 w-4" />
+                                                            <span>Booking History</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
                                                 </>
                                             )}
                                             <DropdownMenuItem asChild>
