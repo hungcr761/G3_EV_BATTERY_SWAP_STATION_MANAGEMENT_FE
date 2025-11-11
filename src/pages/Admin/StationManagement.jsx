@@ -128,8 +128,20 @@ const StationManagement = () => {
             const promises = stations.map(async (station) => {
                 try {
                     const response = await cabinetAPI.getAll({ station_id: station.id });
-                    const cabinets = response.data?.payload?.cabinets?.data || response.data?.cabinets?.data || [];
-                    newCabinetData[station.id] = cabinets;
+                    // Handle different response structures: with/without pagination
+                    // Structure 1: { success: true, payload: { cabinets: [...] } }
+                    // Structure 2: { success: true, payload: { cabinets: { data: [...], total: N } } }
+                    let cabinets = [];
+                    if (response.data?.payload?.cabinets) {
+                        cabinets = Array.isArray(response.data.payload.cabinets)
+                            ? response.data.payload.cabinets
+                            : response.data.payload.cabinets.data || [];
+                    } else if (response.data?.cabinets) {
+                        cabinets = Array.isArray(response.data.cabinets)
+                            ? response.data.cabinets
+                            : response.data.cabinets.data || [];
+                    }
+                    newCabinetData[station.id] = Array.isArray(cabinets) ? cabinets : [];
                 } catch (err) {
                     console.error(`Error fetching cabinets for station ${station.id}:`, err);
                     newCabinetData[station.id] = [];
@@ -156,19 +168,24 @@ const StationManagement = () => {
             let totalSlots = 0;
             let availableBatteries = 0;
 
-            cabinets.forEach(cabinet => {
-                // Sum battery_capacity to get total slots
-                totalSlots += cabinet.battery_capacity || 0;
+            if (Array.isArray(cabinets)) {
+                cabinets.forEach(cabinet => {
+                    // Sum battery_capacity to get total slots (convert to number if string)
+                    const capacity = Number(cabinet.battery_capacity) || 0;
+                    totalSlots += capacity;
 
-                // Count slots with non-null battery
-                if (cabinet.slots && Array.isArray(cabinet.slots)) {
-                    cabinet.slots.forEach(slot => {
-                        if (slot.battery !== null && slot.battery !== undefined) {
-                            availableBatteries++;
-                        }
-                    });
-                }
-            });
+                    // Count slots with non-null, non-undefined battery
+                    // A battery is considered available if it exists and is an object
+                    if (cabinet.slots && Array.isArray(cabinet.slots)) {
+                        cabinet.slots.forEach(slot => {
+                            // Check if battery exists and is a valid object (not null, not undefined)
+                            if (slot.battery !== null && slot.battery !== undefined && typeof slot.battery === 'object') {
+                                availableBatteries++;
+                            }
+                        });
+                    }
+                });
+            }
 
             result[stationId] = {
                 available: availableBatteries,
