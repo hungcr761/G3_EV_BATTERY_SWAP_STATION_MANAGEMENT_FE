@@ -26,7 +26,9 @@ export default function AdminTransferManagement() {
   const [openApprove, setOpenApprove] = useState(false);
   const [approveTarget, setApproveTarget] = useState(null); // request being approved
   const [approveForm, setApproveForm] = useState({ source_station_id: '', parts: [ { transfer_quantity: '', source_station_id: '' } ] });
-  const [stationSummary, setStationSummary] = useState(null); // summary for source station check
+  // Per-part station summaries
+  const [stationSummaries, setStationSummaries] = useState({}); // { [index]: {TotalBatteries, AvailableForSwap, BatteryShortage, message} }
+  const [stationSummaryLoading, setStationSummaryLoading] = useState({}); // { [index]: boolean }
   // Remove summaryLoading (not used currently)
   const [approveError, setApproveError] = useState('');
 
@@ -126,25 +128,31 @@ export default function AdminTransferManagement() {
       source_station_id: '',
       parts: [ { transfer_quantity: '', source_station_id: '' } ]
     });
+    setStationSummaries({});
+    setStationSummaryLoading({});
     setOpenApprove(true);
   };
 
-  const fetchSourceSummary = async (stationId) => {
-    if (!stationId) { setStationSummary(null); return; }
-  // optionally show loading state here
+  const fetchSourceSummary = async (index, stationId) => {
+    if (!stationId) {
+      setStationSummaries((prev) => ({ ...prev, [index]: null }));
+      return;
+    }
+    setStationSummaryLoading((prev) => ({ ...prev, [index]: true }));
     try {
       const res = await batteryAPI.getSummaryByStation(stationId);
       const data = res?.data?.data || res?.data?.payload || res?.data || {};
-      setStationSummary({
+      const summary = {
         TotalBatteries: Number(data.TotalBatteries) || 0,
         AvailableForSwap: Number(data.AvailableForSwap) || 0,
         BatteryShortage: Number(data.BatteryShortage) || 0,
         message: data.message || ''
-      });
+      };
+      setStationSummaries((prev) => ({ ...prev, [index]: summary }));
     } catch {
-      setStationSummary(null);
+      setStationSummaries((prev) => ({ ...prev, [index]: null }));
     } finally {
-      // end loading
+      setStationSummaryLoading((prev) => ({ ...prev, [index]: false }));
     }
   };
 
@@ -367,12 +375,13 @@ export default function AdminTransferManagement() {
                 {approveForm.parts.map((part, idx) => (
                   <div key={idx} className="border rounded-md p-3 space-y-3 bg-slate-50">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                      <div className="md:col-span-3 text-[11px] text-slate-500">Part {idx + 1}</div>
                       <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1">Source Station ID</label>
                         <Input
                           placeholder="e.g. 2"
                           value={part.source_station_id}
-                          onChange={(e) => { handleChangePartSource(idx, e.target.value); fetchSourceSummary(e.target.value); }}
+                          onChange={(e) => { const v = e.target.value; handleChangePartSource(idx, v); fetchSourceSummary(idx, v); }}
                         />
                       </div>
                       <div>
@@ -393,12 +402,14 @@ export default function AdminTransferManagement() {
                         </div>
                       )}
                     </div>
-                    {idx === 0 && stationSummary && (
-                      <div className="text-xs text-slate-600 bg-white rounded p-2 border">
-                        <div><strong>Source Summary:</strong> {stationSummary.message}</div>
-                        <div>Available For Swap: <b>{stationSummary.AvailableForSwap}</b></div>
-                        {Number(part.transfer_quantity) > stationSummary.AvailableForSwap && approveForm.parts.length === 1 && (
-                          <div className="text-amber-600 mt-1">Quantity exceeds available. Consider splitting into another part.</div>
+                    {stationSummaryLoading[idx] && (
+                      <div className="text-xs text-slate-500 bg-white rounded p-2 border">Loading…</div>
+                    )}
+                    {!stationSummaryLoading[idx] && stationSummaries[idx] && (
+                      <div className="text-xs text-slate-700 bg-white rounded p-2 border">
+                        <div>Available For Swap: <b>{stationSummaries[idx].AvailableForSwap}</b></div>
+                        {Number(part.transfer_quantity) > (stationSummaries[idx].AvailableForSwap || 0) && (
+                          <div className="text-amber-600 mt-1">Quantity exceeds available from this station.</div>
                         )}
                       </div>
                     )}
