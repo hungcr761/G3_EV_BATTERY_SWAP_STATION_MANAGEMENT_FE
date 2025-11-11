@@ -68,7 +68,7 @@ const OTPVerification = ({ email, userData, onBack, onSuccess }) => {
 
         try {
             await authAPI.requestVerification({ email });
-            setCountdown(60);
+            setCountdown(10);
             setCanResend(false);
             setOtp('');
         } catch (err) {

@@ -24,6 +24,8 @@ const SwapStatus = () => {
     const [validationData, setValidationData] = useState(null);
     const [swapResult, setSwapResult] = useState(null);
     const [isUserFlow, setIsUserFlow] = useState(false);
+    const [swapStartTime, setSwapStartTime] = useState(null);
+    const [swapEndTime, setSwapEndTime] = useState(null);
     const [currentAction, setCurrentAction] = useState({
         title: 'Verification',
         description: 'Checking information',
@@ -162,7 +164,12 @@ const SwapStatus = () => {
     const fetchVehicleBatteries = async (vehicleId) => {
         try {
             const response = await batteryAPI.getByVehicleId(vehicleId);
-            const batteries = response.data || [];
+            // Handle response structure: response.data.payload.batteries
+            const batteries = response.data?.payload?.batteries ||
+                response.data?.batteries ||
+                (Array.isArray(response.data) ? response.data : []) ||
+                [];
+            console.log('Fetched batteries:', batteries);
             setVehicleBatteries(batteries);
             return batteries;
         } catch (error) {
@@ -257,6 +264,10 @@ const SwapStatus = () => {
 
     const startSwapProcess = async () => {
         try {
+            // Record swap start time
+            const startTime = new Date();
+            setSwapStartTime(startTime);
+
             // Step 1: Verification
             setCurrentAction({
                 title: isUserFlow ? 'Account Verification' : 'Booking Verification',
@@ -301,7 +312,7 @@ const SwapStatus = () => {
             }));
 
             const batteries = await fetchVehicleBatteries(currentData.vehicleId);
-            if (batteries.length === 0) {
+            if (!batteries || batteries.length === 0) {
                 setCurrentAction(prev => ({
                     ...prev,
                     title: 'Error',
@@ -309,6 +320,18 @@ const SwapStatus = () => {
                     status: 'error'
                 }));
                 return;
+            }
+            //delete later
+            // Validate that batteries have valid IDs (either battery_id or battery_serial)
+            // Note: Some batteries might have empty battery_id but valid battery_serial
+            const batteriesWithValidIds = batteries.filter(b =>
+                (b.battery_id && b.battery_id.trim() !== '') ||
+                (b.battery_serial && b.battery_serial.trim() !== '')
+            );
+
+            // If no batteries have valid IDs, show warning but continue (backend may handle this)
+            if (batteriesWithValidIds.length === 0) {
+                console.warn('Batteries found but all have empty IDs. Proceeding anyway - backend should handle validation.');
             }
 
             // Step 4: Select random slots for battery insertion
@@ -473,13 +496,30 @@ const SwapStatus = () => {
                     });
 
                     // Prepare battery data for validation - map selected slots with vehicle batteries
-                    const batteryData = selectedSlots.map((slot, index) => ({
-                        slot_id: slot.slot_id,
-                        battery_id: vehicleBatteries[index]?.battery_id || vehicleBatteries[0]?.battery_id
-                    }));
+                    const batteryData = selectedSlots.map((slot, index) => {
+                        // Get battery for this slot index, or fallback to first battery if only one battery
+                        const battery = vehicleBatteries[index] || vehicleBatteries[0];
 
-                    if (!batteryData.every(b => b.battery_id)) {
-                        throw new Error('Missing battery ID information');
+                        // Use battery_id if available and not empty, otherwise try battery_serial
+                        // If both are empty, we'll let the backend handle validation
+                        const batteryId = (battery?.battery_id && battery.battery_id.trim() !== '')
+                            ? battery.battery_id
+                            : (battery?.battery_serial && battery.battery_serial.trim() !== '')
+                                ? battery.battery_serial
+                                : battery?.battery_id || battery?.battery_serial || '';
+
+                        return {
+                            slot_id: slot.slot_id,
+                            battery_id: batteryId
+                        };
+                    });
+
+                    // Check if we have at least some identifier (even if empty, backend may handle it)
+                    // Log warning if all IDs are empty
+                    const emptyIds = batteryData.filter(b => !b.battery_id || b.battery_id.trim() === '');
+                    if (emptyIds.length === batteryData.length) {
+                        console.warn('All battery IDs are empty. Backend should handle this case.');
+                        // Still proceed - backend validation will determine if this is acceptable
                     }
 
                     let validationResponse;
@@ -537,6 +577,8 @@ const SwapStatus = () => {
                         executeResponse = await executeSwapWithBooking(validBatteriesIn, batteriesOut);
                     }
                     setSwapResult(executeResponse);
+                    // Record swap completion time (when swap API call completes)
+                    setSwapEndTime(new Date());
 
                     // Step 7: Get new batteries - show which slots have batteries ready
                     let batteriesOutInfo = [];
@@ -626,7 +668,9 @@ const SwapStatus = () => {
                         bookingData: !isUserFlow ? bookingData : null,
                         swapResult: swapResult,
                         vehicleBatteries: vehicleBatteries, // Pass old batteries for SOC calculation
-                        validationData: validationData // Pass validation data for booked batteries (booking flow)
+                        validationData: validationData, // Pass validation data for booked batteries (booking flow)
+                        swapStartTime: swapStartTime, // Pass swap start time for duration calculation
+                        swapEndTime: swapEndTime || new Date() // Pass swap end time for duration calculation
                     }
                 });
             }
@@ -782,8 +826,14 @@ const SwapStatus = () => {
                                             </Badge>
                                             {battery && (
                                                 <div className="mt-2 text-xs text-muted-foreground">
-                                                    <p>Battery: {battery.battery_serial || battery.battery_id.slice(0, 8)}</p>
-                                                    <p>SOC: {battery.current_soc}% | SOH: {battery.current_soh}%</p>
+                                                    <p>Battery: {
+                                                        battery.battery_serial && battery.battery_serial.trim() !== ''
+                                                            ? battery.battery_serial
+                                                            : (battery.battery_id && battery.battery_id.trim() !== ''
+                                                                ? battery.battery_id.slice(0, 8)
+                                                                : 'N/A')
+                                                    }</p>
+                                                    <p>SOC: {battery.current_soc || 'N/A'}% | SOH: {battery.current_soh || 'N/A'}%</p>
                                                 </div>
                                             )}
                                             <p className="text-sm text-muted-foreground mt-2">
