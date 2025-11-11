@@ -28,6 +28,39 @@ const SwapComplete = () => {
         return Math.round(sum / validSOCs.length);
     };
 
+    // Helper function to calculate and format swap duration
+    const calculateSwapDuration = (startTime, endTime = new Date()) => {
+        if (!startTime) {
+            return 'N/A';
+        }
+
+        // Handle both Date objects and string timestamps
+        const start = startTime instanceof Date ? startTime : new Date(startTime);
+        const end = endTime instanceof Date ? endTime : new Date(endTime);
+
+        // Check if dates are valid
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return 'N/A';
+        }
+
+        // Calculate difference in milliseconds
+        const diffMs = end.getTime() - start.getTime();
+
+        // Convert to seconds
+        const totalSeconds = Math.floor(diffMs / 1000);
+
+        // Calculate minutes and seconds
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+
+        // Format in Vietnamese
+        if (minutes > 0) {
+            return `${minutes} minutes ${seconds} seconds`;
+        } else {
+            return `${seconds} seconds`;
+        }
+    };
+
     // Fetch swap data
     useEffect(() => {
         const fetchSwapData = async () => {
@@ -44,6 +77,24 @@ const SwapComplete = () => {
             // Calculate battery levels from swap result
             let oldBatteryLevel = 'N/A';
             let newBatteryLevel = 'N/A';
+            let swapDuration = 'N/A';
+
+            // Calculate swap duration from start time
+            if (stateData?.swapStartTime) {
+                // Prefer swapEndTime from state, then swap result completion time, then current time
+                const endTime = stateData?.swapEndTime
+                    ? (stateData.swapEndTime instanceof Date ? stateData.swapEndTime : new Date(stateData.swapEndTime))
+                    : (stateData?.swapResult?.data?.completed_at
+                        ? new Date(stateData.swapResult.data.completed_at)
+                        : new Date());
+                swapDuration = calculateSwapDuration(stateData.swapStartTime, endTime);
+            } else if (stateData?.swapResult?.data?.started_at && stateData?.swapResult?.data?.completed_at) {
+                // Fallback: use timestamps from swap result if available
+                swapDuration = calculateSwapDuration(
+                    stateData.swapResult.data.started_at,
+                    stateData.swapResult.data.completed_at
+                );
+            }
 
             if (stateData?.swapResult) {
                 const swapResult = stateData.swapResult;
@@ -87,11 +138,9 @@ const SwapComplete = () => {
                     vehiclePlate: userData.vehiclePlate || 'N/A',
                     oldBatteryLevel: oldBatteryLevel,
                     newBatteryLevel: newBatteryLevel,
-                    swapDuration: '4 phút 32 giây', // Would be calculated from swapResult
+                    swapDuration: swapDuration,
                     completedTime: new Date().toLocaleString('en-US'),
                     stationName: userData.stationName || `Station #${stationId}`,
-                    // cost: swapResult.data?.cost || '50,000 VNĐ', // Would come from swapResult
-                    nextServiceDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US')
                 });
             } else if (bookingId) {
                 // Booking flow - try to fetch from API
@@ -108,7 +157,7 @@ const SwapComplete = () => {
                             vehiclePlate: booking.vehicle?.license_plate || booking.vehiclePlate || 'N/A',
                             oldBatteryLevel: oldBatteryLevel,
                             newBatteryLevel: newBatteryLevel,
-                            swapDuration: '4 phút 32 giây', // Would be calculated
+                            swapDuration: swapDuration,
                             completedTime: new Date().toLocaleString('en-US'),
                             stationName: booking.station?.station_name || booking.stationName || `Station #${stationId}`,
                             // cost: stateData.swapResult?.data?.cost || '50,000 VNĐ', // Would come from pricing
@@ -127,7 +176,7 @@ const SwapComplete = () => {
                             vehiclePlate: booking.vehicle?.license_plate || 'N/A',
                             oldBatteryLevel: oldBatteryLevel,
                             newBatteryLevel: newBatteryLevel,
-                            swapDuration: '4 phút 32 giây', // Would be calculated
+                            swapDuration: swapDuration,
                             completedTime: new Date().toLocaleString('en-US'),
                             stationName: booking.station?.station_name,
                             // cost: '50,000 VNĐ', // Would come from pricing
@@ -145,7 +194,7 @@ const SwapComplete = () => {
                             vehiclePlate: booking.vehicle?.license_plate || booking.vehiclePlate || 'N/A',
                             oldBatteryLevel: oldBatteryLevel,
                             newBatteryLevel: newBatteryLevel,
-                            swapDuration: '4 phút 32 giây',
+                            swapDuration: swapDuration,
                             completedTime: new Date().toLocaleString('en-US'),
                             stationName: booking.station?.station_name || booking.stationName || `Station #${stationId}`
                         });
@@ -161,7 +210,7 @@ const SwapComplete = () => {
                     vehiclePlate: 'N/A',
                     oldBatteryLevel: oldBatteryLevel !== 'N/A' ? oldBatteryLevel : 'N/A',
                     newBatteryLevel: newBatteryLevel !== 'N/A' ? newBatteryLevel : 'N/A',
-                    swapDuration: '4 phút 32 giây',
+                    swapDuration: swapDuration,
                     completedTime: new Date().toLocaleString('en-US'),
                     stationName: `Station #${stationId}`
                 });

@@ -560,12 +560,12 @@ const BatteryManagement = () => {
                                         <h3 className="font-semibold text-gray-900 text-md">{battery.serialNumber}</h3>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <Badge className={getStatusColor(battery.status)}>
+                                        {/* <Badge className={getStatusColor(battery.status)}>
                                             <div className="flex items-center gap-1">
                                                 {getStatusIcon(battery.status)}
                                                 {getStatusText(battery.status)}
                                             </div>
-                                        </Badge>
+                                        </Badge> */}
                                     </div>
                                 </div>
 
