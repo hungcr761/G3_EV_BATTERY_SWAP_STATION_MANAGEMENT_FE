@@ -97,6 +97,7 @@ export const bookingAPI = {
     delete: (id) => api.delete(`/booking/${id}`),
     getByUserId: (userId) => api.get(`/booking/user/${userId}`),
     getMyBookings: () => api.get('/booking/my-bookings?status=pending'),
+    getByStatus: (status) => api.get(`/booking/my-bookings?status=${status}`),
     cancel: (id) => api.patch(`/booking/${id}/cancel`),
 };
 

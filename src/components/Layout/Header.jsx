@@ -27,6 +27,7 @@ import {
     X,
     ChevronDown,
     CalendarPlus,
+    Calendar,
     Motorbike,
     CreditCard,
     LifeBuoy,
@@ -141,6 +142,12 @@ const Header = () => {
                                                             <span>Swap History</span>
                                                         </Link>
                                                     </DropdownMenuItem>
+                                                    <DropdownMenuItem asChild>
+                                                        <Link to="/bookingHistory" className="cursor-pointer">
+                                                            <Calendar className="mr-2 h-4 w-4" />
+                                                            <span>Booking History</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
                                                 </>
                                             )}
                                             <DropdownMenuItem asChild>
@@ -222,6 +229,9 @@ const Header = () => {
                                                 </Link>
                                                 <Link to="/paymentHistory" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
                                                     <CreditCard className="h-4 w-4 mr-2" /> Payments
+                                                </Link>
+                                                <Link to="/bookingHistory" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
+                                                    <Calendar className="h-4 w-4 mr-2" /> Bookings
                                                 </Link>
                                                 <Link to="/support" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
                                                     <LifeBuoy className="h-4 w-4 mr-2" /> Support

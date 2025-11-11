@@ -43,6 +43,7 @@ import ShiftManagement from './pages/staff/ShiftManagement.jsx';
 import SwapManagement from './pages/EVDriver/SwapHistory.jsx';
 import AdminTransferManagement from './pages/Admin/AdminTransferManagement.jsx';
 import SwapHistory from './pages/EVDriver/SwapHistory.jsx';
+import BookingHistory from './pages/EVDriver/BookingHistory.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -193,6 +194,13 @@ function App() {
             <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
                 <SwapHistory />
+              </Layout>
+            </RoleProtectedRoute>
+          } />
+          <Route path="/bookingHistory" element={
+            <RoleProtectedRoute allowedRoute={['driver']}>
+              <Layout>
+                <BookingHistory />
               </Layout>
             </RoleProtectedRoute>
           } />
