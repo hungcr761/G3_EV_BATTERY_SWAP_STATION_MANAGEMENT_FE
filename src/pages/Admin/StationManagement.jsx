@@ -31,7 +31,6 @@ import {
 import { useStation } from '../../hooks/useStation';
 import { cabinetAPI } from '../../lib/apiServices';
 import { useUser } from '../../hooks/useUser';
-import { useShifts } from '../../hooks/useShifts';
 
 const StationManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -74,41 +73,12 @@ const StationManagement = () => {
         fullname: ''
     });
 
-    // Fetch all shifts
-    const { shifts, loading: shiftsLoading } = useShifts();
-
     // State to store cabinet data per station
     const [cabinetDataByStation, setCabinetDataByStation] = useState({});
     const [cabinetLoadingByStation, setCabinetLoadingByStation] = useState({});
 
     // Get total staff from pagination
     const totalStaff = staffPagination?.total || 0;
-
-    // Calculate staff count per station from shifts
-    const staffCountByStation = useMemo(() => {
-        const countMap = {};
-
-        // Group shifts by station_id and count unique staff_id
-        (shifts || []).forEach(shift => {
-            const stationId = shift.station_id;
-            const staffId = shift.staff_id;
-
-            if (stationId && staffId) {
-                if (!countMap[stationId]) {
-                    countMap[stationId] = new Set();
-                }
-                countMap[stationId].add(staffId);
-            }
-        });
-
-        // Convert Sets to counts
-        const result = {};
-        Object.keys(countMap).forEach(stationId => {
-            result[stationId] = countMap[stationId].size;
-        });
-
-        return result;
-    }, [shifts]);
 
     // Fetch cabinet data for all stations
     useEffect(() => {
@@ -721,9 +691,6 @@ const StationManagement = () => {
                                         Batteries
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Staff
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
@@ -769,14 +736,6 @@ const StationManagement = () => {
                                                     ) : (
                                                         `${batteryCountsByStation[station.id]?.available || 0}/${batteryCountsByStation[station.id]?.total || 0}`
                                                     )}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-2">
-                                                <Users className="h-4 w-4 text-green-600" />
-                                                <span className="text-sm text-gray-900">
-                                                    {shiftsLoading ? '...' : (staffCountByStation[station.id] || 0)}
                                                 </span>
                                             </div>
                                         </td>
