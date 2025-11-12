@@ -34,7 +34,6 @@ import BatteryManagement from './pages/Admin/BatteryManagement';
 import AnalyticsReports from './pages/Admin/AnalyticsReports';
 import SystemSettings from './pages/Admin/SystemSettings';
 import PaymentHistory from './pages/EVDriver/PaymentHistory.jsx';
-import ShiftSchedule from './pages/Admin/ShiftSchedule';
 import StaffLayout from './components/Layout/StaffLayout.jsx';
 import StaffDashboard from './pages/staff/StaffBatteryManagement.jsx';
 import TransferManagement from './pages/staff/TransferManagement.jsx';
@@ -255,13 +254,6 @@ function App() {
             <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
                 <AnalyticsReports />
-              </AdminLayout>
-            </RoleProtectedRoute>
-          } />
-          <Route path="/admin/shifts" element={
-            <RoleProtectedRoute allowedRoute={['admin']}>
-              <AdminLayout>
-                <ShiftSchedule />
               </AdminLayout>
             </RoleProtectedRoute>
           } />

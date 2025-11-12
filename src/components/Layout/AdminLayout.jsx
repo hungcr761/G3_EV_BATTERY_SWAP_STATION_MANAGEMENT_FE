@@ -12,7 +12,6 @@ import {
     User,
     LogOut,
     ChevronDown,
-    Clock,
     ArrowLeftRight
 } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -43,7 +42,6 @@ const AdminLayout = ({ children }) => {
     const navigation = [
         { name: 'Analytics & Reports', href: '/admin', icon: BarChart3 },
         { name: 'Station Management', href: '/admin/stations', icon: MapPin },
-        { name: 'Shift Scheduling', href: '/admin/shifts', icon: Clock },
         { name: 'User Management', href: '/admin/users', icon: Users },
         { name: 'Battery Management', href: '/admin/batteries', icon: Battery },
         { name: 'Transfer Management', href: '/admin/transfer', icon: ArrowLeftRight },
