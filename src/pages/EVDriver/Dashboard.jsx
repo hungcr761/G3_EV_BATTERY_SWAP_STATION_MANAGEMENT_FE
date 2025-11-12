@@ -114,7 +114,7 @@ const Dashboard = () => {
 
     // Fetch bookings from API
     const { data: bookingsData, loading: bookingsLoading, error: bookingsError, refetch: refetchBookings } = useApi(bookingAPI.getMyBookings);
-
+    console.log('bookingsData:', bookingsData);
     // Fetch swap records from API
     const getSwapRecords = useMemo(() => {
         return () => {
@@ -268,7 +268,7 @@ const Dashboard = () => {
     };
 
     // Format bookings data for display
-    const upcomingBookings = bookingsData && bookingsData.bookings && Array.isArray(bookingsData.bookings) ? bookingsData.bookings.map(booking => ({
+    const upcomingBookings = bookingsData && Array.isArray(bookingsData.bookings) ? bookingsData.bookings.filter(booking => booking.status === "pending").map(booking => ({
         id: booking.booking_id,
         station: booking.station?.station_name || 'Trạm không xác định',
         address: booking.station?.address || '',
@@ -284,7 +284,7 @@ const Dashboard = () => {
         vehicle: booking.vehicle?.license_plate || 'Không xác định',
         vehicleModel: booking.vehicle?.model?.name || '',
         vehicleBrand: booking.vehicle?.model?.brand || '',
-        status: booking.status,
+        status: booking.status ,
         batteryCount: booking.batteries?.length || 0,
         batteries: booking.batteries || [],
         createTime: booking.create_time,
@@ -292,6 +292,7 @@ const Dashboard = () => {
         scheduledEndTime: booking.scheduled_end_time
     })) : [];
 
+    console.log('upcomingBookings:', upcomingBookings);
     // If showing profile update, render that component
     if (showProfileUpdate) {
         return <ProfileUpdate onBack={() => setShowProfileUpdate(false)} />;
@@ -472,6 +473,17 @@ const Dashboard = () => {
                                 <CardDescription className="text-slate-600">
                                     Your upcoming battery swap appointments
                                 </CardDescription>
+                                <div className="flex items-center gap-3">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-purple-200 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-all duration-200"
+                                        onClick={() => navigate('/bookingHistory')}
+                                    >
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        View All
+                                    </Button>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">

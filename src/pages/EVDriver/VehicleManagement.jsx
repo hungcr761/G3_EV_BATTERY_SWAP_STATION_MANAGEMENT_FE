@@ -15,7 +15,7 @@ export default function VehicleManagement() {
     const {
         vehicles,
         vehicleModels,
-        loading,
+        loading, 
         message,
         apiError,
         isSubmitting,

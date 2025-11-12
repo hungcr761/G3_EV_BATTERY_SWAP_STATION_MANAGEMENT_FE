@@ -31,7 +31,7 @@ export default function useVehicle() {
         try {
             const res = await vehicleAPI.getAll();
             const vehiclesData = res.data?.vehicles || res.data || [];
-
+            
             const mappedVehicles = vehiclesData.map(v => {
                 const modelName = v.model?.name || 'Unknown Model';
                 const batteryName = v.model?.batteryType?.battery_type_code || 'Unknown Battery';
@@ -44,7 +44,7 @@ export default function useVehicle() {
                     batterySlot
                 };
             })
-
+            console.log('Fetched vehicles:', mappedVehicles);
             setVehicles(mappedVehicles);
         } catch (error) {
             console.error('Error fetching vehicles:', error);

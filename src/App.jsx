@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router';
+import { Routes, Route, Navigate, RouterProvider } from 'react-router';
 import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout/Layout';
@@ -182,6 +182,7 @@ function App() {
               </Layout>
             </RoleProtectedRoute>
           } />
+
           <Route path='/paymentHistory' element={
             <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
@@ -207,11 +208,10 @@ function App() {
           <Route path="/settings" element={
             <RoleProtectedRoute allowedRoute={['driver', 'admin', 'staff']}>
               <Layout>
-                <Settings />
+                <Settings/>
               </Layout>
             </RoleProtectedRoute>
-          } />
-
+          }/>
 
           {/* Staff routes */}
           <Route path="/staff" element={
