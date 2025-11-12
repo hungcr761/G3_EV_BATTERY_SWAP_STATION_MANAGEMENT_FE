@@ -114,7 +114,7 @@ const Dashboard = () => {
 
     // Fetch bookings from API
     const { data: bookingsData, loading: bookingsLoading, error: bookingsError, refetch: refetchBookings } = useApi(bookingAPI.getMyBookings);
-    console.log('fetching booking data:' , bookingsData)
+    console.log('bookingsData:', bookingsData);
     // Fetch swap records from API
     const getSwapRecords = useMemo(() => {
         return () => {
@@ -268,7 +268,7 @@ const Dashboard = () => {
     };
 
     // Format bookings data for display
-    const upcomingBookings = bookingsData && bookingsData.bookings && bookingsData?.bookings?.status === 'pending' && Array.isArray(bookingsData.bookings) ? bookingsData.bookings.map(booking => ({
+    const upcomingBookings = bookingsData && Array.isArray(bookingsData.bookings) ? bookingsData.bookings.filter(booking => booking.status === "pending").map(booking => ({
         id: booking.booking_id,
         station: booking.station?.station_name || 'Trạm không xác định',
         address: booking.station?.address || '',
@@ -284,7 +284,7 @@ const Dashboard = () => {
         vehicle: booking.vehicle?.license_plate || 'Không xác định',
         vehicleModel: booking.vehicle?.model?.name || '',
         vehicleBrand: booking.vehicle?.model?.brand || '',
-        status: booking.status,
+        status: booking.status ,
         batteryCount: booking.batteries?.length || 0,
         batteries: booking.batteries || [],
         createTime: booking.create_time,
@@ -292,6 +292,7 @@ const Dashboard = () => {
         scheduledEndTime: booking.scheduled_end_time
     })) : [];
 
+    console.log('upcomingBookings:', upcomingBookings);
     // If showing profile update, render that component
     if (showProfileUpdate) {
         return <ProfileUpdate onBack={() => setShowProfileUpdate(false)} />;

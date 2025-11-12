@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 
 function formatDateTime(dt) {
   try {
@@ -29,6 +29,13 @@ const statusClass = (s) => {
 
 export default function BookingHistory() {
   const { bookings, loading, error, refetch } = useBooking();
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  // derive filtered list according to statusFilter
+  const filteredBookings = (bookings || []).filter(b => {
+    if (!statusFilter || statusFilter === 'all') return true;
+    return String(b?.status || '').toLowerCase() === String(statusFilter).toLowerCase();
+  });
 
   return (
     <div className="container max-w-5xl mx-auto px-4 py-6">
@@ -37,9 +44,23 @@ export default function BookingHistory() {
           <h1 className="text-2xl font-bold tracking-tight">My Bookings</h1>
           <p className="text-slate-600 text-sm">View your booking history and details</p>
         </div>
-        <Button variant="outline" onClick={refetch} disabled={loading}>
-          {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />} Refresh
-        </Button>
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-slate-600">Status</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-1.5 border rounded-md text-sm bg-white"
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+
+          <Button variant="outline" onClick={refetch} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />} Refresh
+          </Button>
+        </div>
       </div>
 
       {loading && (
@@ -56,7 +77,7 @@ export default function BookingHistory() {
       )}
 
       <div className="space-y-4">
-        {(bookings || []).map((b) => (
+        {(filteredBookings || []).map((b) => (
           <Card key={b.booking_id}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">

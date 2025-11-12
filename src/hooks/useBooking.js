@@ -17,6 +17,7 @@ export default function useBooking() {
                 response?.data?.data?.bookings ||
                 [];
             setBookings(Array.isArray(data) ? data : []);
+            console.log('fetching bookings', data)
         } catch (e) {
             setError(e?.response?.data?.message || e?.message || 'Failed to load bookings');
             setBookings([]);
