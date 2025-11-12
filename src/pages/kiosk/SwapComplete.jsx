@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { CheckCircle2, Battery, Clock, Star, Download, Mail } from 'lucide-react';
+import { CheckCircle2, Battery, Clock, Star, Download, Mail, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { bookingAPI } from '../../lib/apiServices';
 
 const SwapComplete = () => {
@@ -13,6 +13,8 @@ const SwapComplete = () => {
     const [countdown, setCountdown] = useState(30);
     const [swapData, setSwapData] = useState(null);
     const [isUserFlow, setIsUserFlow] = useState(false);
+    const [batteriesIn, setBatteriesIn] = useState([]);
+    const [batteriesOut, setBatteriesOut] = useState([]);
 
     // Helper function to calculate average SOC from batteries
     const calculateAverageSOC = (batteries) => {
@@ -96,34 +98,43 @@ const SwapComplete = () => {
                 );
             }
 
+            // Extract battery information
+            let batteriesOutList = [];
+            let batteriesInList = [];
+
             if (stateData?.swapResult) {
                 const swapResult = stateData.swapResult;
 
-                // Get old battery levels (from vehicle batteries that were removed)
+                // Get batteries OUT (removed from vehicle) - these are the old batteries
                 if (stateData.vehicleBatteries && stateData.vehicleBatteries.length > 0) {
+                    batteriesOutList = stateData.vehicleBatteries;
                     const avgOldSOC = calculateAverageSOC(stateData.vehicleBatteries);
                     oldBatteryLevel = avgOldSOC !== null ? `${avgOldSOC}%` : 'N/A';
-                } else if (swapResult.data?.batteries_in_info) {
-                    // Fallback: try to get from batteries_in_info if available
+                } else if (swapResult.data?.batteries_in_info && swapResult.data.batteries_in_info.length > 0) {
+                    // Fallback: batteries_in_info contains batteries that went into the station (removed from vehicle)
+                    batteriesOutList = swapResult.data.batteries_in_info;
                     const avgOldSOC = calculateAverageSOC(swapResult.data.batteries_in_info);
                     oldBatteryLevel = avgOldSOC !== null ? `${avgOldSOC}%` : 'N/A';
                 }
 
-                // Get new battery levels (from batteries given to user)
-                let newBatteries = [];
+                // Get batteries IN (given to user) - these are the new batteries
                 if (swapResult.data?.batteries_out_info && swapResult.data.batteries_out_info.length > 0) {
-                    newBatteries = swapResult.data.batteries_out_info;
+                    batteriesInList = swapResult.data.batteries_out_info;
                 } else if (stateData.validationData?.data?.booked_batteries_out && stateData.validationData.data.booked_batteries_out.length > 0) {
-                    newBatteries = stateData.validationData.data.booked_batteries_out;
+                    batteriesInList = stateData.validationData.data.booked_batteries_out;
                 } else if (swapResult.data?.booked_batteries_out && swapResult.data.booked_batteries_out.length > 0) {
-                    newBatteries = swapResult.data.booked_batteries_out;
+                    batteriesInList = swapResult.data.booked_batteries_out;
                 }
 
-                if (newBatteries.length > 0) {
-                    const avgNewSOC = calculateAverageSOC(newBatteries);
+                if (batteriesInList.length > 0) {
+                    const avgNewSOC = calculateAverageSOC(batteriesInList);
                     newBatteryLevel = avgNewSOC !== null ? `${avgNewSOC}%` : 'N/A';
                 }
             }
+
+            // Set battery lists
+            setBatteriesOut(batteriesOutList);
+            setBatteriesIn(batteriesInList);
 
             if (hasStateData && isUserFlowRoute) {
                 // User flow (no booking) - use data from location.state
@@ -331,21 +342,157 @@ const SwapComplete = () => {
                     </CardContent>
                 </Card>
 
-                {/* Battery Info */}
-                <Card>
-                    <CardContent className="p-8">
-                        <div className="flex items-center space-x-6">
-                            <Battery className="h-16 w-16 text-green-600" />
-                            <div className="flex-1">
-                                <h3 className="text-2xl font-bold mb-2">New Batteries Installed</h3>
-                                <p className="text-xl text-muted-foreground">
-                                    Your batteries are now at <strong className="text-green-600">{swapData.newBatteryLevel}</strong> and ready
-                                    for your journey
+                {/* Detailed Battery Info */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Batteries OUT (Removed from Vehicle) */}
+                    {batteriesOut.length > 0 && (
+                        <Card className="border-2 border-red-200">
+                            <CardHeader className="bg-gradient-to-r from-red-50 to-red-100">
+                                <CardTitle className="text-2xl flex items-center gap-3 text-red-800">
+                                    <ArrowDownCircle className="h-6 w-6" />
+                                    Batteries Removed
+                                </CardTitle>
+                                <p className="text-sm text-muted-foreground mt-2">
+                                    {batteriesOut.length} battery{batteriesOut.length > 1 ? 'ies' : ''} removed from your vehicle
                                 </p>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="space-y-4">
+                                    {batteriesOut.map((battery, index) => {
+                                        const batteryId = battery.battery_id || battery.id || 'N/A';
+                                        const batterySerial = battery.battery_serial || battery.serial_number || battery.serial || 'N/A';
+                                        const soc = battery.current_soc || battery.soc || 'N/A';
+                                        const soh = battery.current_soh || battery.soh || 'N/A';
+                                        const displayId = batterySerial !== 'N/A' ? batterySerial : (batteryId !== 'N/A' ? batteryId : `Battery ${index + 1}`);
+                                        const uniqueKey = batteryId !== 'N/A' ? batteryId : (batterySerial !== 'N/A' ? batterySerial : `battery-out-${index}`);
+
+                                        return (
+                                            <div key={uniqueKey} className="bg-red-50 p-4 rounded-lg border border-red-200">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <h4 className="text-lg font-semibold text-red-800">
+                                                        Battery #{index + 1}
+                                                    </h4>
+                                                    <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
+                                                        {soc !== 'N/A' ? `${soc}%` : 'N/A'}
+                                                    </Badge>
+                                                </div>
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground font-medium">Serial/ID:</span>
+                                                        <span className="font-semibold">{displayId}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground font-medium">SOC:</span>
+                                                        <span className="font-semibold">{soc !== 'N/A' ? `${soc}%` : 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground font-medium">SOH:</span>
+                                                        <span className="font-semibold">{soh !== 'N/A' ? `${soh}%` : 'N/A'}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Batteries IN (Given to User) */}
+                    {batteriesIn.length > 0 && (
+                        <Card className="border-2 border-green-200">
+                            <CardHeader className="bg-gradient-to-r from-green-50 to-green-100">
+                                <CardTitle className="text-2xl flex items-center gap-3 text-green-800">
+                                    <ArrowUpCircle className="h-6 w-6" />
+                                    Batteries Installed
+                                </CardTitle>
+                                <p className="text-sm text-muted-foreground mt-2">
+                                    {batteriesIn.length} battery{batteriesIn.length > 1 ? 'ies' : ''} installed in your vehicle
+                                </p>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="space-y-4">
+                                    {batteriesIn.map((battery, index) => {
+                                        const batteryId = battery.battery_id || battery.id || 'N/A';
+                                        const batterySerial = battery.battery_serial || battery.serial_number || battery.serial || 'N/A';
+                                        const soc = battery.current_soc || battery.soc || 'N/A';
+                                        const soh = battery.current_soh || battery.soh || 'N/A';
+                                        const slotId = battery.slot_id;
+                                        const slotNumber = battery.slot_number;
+                                        const displayId = batterySerial !== 'N/A' ? batterySerial : (batteryId !== 'N/A' ? batteryId : `Battery ${index + 1}`);
+                                        const uniqueKey = batteryId !== 'N/A' ? batteryId : (batterySerial !== 'N/A' ? batterySerial : `battery-in-${index}`);
+
+                                        return (
+                                            <div key={uniqueKey} className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <h4 className="text-lg font-semibold text-green-800">
+                                                        Battery #{index + 1}
+                                                    </h4>
+                                                    <Badge variant="default" className="bg-green-500 text-white">
+                                                        {soc !== 'N/A' ? `${soc}%` : 'N/A'}
+                                                    </Badge>
+                                                </div>
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground font-medium">Serial/ID:</span>
+                                                        <span className="font-semibold">{displayId}</span>
+                                                    </div>
+                                                    {(slotId || slotNumber) && (
+                                                        <div className="flex justify-between">
+                                                            <span className="text-muted-foreground font-medium">Slot:</span>
+                                                            <span className="font-semibold">{slotNumber || `Slot ${slotId}`}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground font-medium">SOC:</span>
+                                                        <span className="font-semibold text-green-600">{soc !== 'N/A' ? `${soc}%` : 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground font-medium">SOH:</span>
+                                                        <span className="font-semibold text-green-600">{soh !== 'N/A' ? `${soh}%` : 'N/A'}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+
+                {/* Battery Summary Info */}
+                {(batteriesOut.length > 0 || batteriesIn.length > 0) && (
+                    <Card className="bg-blue-50 border-blue-200">
+                        <CardContent className="p-6">
+                            <div className="flex items-center space-x-6">
+                                <Battery className="h-16 w-16 text-blue-600" />
+                                <div className="flex-1">
+                                    <h3 className="text-2xl font-bold mb-2">Battery Swap Summary</h3>
+                                    <p className="text-xl text-muted-foreground">
+                                        {batteriesOut.length > 0 && batteriesIn.length > 0 ? (
+                                            <>
+                                                Swapped <strong className="text-blue-600">{batteriesOut.length} battery{batteriesOut.length > 1 ? 'ies' : ''}</strong> from{' '}
+                                                <strong className="text-red-600">{swapData.oldBatteryLevel}</strong> to{' '}
+                                                <strong className="text-green-600">{swapData.newBatteryLevel}</strong>
+                                            </>
+                                        ) : batteriesIn.length > 0 ? (
+                                            <>
+                                                Installed <strong className="text-green-600">{batteriesIn.length} battery{batteriesIn.length > 1 ? 'ies' : ''}</strong> at{' '}
+                                                <strong className="text-green-600">{swapData.newBatteryLevel}</strong>
+                                            </>
+                                        ) : (
+                                            <>
+                                                Removed <strong className="text-red-600">{batteriesOut.length} battery{batteriesOut.length > 1 ? 'ies' : ''}</strong> at{' '}
+                                                <strong className="text-red-600">{swapData.oldBatteryLevel}</strong>
+                                            </>
+                                        )}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Action Buttons */}
                 <div className="space-y-4">
