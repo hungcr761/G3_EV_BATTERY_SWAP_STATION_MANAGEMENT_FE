@@ -34,22 +34,6 @@ export default function PlanCard({ plan, onSelect, formatPrice, formatPercent })
                             <Check className={`h-5 w-5 ${isUnlimited ? 'text-emerald-600' : 'text-blue-600'} flex-shrink-0`} />
                         </div>
                         <span className="text-sm text-slate-700">
-                            SoH cap: <strong>{formatPercent(plan.soh_cap)}%</strong>
-                        </span>
-                    </li>
-                    <li className="flex items-center space-x-3">
-                        <div className={`p-1 ${isUnlimited ? 'bg-emerald-100' : 'bg-blue-100'} rounded-lg`}>
-                            <Check className={`h-5 w-5 ${isUnlimited ? 'text-emerald-600' : 'text-blue-600'} flex-shrink-0`} />
-                        </div>
-                        <span className="text-sm text-slate-700">
-                            Penalty fee: <strong>{formatPrice(plan.penalty_fee)}/%</strong>
-                        </span>
-                    </li>
-                    <li className="flex items-center space-x-3">
-                        <div className={`p-1 ${isUnlimited ? 'bg-emerald-100' : 'bg-blue-100'} rounded-lg`}>
-                            <Check className={`h-5 w-5 ${isUnlimited ? 'text-emerald-600' : 'text-blue-600'} flex-shrink-0`} />
-                        </div>
-                        <span className="text-sm text-slate-700">
                             Duration: <strong>{plan.duration_days} days</strong>
                         </span>
                     </li>

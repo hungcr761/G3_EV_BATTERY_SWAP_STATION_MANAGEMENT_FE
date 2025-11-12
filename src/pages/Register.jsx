@@ -1,30 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react';
+import RegisterForm from '../components/Auth/RegisterForm';
+import SimpleHeader from '../components/Layout/SimpleHeader';
 
-export default function Register() {
-    const [booking, setBooking] = useState();
-    const [loading, setLoading] = useState(false);
-    const [error , setError] = useState(null);
+const Register = () => {
+    return (
+        <>
+            <SimpleHeader />
+            <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+                <RegisterForm />
+            </div>
+        </>
+    );
+};
 
-
-    useEffect(() => {
-        const fetchBookings = async () => {
-            setLoading(true);
-            try {
-                const response = await getMyBookings();
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
-                setBooking(data);
-            } catch (error) {
-                setError(error);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        fetchBookings();
-    },[]);
-
-  return (
-    <div>Register</div>
-  )
-}
+export default Register;
