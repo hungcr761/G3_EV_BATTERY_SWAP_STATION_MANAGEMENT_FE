@@ -43,7 +43,6 @@ import ShiftManagement from './pages/staff/ShiftManagement.jsx';
 import SwapManagement from './pages/EVDriver/SwapHistory.jsx';
 import AdminTransferManagement from './pages/Admin/AdminTransferManagement.jsx';
 import SwapHistory from './pages/EVDriver/SwapHistory.jsx';
-import BookingManagement from './pages/EVDriver/BookingHistory.jsx';
 import BookingHistory from './pages/EVDriver/BookingHistory.jsx';
 
 // Protected Route Component
@@ -199,15 +198,13 @@ function App() {
               </Layout>
             </RoleProtectedRoute>
           } />
-
           <Route path="/bookingHistory" element={
             <RoleProtectedRoute allowedRoute={['driver']}>
               <Layout>
                 <BookingHistory />
               </Layout>
             </RoleProtectedRoute>
-          }/>
-
+          } />
           <Route path="/settings" element={
             <RoleProtectedRoute allowedRoute={['driver', 'admin', 'staff']}>
               <Layout>
