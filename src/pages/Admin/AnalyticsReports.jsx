@@ -605,8 +605,7 @@ const AnalyticsReports = () => {
                             label: label,
                             totalRevenue: parseFloat(item.totalRevenue || 0),
                             totalPlanFee: parseFloat(item.totalPlanFee || 0),
-                            totalSwapFee: parseFloat(item.totalSwapFee || 0),
-                            totalPenaltyFee: parseFloat(item.totalPenaltyFee || 0)
+                            totalSwapFee: parseFloat(item.totalSwapFee || 0)
                         };
                     });
 
@@ -752,9 +751,9 @@ const AnalyticsReports = () => {
             try {
                 setBatterySohLoading(true);
                 const response = await batteryAPI.getAll();
+                if (response.data.payload.batteries.data && Array.isArray(response.data.payload.batteries.data)) {
+                    const batteries = response.data.payload.batteries.data;
 
-                if (response.data.batteries && Array.isArray(response.data.batteries)) {
-                    const batteries = response.data.batteries;
                     // Filter batteries that have current_soh and calculate average
                     const sohValues = batteries
                         .map(b => b?.current_soh != null ? parseFloat(b.current_soh) : null)
@@ -997,15 +996,15 @@ const AnalyticsReports = () => {
         value: item.totalPlanFee
     }));
 
-    const exceedFeesChartData = revenueData.map(item => ({
+    const swapFeeChartData = revenueData.map(item => ({
         label: item.label,
-        value: item.totalPenaltyFee
+        value: item.totalSwapFee
     }));
 
     // Calculate totals
     const totalRevenue = revenueData.reduce((sum, item) => sum + item.totalRevenue, 0);
     const totalPlanFee = revenueData.reduce((sum, item) => sum + item.totalPlanFee, 0);
-    const totalPenaltyFee = revenueData.reduce((sum, item) => sum + item.totalPenaltyFee, 0);
+    const totalSwapFee = revenueData.reduce((sum, item) => sum + item.totalSwapFee, 0);
     const avgMonthlyRevenue = revenueData.length > 0 ? totalRevenue / revenueData.length : 0;
     // Calculate total swaps from station performance (includes all swaps across all hours)
     // This ensures total swaps matches the sum of all stations
@@ -1442,35 +1441,29 @@ const AnalyticsReports = () => {
                         </div>
                     </div>
                     <div>
-                        <h4 className="text-md font-medium text-gray-700 mb-3">Penalty Fee Trend</h4>
+                        <h4 className="text-md font-medium text-gray-700 mb-3">Swap Fee Trend</h4>
                         <LineChart
-                            data={exceedFeesChartData}
+                            data={swapFeeChartData}
                             height={200}
-                            color="#F59E0B"
-                            name="Penalty Fee"
+                            color="#3B82F6"
+                            name="Swap Fee"
                         />
                         <div className="mt-2 text-center">
-                            <span className="text-sm text-gray-600">Penalty Fee (Orange)</span>
+                            <span className="text-sm text-gray-600">Swap Fee (Blue)</span>
                         </div>
                     </div>
                 </div>
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="text-center p-4 bg-green-50 rounded-lg">
                         <p className="text-gray-600 text-sm">Total Plan Fee</p>
                         <p className="font-semibold text-green-700 text-lg">
                             {revenueLoading ? '...' : `${totalPlanFee.toLocaleString()} VND`}
                         </p>
                     </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Total Penalty Fee</p>
-                        <p className="font-semibold text-orange-700 text-lg">
-                            {revenueLoading ? '...' : `${totalPenaltyFee.toLocaleString()} VND`}
-                        </p>
-                    </div>
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
                         <p className="text-gray-600 text-sm">Total Swap Fee</p>
                         <p className="font-semibold text-blue-700 text-lg">
-                            {revenueLoading ? '...' : `${revenueData.reduce((sum, d) => sum + d.totalSwapFee, 0).toLocaleString()} VND`}
+                            {revenueLoading ? '...' : `${totalSwapFee.toLocaleString()} VND`}
                         </p>
                     </div>
                 </div>
