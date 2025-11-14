@@ -63,19 +63,30 @@ export default function useVehicle() {
         setIsSubmitting(true);
         setApiError('');
         try {
-            const selectedModel = vehicleModels.find(m => m.name === data.model);
+            let payload;
 
-            if (!selectedModel) {
-                setApiError('Invalid vehicle model selected');
-                setIsSubmitting(false);
-                return;
+            if (editingVehicle) {
+                // When editing, model is required
+                const selectedModel = vehicleModels.find(m => m.name === data.model);
+
+                if (!selectedModel) {
+                    setApiError('Invalid vehicle model selected');
+                    setIsSubmitting(false);
+                    return;
+                }
+
+                payload = {
+                    vin: data.vin,
+                    model_id: selectedModel.model_id,
+                    license_plate: data.license_plate
+                };
+            } else {
+                // When adding new vehicle, backend will determine model from VIN
+                payload = {
+                    vin: data.vin,
+                    license_plate: data.license_plate
+                };
             }
-
-            const payload = {
-                vin: data.vin,
-                model_id: selectedModel.model_id,
-                license_plate: data.license_plate
-            };
 
             let res;
             if (editingVehicle) {

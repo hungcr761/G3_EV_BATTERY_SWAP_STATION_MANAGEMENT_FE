@@ -4,7 +4,7 @@ import { Button } from '../ui/button';
 import { Battery, Check, Star, Zap } from 'lucide-react';
 
 export default function PlanCard({ plan, onSelect, formatPrice, formatPercent }) {
-    const isUnlimited = parseFloat(plan.swap_fee) === 0;
+    const isUnlimited = true;
 
     return (
         <div className={`group flex flex-col ${isUnlimited ? 'border-slate-200/60' : 'border-blue-200/60'} shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1`}>

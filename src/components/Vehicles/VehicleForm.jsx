@@ -81,41 +81,47 @@ export default function VehicleForm({ onSubmit, editingVehicle, vehicleModels = 
                 )}
             </div>
 
-            {/* model */}
-            <div className="space-y-2">
-                <Label htmlFor="model">
-                    Vehicle Model <span className="text-red-500">*</span>
-                </Label>
-                <Controller
-                    name="model"
-                    control={control}
-                    render={({ field }) => (
-                        <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className={errors.model ? 'border-red-500 focus:border-red-500' : ''}>
-                                <SelectValue placeholder="Select vehicle model" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {(vehicleModels || []).map(m => (
-                                    <SelectItem key={m.model_id} value={m.name}>
-                                        VinFast {m.name} {m.battery_slot ? `(${m.battery_slot} battery slots)` : ''}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+            {/* model - only show when editing */}
+            {editingVehicle && (
+                <div className="space-y-2">
+                    <Label htmlFor="model">
+                        Vehicle Model <span className="text-red-500">*</span>
+                    </Label>
+                    <Controller
+                        name="model"
+                        control={control}
+                        render={({ field }) => (
+                            <Select value={field.value} onValueChange={field.onChange}>
+                                <SelectTrigger className={errors.model ? 'border-red-500 focus:border-red-500' : ''}>
+                                    <SelectValue placeholder="Select vehicle model" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {(vehicleModels || []).map(m => (
+                                        <SelectItem key={m.model_id} value={m.name}>
+                                            VinFast {m.name} {m.battery_slot ? `(${m.battery_slot} battery slots)` : ''}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
+                    {errors.model && (
+                        <div className="flex items-start space-x-2 p-2 bg-red-50 border border-red-200 rounded">
+                            <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
+                            <p className="text-sm text-red-600 font-medium">{errors.model.message}</p>
+                        </div>
                     )}
-                />
-                {errors.model && (
-                    <div className="flex items-start space-x-2 p-2 bg-red-50 border border-red-200 rounded">
-                        <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-red-600 font-medium">{errors.model.message}</p>
-                    </div>
-                )}
-                {!errors.model && (
-                    <p className="text-xs text-gray-500">
-                        Select the VinFast model that matches your vehicle
-                    </p>
-                )}
-            </div>
+                    {!errors.model && (
+                        <p className="text-xs text-gray-500">
+                            Select the VinFast model that matches your vehicle
+                        </p>
+                    )}
+                </div>
+            )}
+            {!editingVehicle && (
+                <div className="space-y-2">
+                </div>
+            )}
 
             {/* License Plate */}
             <div className="space-y-2">
