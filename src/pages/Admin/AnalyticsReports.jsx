@@ -419,12 +419,6 @@ const RevenueStackedAreaChart = ({ data, height = 350 }) => {
                                         </div>
                                     );
                                 })}
-                                {total > 0 && (
-                                    <div className="mt-2 pt-2 border-t border-border/50">
-                                        <span className="text-muted-foreground">Total: </span>
-                                        <span className="font-semibold">{total.toLocaleString()} VND</span>
-                                    </div>
-                                )}
                             </div>
                         );
                     }}
@@ -1346,26 +1340,26 @@ const AnalyticsReports = () => {
                         <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                            <span className="text-sm text-gray-600">Revenue (VND)</span>
+                            <span className="text-sm text-gray-600">Plan Fee (VND)</span>
                         </div>
                     </div>
                     <LineChart
-                        data={totalRevenueChartData}
+                        data={subscriptionRevenueChartData}
                         height={250}
                         color="#10B981"
-                        name="Revenue"
+                        name="Plan Fee"
                     />
                     <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
                         <div className="text-center p-3 bg-green-50 rounded-lg">
-                            <p className="text-gray-600">Total Revenue</p>
+                            <p className="text-gray-600">Total Plan Fee</p>
                             <p className="font-semibold text-green-700">
-                                {revenueLoading ? '...' : `${totalRevenue.toLocaleString()} VND`}
+                                {revenueLoading ? '...' : `${totalPlanFee.toLocaleString()} VND`}
                             </p>
                         </div>
                         <div className="text-center p-3 bg-blue-50 rounded-lg">
                             <p className="text-gray-600">Avg Period</p>
                             <p className="font-semibold text-blue-700">
-                                {revenueLoading ? '...' : `${Math.round(avgMonthlyRevenue).toLocaleString()} VND`}
+                                {revenueLoading ? '...' : `${Math.round(revenueData.length > 0 ? totalPlanFee / revenueData.length : 0).toLocaleString()} VND`}
                             </p>
                         </div>
                     </div>
@@ -1423,51 +1417,6 @@ const AnalyticsReports = () => {
                     )}
                 </Card>
             </div>
-
-            {/* Revenue Breakdown */}
-            <Card className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Breakdown</h3>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                        <h4 className="text-md font-medium text-gray-700 mb-3">Plan Fee Trend</h4>
-                        <LineChart
-                            data={subscriptionRevenueChartData}
-                            height={200}
-                            color="#10B981"
-                            name="Plan Fee"
-                        />
-                        <div className="mt-2 text-center">
-                            <span className="text-sm text-gray-600">Plan Fee (Green)</span>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 className="text-md font-medium text-gray-700 mb-3">Swap Fee Trend</h4>
-                        <LineChart
-                            data={swapFeeChartData}
-                            height={200}
-                            color="#3B82F6"
-                            name="Swap Fee"
-                        />
-                        <div className="mt-2 text-center">
-                            <span className="text-sm text-gray-600">Swap Fee (Blue)</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Total Plan Fee</p>
-                        <p className="font-semibold text-green-700 text-lg">
-                            {revenueLoading ? '...' : `${totalPlanFee.toLocaleString()} VND`}
-                        </p>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                        <p className="text-gray-600 text-sm">Total Swap Fee</p>
-                        <p className="font-semibold text-blue-700 text-lg">
-                            {revenueLoading ? '...' : `${totalSwapFee.toLocaleString()} VND`}
-                        </p>
-                    </div>
-                </div>
-            </Card>
 
             {/* Station Performance */}
             <Card className="p-6">
