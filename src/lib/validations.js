@@ -93,8 +93,8 @@ export const vehicleSchema = z
             .length(17, 'VIN must be exactly 17 characters')
             .transform(val => (val || '').toUpperCase()),
         model: z.string()
-            .min(1, 'Please select a vehicle model')
-            .max(100, 'Model name cannot exceed 100 characters'),
+            .max(100, 'Model name cannot exceed 100 characters')
+            .optional(),
         license_plate: z.string()
             .min(8, 'License plate is required')
             .max(9, 'License plate cannot exceed 9 characters')
@@ -141,8 +141,8 @@ export const vehicleSchema = z
             });
         }
 
-        // Validate VDS by model if we know the mapping
-        const expectedVds = modelVdsMap[model];
+        // Validate VDS by model if model is provided and we know the mapping
+        const expectedVds = model ? modelVdsMap[model] : null;
         if (expectedVds) {
             const vds = vin.slice(3, 6);
             if (vds !== expectedVds) {
