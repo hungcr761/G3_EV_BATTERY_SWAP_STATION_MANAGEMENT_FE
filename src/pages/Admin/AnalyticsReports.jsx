@@ -585,6 +585,7 @@ const AnalyticsReports = () => {
                 if (response.data?.success && response.data?.payload) {
                     // Transform API data to match component format
                     const transformedData = response.data.payload.map((item, index) => {
+                        console.log(item);
                         const periodDate = new Date(item.period);
                         let label = '';
 
@@ -598,8 +599,7 @@ const AnalyticsReports = () => {
                             period: item.period,
                             label: label,
                             totalRevenue: parseFloat(item.totalRevenue || 0),
-                            totalPlanFee: parseFloat(item.totalPlanFee || 0),
-                            totalSwapFee: parseFloat(item.totalSwapFee || 0)
+                            totalPlanFee: parseFloat(item.totalRevenue || 0)
                         };
                     });
 

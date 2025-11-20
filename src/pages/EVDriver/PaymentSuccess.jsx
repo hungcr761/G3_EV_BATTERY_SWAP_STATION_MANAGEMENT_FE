@@ -347,7 +347,6 @@ export default function PaymentSuccess() {
                                     <ul className="space-y-1 text-sm text-green-700">
                                         <li>• Battery swap service has been activated for your vehicle</li>
                                         <li>• You can start using the service immediately</li>
-                                        <li>• Electronic invoice will be sent via email</li>
                                         <li>• Detailed information can be viewed in Dashboard</li>
                                     </ul>
                                 </div>

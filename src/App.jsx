@@ -140,11 +140,11 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
-          <Route path="/support" element={
+          {/* <Route path="/support" element={
             <Layout>
               <Support />
             </Layout>
-          } />
+          } /> */}
 
           {/* Auth routes without layout */}
           <Route path="/login" element={<Login />} />
@@ -207,10 +207,10 @@ function App() {
           <Route path="/settings" element={
             <RoleProtectedRoute allowedRoute={['driver', 'admin', 'staff']}>
               <Layout>
-                <Settings/>
+                <Settings />
               </Layout>
             </RoleProtectedRoute>
-          }/>
+          } />
 
           {/* Staff routes */}
           <Route path="/staff" element={

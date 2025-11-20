@@ -102,10 +102,9 @@ const KioskHome = () => {
             if (booking.station_id !== parseInt(stationId)) {
                 const wrongStationName = booking.station?.station_name || `Station #${booking.station_id}`;
                 setError(
-                    `❌ Wrong Station!\n\n` +
                     `This booking is for: ${wrongStationName}\n` +
                     `You are at: ${stationInfo?.name || `Station #${stationId}`}\n\n` +
-                    `Please go to the correct station or cancel and create a new booking.`
+                    `Please go to the correct station`
                 );
                 setValidating(false);
                 return;
@@ -119,8 +118,7 @@ const KioskHome = () => {
                     setError(
                         `❌ Booking Expired!\n\n` +
                         `Expiration time: ${bookingEndTime.toLocaleString('en-US')}\n` +
-                        `Current time: ${now.toLocaleString('en-US')}\n\n` +
-                        `Please create a new booking through the app or website.`
+                        `Current time: ${now.toLocaleString('en-US')}\n\n`
                     );
                     setValidating(false);
                     return;
@@ -130,7 +128,6 @@ const KioskHome = () => {
             // VALIDATION 3: Check booking status
             if (booking.status === 'completed') {
                 setError(
-                    `❌ Booking Already Used!\n\n` +
                     `This booking has been completed.\n` +
                     `If you need to swap batteries again, please create a new booking.`
                 );
@@ -140,7 +137,7 @@ const KioskHome = () => {
 
             if (booking.status === 'cancelled') {
                 setError(
-                    `❌ Booking Cancelled!\n\n` +
+                    `This booking has been cancelled.\n` +
                     `Please create a new booking to use the service.`
                 );
                 setValidating(false);
