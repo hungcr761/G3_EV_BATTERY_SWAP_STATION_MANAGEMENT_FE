@@ -157,21 +157,6 @@ export default function Payment() {
                                             {plan.description || 'No description'}
                                         </p>
 
-                                        {/* Features */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="flex items-center space-x-2">
-                                                <Check className="h-5 w-5 text-green-500" />
-                                                <span className="text-sm">
-                                                    Max Batteries: <strong>{plan.battery_cap || 0}</strong>
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <Check className="h-5 w-5 text-green-500" />
-                                                <span className="text-sm">
-                                                    SoH Cap: <strong>{plan.soh_cap ? (parseFloat(plan.soh_cap) * 100).toFixed(0) : 0}%</strong>
-                                                </span>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -228,16 +213,6 @@ export default function Payment() {
                                         </p>
                                     </div>
 
-                                    {/* Penalty Fee Info */}
-                                    <div className="flex justify-between items-center py-3 border-b">
-                                        <div>
-                                            <p className="font-medium">Penalty Fee/%</p>
-                                            <p className="text-sm text-muted-foreground">If violating rules</p>
-                                        </div>
-                                        <p className="font-semibold text-lg text-orange-600">
-                                            {formatPrice(plan.penalty_fee || 0)}/%
-                                        </p>
-                                    </div>
 
                                     {/* Total */}
                                     <div className="bg-primary/10 rounded-lg p-4 mt-4">
@@ -309,22 +284,6 @@ export default function Payment() {
                                 </CardContent>
                             </Card>
 
-                            {/* Info Card */}
-                            <Card className="border-blue-200 bg-blue-50/50">
-                                <CardContent className="pt-6">
-                                    <h4 className="font-semibold mb-3 text-blue-900">Important Notes</h4>
-                                    <ul className="space-y-2 text-sm text-blue-800">
-                                        <li className="flex items-start">
-                                            <Check className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />
-                                            <span>Plan will be activated immediately after payment</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <Check className="h-4 w-4 mr-2 mt-0.5 text-blue-600" />
-                                            <span>Electronic invoice will be sent via email</span>
-                                        </li>
-                                    </ul>
-                                </CardContent>
-                            </Card>
                         </div>
                     </div>
                 </div>

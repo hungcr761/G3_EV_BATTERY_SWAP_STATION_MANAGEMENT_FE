@@ -334,9 +334,9 @@ const Dashboard = () => {
                                     <User className="h-8 w-8 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="wc-title">Xin chào, {toTitleCase(user?.fullname)}!</h1>
+                                    <h1 className="wc-title">Hello, {toTitleCase(user?.fullname)}!</h1>
                                     <div className="wc-sub mt-2 flex items-center gap-3">
-                                        <span className="px-2 py-0.5 rounded-full bg-white/20 text-xs">Tài xế EV</span>
+                                        <span className="px-2 py-0.5 rounded-full bg-white/20 text-xs">EV Driver</span>
                                         <span className="text-sm opacity-90">{user?.email}</span>
                                     </div>
                                 </div>

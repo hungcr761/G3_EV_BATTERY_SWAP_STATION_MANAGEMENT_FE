@@ -48,7 +48,7 @@ const Header = () => {
         { label: 'Dashboard', href: '/Dashboard' },
         { label: 'Booking', href: '/booking' },
         { label: 'Services', href: '/services' },
-        { label: 'Support', href: '/support' }
+        // { label: 'Support', href: '/support' }
     ];
 
     return (
@@ -233,9 +233,9 @@ const Header = () => {
                                                 <Link to="/bookingHistory" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
                                                     <Calendar className="h-4 w-4 mr-2" /> Bookings
                                                 </Link>
-                                                <Link to="/support" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
+                                                {/* <Link to="/support" className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
                                                     <LifeBuoy className="h-4 w-4 mr-2" /> Support
-                                                </Link>
+                                                </Link> */}
                                             </div>
                                         </>
                                     )}
