@@ -63,7 +63,6 @@ const UserManagement = () => {
         updateStatus,
         updateProfile,
         createStaff,
-        deleteUser,
         refetch
     } = useUser({
         page: 1,
@@ -168,20 +167,6 @@ const UserManagement = () => {
         }
     };
 
-    // Handle delete user
-    const handleDeleteUser = async (accountId) => {
-        if (window.confirm('Are you sure you want to delete this user?')) {
-            try {
-                await deleteUser(accountId);
-                // Refetch stats after deletion
-                await fetchStats();
-                // Optionally show success message
-            } catch (err) {
-                console.error('Failed to delete user:', err);
-                // Optionally show error message
-            }
-        }
-    };
 
     // Handle create staff form submission
     const onSubmitStaff = async (data) => {
@@ -406,9 +391,6 @@ const UserManagement = () => {
                                                             {user.fullname || 'N/A'}
                                                         </div>
                                                         <div className="text-sm text-gray-500">{user.email || 'N/A'}</div>
-                                                        {user.citizen_id && (
-                                                            <div className="text-xs text-gray-400">ID: {user.citizen_id}</div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
@@ -438,6 +420,9 @@ const UserManagement = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {user.citizen_id && (
+                                                    <div className="text-xs">Citizen ID: {user.citizen_id}</div>
+                                                )}
                                                 {user.driving_license && (
                                                     <div className="text-xs">License: {user.driving_license}</div>
                                                 )}
@@ -461,15 +446,6 @@ const UserManagement = () => {
                                                     </Button>
                                                     <Button variant="ghost" size="sm" title="Edit">
                                                         <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-red-600 hover:text-red-700"
-                                                        onClick={() => handleDeleteUser(user.account_id)}
-                                                        title="Delete"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </div>
                                             </td>

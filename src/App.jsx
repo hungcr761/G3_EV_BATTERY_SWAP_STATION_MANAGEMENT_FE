@@ -140,11 +140,6 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
-          {/* <Route path="/support" element={
-            <Layout>
-              <Support />
-            </Layout>
-          } /> */}
 
           {/* Auth routes without layout */}
           <Route path="/login" element={<Login />} />
@@ -275,13 +270,6 @@ function App() {
             <RoleProtectedRoute allowedRoute={['admin']}>
               <AdminLayout>
                 <BatteryManagement />
-              </AdminLayout>
-            </RoleProtectedRoute>
-          } />
-          <Route path="/admin/transfer" element={
-            <RoleProtectedRoute allowedRoute={['admin']}>
-              <AdminLayout>
-                <AdminTransferManagement />
               </AdminLayout>
             </RoleProtectedRoute>
           } />

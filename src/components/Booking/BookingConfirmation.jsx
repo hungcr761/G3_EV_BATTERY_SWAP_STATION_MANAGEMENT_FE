@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -11,6 +11,7 @@ import {
     AlertTriangle,
     Loader2
 } from 'lucide-react';
+import { configAPI } from '../../lib/apiServices';
 
 const BookingConfirmation = ({
     selectedVehicle,
@@ -22,10 +23,37 @@ const BookingConfirmation = ({
     isSubmitting = false
 }) => {
     const [bookingStartTime] = useState(new Date());
-    const [bookingEndTime] = useState(() => {
+    const [bookingInterval, setBookingInterval] = useState(30); // Default to 30 minutes
+    const [isLoadingInterval, setIsLoadingInterval] = useState(true);
+    const [bookingEndTime, setBookingEndTime] = useState(() => {
         const now = new Date();
-        return new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes from now
+        return new Date(now.getTime() + 30 * 60 * 1000); // Default to 30 minutes from now
     });
+
+    // Fetch booking interval from API
+    useEffect(() => {
+        const fetchBookingInterval = async () => {
+            try {
+                setIsLoadingInterval(true);
+                const response = await configAPI.getBookingInterval();
+                // Assuming the API returns { interval: number } or { booking_interval: number } or just a number
+                const interval = response.data?.data || response.data || 30;
+                setBookingInterval(interval);
+
+                // Update booking end time with the fetched interval
+                const now = new Date();
+                setBookingEndTime(new Date(now.getTime() + interval * 60 * 1000));
+            } catch (error) {
+                console.error('Error fetching booking interval:', error);
+                // Keep default 30 minutes if API fails
+                setBookingInterval(30);
+            } finally {
+                setIsLoadingInterval(false);
+            }
+        };
+
+        fetchBookingInterval();
+    }, []);
 
     const formatTime = (time) => {
         if (!time) return '';

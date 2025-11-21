@@ -185,5 +185,6 @@ export const configAPI = {
     get: () => api.get('/config'),
     update: (data) => api.put('/config', data),
     reset: () => api.post('/config/reset'),
+    getBookingInterval: () => api.get('/config/booking-interval'),
 };
 
