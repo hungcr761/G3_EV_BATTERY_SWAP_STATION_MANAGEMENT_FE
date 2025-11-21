@@ -749,14 +749,6 @@ const StationManagement = () => {
                                                 >
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-red-600 hover:text-red-700"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
                                             </div>
                                         </td>
                                     </tr>

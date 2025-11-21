@@ -44,7 +44,6 @@ const AdminLayout = ({ children }) => {
         { name: 'Station Management', href: '/admin/stations', icon: MapPin },
         { name: 'User Management', href: '/admin/users', icon: Users },
         { name: 'Battery Management', href: '/admin/batteries', icon: Battery },
-        { name: 'Transfer Management', href: '/admin/transfer', icon: ArrowLeftRight },
         { name: 'System Settings', href: '/admin/settings', icon: Settings },
     ];
 

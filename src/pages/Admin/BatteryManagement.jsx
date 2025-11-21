@@ -7,7 +7,6 @@ import {
     AlertTriangle,
     CheckCircle,
     Clock,
-    TrendingUp,
     MapPin,
     Activity,
     Zap,
@@ -22,12 +21,11 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { useApi } from '../../hooks/useApi';
-import { batteryAPI, batteryTypeAPI, stationAPI, cabinetAPI } from '../../lib/apiServices';
+import { batteryAPI, batteryTypeAPI, stationAPI, cabinetAPI, configAPI } from '../../lib/apiServices';
 // Removed transfer management from this page; handled in AdminTransferManagement
 
 const BatteryManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState('all');
     const [filterStation, setFilterStation] = useState('all');
     const [sortField, setSortField] = useState('none');
     const [sortDirection, setSortDirection] = useState('desc');
@@ -42,10 +40,15 @@ const BatteryManagement = () => {
     const [batteriesData, setBatteriesData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [summaryCounts, setSummaryCounts] = useState({
+        available: 0,
+        needMaintenance: 0
+    });
 
     const { data: apiBatteryTypes } = useApi(batteryTypeAPI.getAll, []);
     const { data: apiStations, loading: stationsLoading } = useApi(stationAPI.getAll, []);
     const { data: apiCabinets } = useApi(() => cabinetAPI.getAll({ page: 1, pageSize: 100 }), []);
+    const { data: apiConfig } = useApi(configAPI.get, []);
 
     // Fetch batteries with pagination
     const fetchBatteries = useCallback(async () => {
@@ -56,7 +59,6 @@ const BatteryManagement = () => {
             const params = {
                 page,
                 pageSize,
-                ...(filterStatus !== 'all' && { status: filterStatus }),
                 ...(filterStation !== 'all' && { station_id: filterStation }),
                 ...(searchTerm && searchTerm.trim() && { search: searchTerm.trim() })
             };
@@ -113,7 +115,7 @@ const BatteryManagement = () => {
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, filterStatus, filterStation, searchTerm]);
+    }, [page, pageSize, filterStation, searchTerm]);
 
     useEffect(() => {
         fetchBatteries();
@@ -122,7 +124,7 @@ const BatteryManagement = () => {
     // Reset to page 1 when filters change
     useEffect(() => {
         setPage(1);
-    }, [filterStatus, filterStation]);
+    }, [filterStation]);
 
     // Debounce search and reset page
     useEffect(() => {
@@ -272,6 +274,62 @@ const BatteryManagement = () => {
         return map;
     })();
 
+    // Get SOH maintenance threshold from config
+    const sohMaintenanceThreshold = (() => {
+        if (!apiConfig) return 70; // Default threshold
+
+        const configData = apiConfig?.data || apiConfig;
+        const threshold = configData?.soh_maintenance_threshole ?? configData?.soh_maintenance_threshold ?? 70;
+        return Number(threshold) || 70;
+    })();
+
+    // Fetch all batteries for summary stats (not paginated)
+    const fetchSummaryStats = useCallback(async () => {
+        try {
+            const params = {
+                page: 1,
+                pageSize: 10000, // Large page size to get all batteries
+                ...(filterStation !== 'all' && { station_id: filterStation }),
+                ...(searchTerm && searchTerm.trim() && { search: searchTerm.trim() })
+            };
+
+            const response = await batteryAPI.getAll(params);
+
+            let allBatteries = [];
+            if (response.data?.success && response.data?.payload) {
+                allBatteries = response.data.payload.data || response.data.payload.batteries?.data || [];
+            } else if (response.data?.payload?.batteries) {
+                allBatteries = Array.isArray(response.data.payload.batteries.data)
+                    ? response.data.payload.batteries.data
+                    : Array.isArray(response.data.payload.batteries)
+                        ? response.data.payload.batteries
+                        : [];
+            } else if (Array.isArray(response.data)) {
+                allBatteries = response.data;
+            }
+
+            // Calculate counts based on SOH
+            const available = allBatteries.filter(b => {
+                const soh = b?.current_soh != null ? parseFloat(b.current_soh) : null;
+                return soh != null && !Number.isNaN(soh) && soh >= sohMaintenanceThreshold;
+            }).length;
+
+            const needMaintenance = allBatteries.filter(b => {
+                const soh = b?.current_soh != null ? parseFloat(b.current_soh) : null;
+                return soh != null && !Number.isNaN(soh) && soh < sohMaintenanceThreshold;
+            }).length;
+
+            setSummaryCounts({ available, needMaintenance });
+        } catch (err) {
+            console.error('Error fetching summary stats:', err);
+            // Don't set error state for summary stats, just log it
+        }
+    }, [filterStation, searchTerm, sohMaintenanceThreshold]);
+
+    useEffect(() => {
+        fetchSummaryStats();
+    }, [fetchSummaryStats]);
+
     // Process batteries data
     const batteries = batteriesData.map((b) => {
         const batteryTypeId = b?.battery_type_id;
@@ -313,11 +371,23 @@ const BatteryManagement = () => {
             location = stationName ? `${stationName}` : 'Station';
         }
 
+        const soh = b?.current_soh != null ? parseFloat(b.current_soh) : null;
+
+        // Calculate status based on SOH
+        let calculatedStatus = 'unknown';
+        if (soh != null && !Number.isNaN(soh)) {
+            if (soh >= sohMaintenanceThreshold) {
+                calculatedStatus = 'available';
+            } else {
+                calculatedStatus = 'maintenance';
+            }
+        }
+
         return {
             id: b?.battery_id ?? b?.battery_serial ?? null,
             serialNumber: b?.battery_serial ?? null,
-            status: b?.status ?? null,
-            soh: b?.current_soh != null ? parseFloat(b.current_soh) : null,
+            status: calculatedStatus,
+            soh,
             soc: b?.current_soc != null ? parseFloat(b.current_soc) : null,
             model: batteryType?.battery_type_code ?? null,
             location,
@@ -449,18 +519,6 @@ const BatteryManagement = () => {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        >
-                            <option value="all">All Statuses</option>
-                            <option value="available">Available</option>
-                            <option value="charging">Charging</option>
-                            <option value="in_use">In Use</option>
-                            <option value="maintenance">Maintenance</option>
-                            <option value="degraded">Degraded</option>
-                        </select>
                         <select
                             value={filterStation}
                             onChange={(e) => setFilterStation(e.target.value)}
@@ -616,16 +674,6 @@ const BatteryManagement = () => {
                                         </div>
                                     </div>
 
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-2 pt-3">
-                                        <Button variant="outline" size="sm" className="flex-1">
-                                            <Eye className="h-4 w-4 mr-1" />
-                                            View
-                                        </Button>
-                                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
                                 </div>
                             </Card>
                         ))}
@@ -673,7 +721,7 @@ const BatteryManagement = () => {
             )}
 
             {/* Summary Stats */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                 <Card className="p-6">
                     <div className="flex items-center">
                         <div className="p-3 bg-blue-50 rounded-lg">
@@ -694,7 +742,7 @@ const BatteryManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Available</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {filteredBatteries.filter(b => b.status === 'available').length}
+                                {summaryCounts.available}
                             </p>
                         </div>
                     </div>
@@ -708,98 +756,13 @@ const BatteryManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Need Maintenance</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {filteredBatteries.filter(b => b.status === 'maintenance' || b.status === 'degraded').length}
-                            </p>
-                        </div>
-                    </div>
-                </Card>
-
-                <Card className="p-6">
-                    <div className="flex items-center">
-                        <div className="p-3 bg-purple-50 rounded-lg">
-                            <TrendingUp className="h-6 w-6 text-purple-600" />
-                        </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">Avg SOC</p>
-                            <p className="text-2xl font-semibold text-gray-900">
-                                {filteredBatteries.length > 0 ? Math.round(filteredBatteries.reduce((sum, b) => sum + (b.soc ?? 0), 0) / filteredBatteries.length) : 0}
+                                {summaryCounts.needMaintenance}
                             </p>
                         </div>
                     </div>
                 </Card>
             </div>
 
-            {/* Health Trends */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Battery Health Distribution (Sample)</h3>
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Excellent (90–100%)</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-32 bg-gray-200 rounded-full h-2">
-                                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '60%' }}></div>
-                                </div>
-                                <span className="text-sm font-medium">3</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Good (80–89%)</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-32 bg-gray-200 rounded-full h-2">
-                                    <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '20%' }}></div>
-                                </div>
-                                <span className="text-sm font-medium">1</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Fair (70–79%)</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-32 bg-gray-200 rounded-full h-2">
-                                    <div className="bg-orange-500 h-2 rounded-full" style={{ width: '20%' }}></div>
-                                </div>
-                                <span className="text-sm font-medium">1</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Poor (Below 70%)</span>
-                            <div className="flex items-center gap-2">
-                                <div className="w-32 bg-gray-200 rounded-full h-2">
-                                    <div className="bg-red-500 h-2 rounded-full" style={{ width: '0%' }}></div>
-                                </div>
-                                <span className="text-sm font-medium">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
-
-                <Card className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Maintenance Alerts (Sample)</h3>
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                            <div className="flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4 text-red-600" />
-                                <span className="text-sm font-medium text-red-800">BAT005 – Degraded</span>
-                            </div>
-                            <span className="text-xs text-red-600">Urgent</span>
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                            <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-yellow-600" />
-                                <span className="text-sm font-medium text-yellow-800">BAT003 – Maintenance Due</span>
-                            </div>
-                            <span className="text-xs text-yellow-600">Jan 25</span>
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle className="h-4 w-4 text-blue-600" />
-                                <span className="text-sm font-medium text-blue-800">BAT001 – Healthy</span>
-                            </div>
-                            <span className="text-xs text-blue-600">Good</span>
-                        </div>
-                    </div>
-                </Card>
-            </div>
         </div>
     );
 };
