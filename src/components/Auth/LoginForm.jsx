@@ -39,8 +39,9 @@ const LoginForm = () => {
                 if (result.user?.role === 'admin') {
                     navigate('/admin');
                 } else if (result.user?.role === 'staff') {
-                    navigate('/staff');
-                } else {    
+                    // TEMPORARILY: Treat staff as regular users
+                    navigate('/dashboard');
+                } else {
                     navigate('/dashboard');
                 }
             } else {

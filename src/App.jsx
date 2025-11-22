@@ -148,21 +148,21 @@ function App() {
 
           {/*Ev routes*/}
           <Route path="/dashboard" element={
-            <RoleProtectedRoute allowedRoute={['driver']}>
+            <RoleProtectedRoute allowedRoute={['driver', 'staff']}>
               <Layout>
                 <Dashboard />
               </Layout>
             </RoleProtectedRoute>
           } />
           <Route path="/profile" element={
-            <RoleProtectedRoute allowedRoute={['driver']}>
+            <RoleProtectedRoute allowedRoute={['driver', 'staff']}>
               <Layout>
                 <Profile />
               </Layout>
             </RoleProtectedRoute>
           } />
           <Route path="/vehiclesManagement" element={
-            <RoleProtectedRoute allowedRoute={['driver']}>
+            <RoleProtectedRoute allowedRoute={['driver', 'staff']}>
               <Layout>
                 <VehicleManagement />
               </Layout>
@@ -170,7 +170,7 @@ function App() {
           } />
 
           <Route path="/subscriptionManagement" element={
-            <RoleProtectedRoute allowedRoute={['driver']}>
+            <RoleProtectedRoute allowedRoute={['driver', 'staff']}>
               <Layout>
                 <SubscriptionManagement />
               </Layout>
@@ -178,7 +178,7 @@ function App() {
           } />
 
           <Route path='/paymentHistory' element={
-            <RoleProtectedRoute allowedRoute={['driver']}>
+            <RoleProtectedRoute allowedRoute={['driver', 'staff']}>
               <Layout>
                 <PaymentHistory />
               </Layout>
@@ -186,14 +186,14 @@ function App() {
           } />
 
           <Route path="/swapHistory" element={
-            <RoleProtectedRoute allowedRoute={['driver']}>
+            <RoleProtectedRoute allowedRoute={['driver', 'staff']}>
               <Layout>
                 <SwapHistory />
               </Layout>
             </RoleProtectedRoute>
           } />
           <Route path="/bookingHistory" element={
-            <RoleProtectedRoute allowedRoute={['driver']}>
+            <RoleProtectedRoute allowedRoute={['driver', 'staff']}>
               <Layout>
                 <BookingHistory />
               </Layout>
@@ -207,8 +207,8 @@ function App() {
             </RoleProtectedRoute>
           } />
 
-          {/* Staff routes */}
-          <Route path="/staff" element={
+          {/* Staff routes - TEMPORARILY HIDDEN */}
+          {/* <Route path="/staff" element={
             <RoleProtectedRoute allowedRoute={['staff']}>
               <StaffLayout>
                 <StaffBatteryManagement />
@@ -230,7 +230,7 @@ function App() {
               </StaffLayout>
             </RoleProtectedRoute>
           }
-          />
+          /> */}
 
           {/* Kiosk routes - separate layout, no auth required */}
           <Route path="/kiosk/:stationId" element={<KioskLayout><KioskHome /></KioskLayout>} />

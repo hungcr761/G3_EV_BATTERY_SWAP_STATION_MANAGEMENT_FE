@@ -64,21 +64,21 @@ const StationManagement = () => {
     const addressInputRef = useRef(null);
     const suggestionsRef = useRef(null);
 
-    // Fetch all staff with role filter
-    const { pagination: staffPagination, loading: staffLoading } = useUser({
-        page: 1,
-        pageSize: 1,
-        role: 'staff',
-        email: '',
-        fullname: ''
-    });
+    // TEMPORARILY HIDDEN: Fetch all staff with role filter
+    // const { pagination: staffPagination, loading: staffLoading } = useUser({
+    //     page: 1,
+    //     pageSize: 1,
+    //     role: 'staff',
+    //     email: '',
+    //     fullname: ''
+    // });
 
     // State to store cabinet data per station
     const [cabinetDataByStation, setCabinetDataByStation] = useState({});
     const [cabinetLoadingByStation, setCabinetLoadingByStation] = useState({});
 
-    // Get total staff from pagination
-    const totalStaff = staffPagination?.total || 0;
+    // TEMPORARILY HIDDEN: Get total staff from pagination
+    // const totalStaff = staffPagination?.total || 0;
 
     // Fetch cabinet data for all stations
     useEffect(() => {
@@ -760,7 +760,7 @@ const StationManagement = () => {
             </Card>
 
             {/* Summary Stats */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <Card className="p-6">
                     <div className="flex items-center">
                         <div className="p-3 bg-blue-50 rounded-lg">
@@ -801,7 +801,8 @@ const StationManagement = () => {
                     </div>
                 </Card>
 
-                <Card className="p-6">
+                {/* TEMPORARILY HIDDEN: Total Staff stat card */}
+                {/* <Card className="p-6">
                     <div className="flex items-center">
                         <div className="p-3 bg-purple-50 rounded-lg">
                             <Users className="h-6 w-6 text-purple-600" />
@@ -813,7 +814,7 @@ const StationManagement = () => {
                             </p>
                         </div>
                     </div>
-                </Card>
+                </Card> */}
             </div>
 
             {/* Create Station Dialog */}
