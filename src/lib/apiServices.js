@@ -98,7 +98,6 @@ export const bookingAPI = {
     getByUserId: (userId) => api.get(`/booking/user/${userId}`),
     getMyBookings: () => api.get('/booking/my-bookings?status=pending'),
     getByStatus: (status) => api.get(`/booking/my-bookings?status=${status}`),
-    getMyBookings: (params) => api.get('/booking/my-bookings', {params}),
     cancel: (id) => api.patch(`/booking/${id}/cancel`),
 };
 

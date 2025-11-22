@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth'
 import { useApi } from '@/hooks/useApi';
-import { bookingAPI, swapAPI, subscriptionAPI, subscriptionPlanAPI } from '@/lib/apiServices';
+import { bookingAPI, swapAPI, subscriptionAPI, subscriptionPlanAPI, vehicleAPI } from '@/lib/apiServices';
 import ProfileUpdate from '@/components/Dashboard/ProfileUpdate';
 import QRCodeLib from 'qrcode';
 import {
@@ -26,7 +26,9 @@ import {
     ChevronRight,
     Loader2,
     Bell,
-    LifeBuoy
+    LifeBuoy,
+    Package,
+    Package2Icon
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -112,10 +114,9 @@ const Dashboard = () => {
         }
     }, [selectedBooking]);
 
-    // Fetch bookings from API
     const { data: bookingsData, loading: bookingsLoading, error: bookingsError, refetch: refetchBookings } = useApi(bookingAPI.getMyBookings);
     console.log('bookingsData:', bookingsData);
-    // Fetch swap records from API
+
     const getSwapRecords = useMemo(() => {
         return () => {
             if (!user?.account_id) {
@@ -127,10 +128,10 @@ const Dashboard = () => {
 
     const { data: swapRecordsData, loading: _swapRecordsLoading } = useApi(getSwapRecords, [user?.account_id]);
 
-    // Fetch subscription plans
     const { data: subscriptionPlansData } = useApi(subscriptionPlanAPI.getAll);
 
-    // Fetch subscriptions by driver ID
+    const { data: vehiclesData } = useApi(vehicleAPI.getAll);
+
     const getSubscriptions = useMemo(() => {
         return () => {
             if (!user?.account_id) {
@@ -176,8 +177,6 @@ const Dashboard = () => {
             return 0;
         }
 
-        // Get all subscription plans as a map for quick lookup
-        // useApi returns response.data, so we need to access payload.subscriptionPlans
         const plans = subscriptionPlansData?.payload?.subscriptionPlans || [];
         const planMap = new Map();
         plans.forEach(plan => {
@@ -186,14 +185,11 @@ const Dashboard = () => {
             }
         });
 
-        // Get active subscriptions
-        // useApi returns response.data, so we need to access payload.subscription
         const subscriptions = subscriptionsData?.payload?.subscription || [];
         const activeSubscriptions = subscriptions.filter(sub =>
             sub && String(sub?.status).toLowerCase() === 'active'
         );
 
-        // Sum up plan fees for active subscriptions
         const totalCost = activeSubscriptions.reduce((sum, subscription) => {
             if (!subscription.plan_id) return sum;
 
@@ -206,14 +202,33 @@ const Dashboard = () => {
         }, 0);
 
         return totalCost;
-    }, [subscriptionPlansData, subscriptionsData]);
+    }, [subscriptionPlansData, subscriptionsData])
+    
+    const subStats = useMemo(() => {
+        if(!subscriptionsData){
+            return {totalSubs: 0};
+        }
+
+        const subscriptions = subscriptionsData?.payload?.subscription || [];
+        const activeSubs = subscriptions.filter(sub => sub && String(sub?.status).toLocaleLowerCase() === 'active');
+        console.log('active subscriptions:' , activeSubs.length);
+        return {totalSubs: activeSubs.length};
+    },[subscriptionsData]);
+
+    const vehicleStats = useMemo(() => {
+        if (!vehiclesData || !Array.isArray(vehiclesData.vehicles)) {
+            return { totalVehicles: 0 };
+        }
+        return { totalVehicles: vehiclesData.vehicles.length };
+    }, [vehiclesData]);
 
     const userStats = {
         totalSwaps: swapStats.totalSwaps,
         thisMonthSwaps: swapStats.thisMonthSwaps,
-        currentBatterySoH: 87,
+        totalVehicles: vehicleStats.totalVehicles,
         monthlyCost: monthlyCost,
-        nextSwapPrediction: '3 ngày'
+        nextSwapPrediction: '3 ngày',
+        totalSubs: subStats.totalSubs
     };
 
     // Derive up to 5 most recent swap records (newest first)
@@ -337,7 +352,9 @@ const Dashboard = () => {
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group">
+                    <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group"
+                        onClick={() => navigate('/swapHistory')}
+                    >
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -351,7 +368,9 @@ const Dashboard = () => {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group">
+                    <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group"
+                        onClick={() => navigate('/swapHistory')}
+                    >
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -365,19 +384,21 @@ const Dashboard = () => {
                         </CardContent>
                     </Card>
 
-                    {/* <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group">
+                    <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group"
+                        onClick={() => navigate('/vehiclesManagement')}
+                    >
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-slate-600">Current SoH</p>
-                                    <p className="text-3xl font-bold text-slate-900 mt-1">{userStats.currentBatterySoH}%</p>
+                                    <p className="text-sm font-medium text-slate-600">Total Vehicle</p>
+                                    <p className="text-3xl font-bold text-slate-900 mt-1">{userStats.totalVehicles}</p>
                                 </div>
                                 <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-md group-hover:shadow-lg transition-shadow duration-300">
                                     <Motorbike className="h-7 w-7 text-white" />
                                 </div>
                             </div>
                         </CardContent>
-                    </Card> */}
+                    </Card>
 
                     <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group">
                         <CardContent className="p-6">
@@ -390,6 +411,25 @@ const Dashboard = () => {
                                 </div>
                                 <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md group-hover:shadow-lg transition-shadow duration-300">
                                     <CreditCard className="h-7 w-7 text-white" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+
+                    <Card className="border-slate-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm hover:-translate-y-1 group"
+                        onClick={() => navigate('/subscriptionManagement')}
+                    >
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-600">Total Subscription</p>
+                                    <p className="text-3xl font-bold text-slate-900 mt-1">
+                                        {userStats.totalSubs}
+                                    </p>
+                                </div>
+                                <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-md group-hover:shadow-lg transition-shadow duration-300">
+                                    <Package2Icon className="h-7 w-7 text-white" />
                                 </div>
                             </div>
                         </CardContent>
