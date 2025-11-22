@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -35,6 +35,10 @@ const SwapStatus = () => {
         buttonText: '',
         slotNumber: null
     });
+    // Ref to track if swap process has been initiated to prevent multiple calls
+    const swapProcessInitiated = useRef(false);
+    const swapProcessRunning = useRef(false);
+    const actionHandlerRunning = useRef(false);
 
     // Fetch data based on flow type
     useEffect(() => {
@@ -254,9 +258,14 @@ const SwapStatus = () => {
         }
     };
 
-    // Start the swap process when data is loaded
+    // Start the swap process when data is loaded (only once)
     useEffect(() => {
-        if ((isUserFlow && userData) || (!isUserFlow && bookingData)) {
+        // Only start if we have the required data and haven't started yet
+        const hasRequiredData = (isUserFlow && userData) || (!isUserFlow && bookingData);
+
+        if (hasRequiredData && !swapProcessInitiated.current && !swapProcessRunning.current) {
+            swapProcessInitiated.current = true;
+            swapProcessRunning.current = true;
             startSwapProcess();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -298,6 +307,7 @@ const SwapStatus = () => {
                     description: 'No empty slots available at station',
                     status: 'error'
                 }));
+                swapProcessRunning.current = false;
                 return;
             }
 
@@ -319,6 +329,7 @@ const SwapStatus = () => {
                     description: 'No batteries found on vehicle',
                     status: 'error'
                 }));
+                swapProcessRunning.current = false;
                 return;
             }
             //delete later
@@ -341,12 +352,15 @@ const SwapStatus = () => {
 
             setCurrentAction({
                 title: 'Insert Old Batteries',
-                description: `Please insert ${requestedQuantity} old batteries into slots: ${selectedSlotsForInsertion.map(s => s.slot_number).join(', ')}`,
+                description: `Please insert ${requestedQuantity} old batteries into slots: ${selectedSlotsForInsertion.map(s => s.slot_id).join(', ')}`,
                 progress: 50,
                 status: 'in_progress',
                 showButton: true,
                 buttonText: 'Batteries Inserted'
             });
+
+            // Mark that we've reached the insertion step - process is still running but user can interact
+            // Don't set swapProcessRunning to false here - it should remain true until swap completes or errors
 
         } catch (error) {
             console.error('Error starting swap process:', error);
@@ -356,6 +370,7 @@ const SwapStatus = () => {
                 description: 'Unable to start battery swap process',
                 status: 'error'
             }));
+            swapProcessRunning.current = false;
         }
     };
 
@@ -425,6 +440,7 @@ const SwapStatus = () => {
                     }));
 
                     // Return to kiosk home after 10 seconds
+                    swapProcessRunning.current = false;
                     setTimeout(() => {
                         navigate(`/kiosk/${stationId}`);
                     }, 10000);
@@ -447,6 +463,7 @@ const SwapStatus = () => {
                     }));
 
                     // Return to kiosk home after 10 seconds
+                    swapProcessRunning.current = false;
                     setTimeout(() => {
                         navigate(`/kiosk/${stationId}`);
                     }, 10000);
@@ -468,6 +485,7 @@ const SwapStatus = () => {
                 }));
 
                 // Return to kiosk home after 10 seconds
+                swapProcessRunning.current = false;
                 setTimeout(() => {
                     navigate(`/kiosk/${stationId}`);
                 }, 10000);
@@ -476,6 +494,17 @@ const SwapStatus = () => {
     };
 
     const handleActionComplete = async () => {
+        // Prevent multiple simultaneous calls
+        if (actionHandlerRunning.current) {
+            console.warn('Action handler already running, ignoring duplicate call');
+            return;
+        }
+
+        actionHandlerRunning.current = true;
+
+        // Capture current action title before state update
+        const currentTitle = currentAction.title;
+
         setCurrentAction(prev => ({
             ...prev,
             showButton: false,
@@ -484,195 +513,205 @@ const SwapStatus = () => {
 
         // Move to next step
         setTimeout(async () => {
-            if (currentAction.title === 'Insert Old Batteries') {
-                // Step 5: Validate and prepare (different for user flow vs booking flow)
-                try {
-                    setCurrentAction({
-                        title: 'Validate and Prepare',
-                        description: 'System is validating and preparing new batteries',
-                        progress: 66,
-                        status: 'in_progress',
-                        showButton: false
-                    });
+            try {
+                if (currentTitle === 'Insert Old Batteries') {
+                    // Step 5: Validate and prepare (different for user flow vs booking flow)
+                    try {
+                        setCurrentAction({
+                            title: 'Validate and Prepare',
+                            description: 'System is validating and preparing new batteries',
+                            progress: 66,
+                            status: 'in_progress',
+                            showButton: false
+                        });
 
-                    // Prepare battery data for validation - map selected slots with vehicle batteries
-                    const batteryData = selectedSlots.map((slot, index) => {
-                        // Get battery for this slot index, or fallback to first battery if only one battery
-                        const battery = vehicleBatteries[index] || vehicleBatteries[0];
+                        // Prepare battery data for validation - map selected slots with vehicle batteries
+                        const batteryData = selectedSlots.map((slot, index) => {
+                            // Get battery for this slot index, or fallback to first battery if only one battery
+                            const battery = vehicleBatteries[index] || vehicleBatteries[0];
 
-                        // Use battery_id if available and not empty, otherwise try battery_serial
-                        // If both are empty, we'll let the backend handle validation
-                        const batteryId = (battery?.battery_id && battery.battery_id.trim() !== '')
-                            ? battery.battery_id
-                            : (battery?.battery_serial && battery.battery_serial.trim() !== '')
-                                ? battery.battery_serial
-                                : battery?.battery_id || battery?.battery_serial || '';
+                            // Use battery_id if available and not empty, otherwise try battery_serial
+                            // If both are empty, we'll let the backend handle validation
+                            const batteryId = (battery?.battery_id && battery.battery_id.trim() !== '')
+                                ? battery.battery_id
+                                : (battery?.battery_serial && battery.battery_serial.trim() !== '')
+                                    ? battery.battery_serial
+                                    : battery?.battery_id || battery?.battery_serial || '';
 
-                        return {
-                            slot_id: slot.slot_id,
-                            battery_id: batteryId
-                        };
-                    });
+                            return {
+                                slot_id: slot.slot_id,
+                                battery_id: batteryId
+                            };
+                        });
 
-                    // Check if we have at least some identifier (even if empty, backend may handle it)
-                    // Log warning if all IDs are empty
-                    const emptyIds = batteryData.filter(b => !b.battery_id || b.battery_id.trim() === '');
-                    if (emptyIds.length === batteryData.length) {
-                        console.warn('All battery IDs are empty. Backend should handle this case.');
-                        // Still proceed - backend validation will determine if this is acceptable
-                    }
+                        // Check if we have at least some identifier (even if empty, backend may handle it)
+                        // Log warning if all IDs are empty
+                        const emptyIds = batteryData.filter(b => !b.battery_id || b.battery_id.trim() === '');
+                        if (emptyIds.length === batteryData.length) {
+                            console.warn('All battery IDs are empty. Backend should handle this case.');
+                            // Still proceed - backend validation will determine if this is acceptable
+                        }
 
-                    let validationResponse;
-                    if (isUserFlow) {
-                        // User flow: use validateAndPrepare
-                        validationResponse = await validateAndPrepareSwap(batteryData);
-                    } else {
-                        // Booking flow: use validateWithBooking
-                        validationResponse = await validateSwapWithBooking(batteryData);
-                    }
-                    setValidationData(validationResponse);
+                        let validationResponse;
+                        if (isUserFlow) {
+                            // User flow: use validateAndPrepare
+                            validationResponse = await validateAndPrepareSwap(batteryData);
+                        } else {
+                            // Booking flow: use validateWithBooking
+                            validationResponse = await validateSwapWithBooking(batteryData);
+                        }
+                        setValidationData(validationResponse);
 
-                    // Check if validation passed
-                    if (!validationResponse.ready_to_execute) {
-                        // Check for invalid batteries error message
-                        const errorMessage = validationResponse.data?.invalid_batteries_in?.error ||
-                            validationResponse.message ||
-                            'Unable to proceed with swap';
+                        // Check if validation passed
+                        if (!validationResponse.ready_to_execute) {
+                            // Check for invalid batteries error message
+                            const errorMessage = validationResponse.data?.invalid_batteries_in?.error ||
+                                validationResponse.message ||
+                                'Unable to proceed with swap';
+
+                            setCurrentAction(prev => ({
+                                ...prev,
+                                title: 'Validation Failed',
+                                description: errorMessage,
+                                status: 'error'
+                            }));
+
+                            // Return to kiosk home after 10 seconds (user likely doesn't have correct batteries)
+                            swapProcessRunning.current = false;
+                            setTimeout(() => {
+                                navigate(`/kiosk/${stationId}`);
+                            }, 10000);
+                            return;
+                        }
+
+                        // Step 6: Execute swap
+                        setCurrentAction({
+                            title: 'Executing Swap',
+                            description: 'Processing battery swap',
+                            progress: 75,
+                            status: 'in_progress',
+                            showButton: false
+                        });
+
+                        let executeResponse;
+                        if (isUserFlow) {
+                            // User flow: use execute
+                            const validBatteriesIn = validationResponse.data?.valid_batteries_in || batteryData;
+                            executeResponse = await executeSwap(validBatteriesIn);
+                        } else {
+                            // Booking flow: use executeWithBooking
+                            const validBatteriesIn = validationResponse.data?.valid_batteries_in || batteryData;
+                            // Prepare batteriesOut from booked_batteries_out in validation response
+                            const batteriesOut = validationResponse.data?.booked_batteries_out?.map(b => ({
+                                battery_id: b.battery_id
+                            })) || [];
+                            executeResponse = await executeSwapWithBooking(validBatteriesIn, batteriesOut);
+                        }
+                        setSwapResult(executeResponse);
+                        // Record swap completion time (when swap API call completes)
+                        setSwapEndTime(new Date());
+
+                        // Step 7: Get new batteries - show which slots have batteries ready
+                        let batteriesOutInfo = [];
+                        if (isUserFlow) {
+                            batteriesOutInfo = executeResponse.data?.batteries_out_info || [];
+                        } else {
+                            // For booking flow, use booked_batteries_out from validation or execute response
+                            batteriesOutInfo = executeResponse.data?.batteries_out_info ||
+                                validationResponse.data?.booked_batteries_out || [];
+                        }
+
+                        // Map slot_id to slot_number from available slots
+                        const batteriesOutSlots = batteriesOutInfo.map(b => {
+                            // Try to find slot_number from empty slots or use slot_id
+                            const slotInfo = emptySlots.find(s => s.slot_id === b.slot_id);
+                            return slotInfo?.slot_number || b.slot_number || `Slot ${b.slot_id}`;
+                        });
+
+                        setCurrentAction({
+                            title: 'Get New Batteries',
+                            description: `New batteries are ready at slots: ${batteriesOutSlots.join(', ')}. Please take the batteries.`,
+                            progress: 83,
+                            status: 'in_progress',
+                            showButton: true,
+                            buttonText: 'Batteries Retrieved'
+                        });
+
+                    } catch (error) {
+                        console.error('Error in swap process:', error);
+
+                        // Check for invalid batteries error in response
+                        const errorMessage = error?.response?.data?.data?.invalid_batteries_in?.error ||
+                            error?.response?.data?.invalid_batteries_in?.error ||
+                            error?.response?.data?.message ||
+                            error?.message ||
+                            'Unable to complete battery swap';
 
                         setCurrentAction(prev => ({
                             ...prev,
-                            title: 'Validation Failed',
+                            title: 'Error',
                             description: errorMessage,
                             status: 'error'
                         }));
 
-                        // Return to kiosk home after 10 seconds (user likely doesn't have correct batteries)
-                        setTimeout(() => {
-                            navigate(`/kiosk/${stationId}`);
-                        }, 10000);
-                        return;
+                        // If it's a validation error (invalid batteries), return to kiosk home
+                        if (errorMessage.includes('battery') || errorMessage.includes('Battery') ||
+                            error?.response?.data?.data?.invalid_batteries_in?.error ||
+                            error?.response?.data?.invalid_batteries_in?.error) {
+                            // Return to kiosk home after 10 seconds
+                            swapProcessRunning.current = false;
+                            setTimeout(() => {
+                                navigate(`/kiosk/${stationId}`);
+                            }, 10000);
+                        } else {
+                            // For other errors, allow retry
+                            setTimeout(() => {
+                                setCurrentAction({
+                                    title: 'Insert Old Batteries',
+                                    description: `Please insert the correct batteries into slots: ${selectedSlots.map(s => s.slot_number).join(', ')}`,
+                                    progress: 50,
+                                    status: 'in_progress',
+                                    showButton: true,
+                                    buttonText: 'Batteries Inserted'
+                                });
+                            }, 3000);
+                        }
                     }
-
-                    // Step 6: Execute swap
+                } else if (currentTitle === 'Get New Batteries') {
+                    // Step 6: Complete swap
                     setCurrentAction({
-                        title: 'Executing Swap',
-                        description: 'Processing battery swap',
-                        progress: 75,
+                        title: 'Complete Battery Swap',
+                        description: 'Checking and completing battery swap process',
+                        progress: 100,
                         status: 'in_progress',
                         showButton: false
                     });
 
-                    let executeResponse;
-                    if (isUserFlow) {
-                        // User flow: use execute
-                        const validBatteriesIn = validationResponse.data?.valid_batteries_in || batteryData;
-                        executeResponse = await executeSwap(validBatteriesIn);
-                    } else {
-                        // Booking flow: use executeWithBooking
-                        const validBatteriesIn = validationResponse.data?.valid_batteries_in || batteryData;
-                        // Prepare batteriesOut from booked_batteries_out in validation response
-                        const batteriesOut = validationResponse.data?.booked_batteries_out?.map(b => ({
-                            battery_id: b.battery_id
-                        })) || [];
-                        executeResponse = await executeSwapWithBooking(validBatteriesIn, batteriesOut);
-                    }
-                    setSwapResult(executeResponse);
-                    // Record swap completion time (when swap API call completes)
-                    setSwapEndTime(new Date());
+                    // Simulate completion time
+                    await new Promise(resolve => setTimeout(resolve, 2000));
 
-                    // Step 7: Get new batteries - show which slots have batteries ready
-                    let batteriesOutInfo = [];
-                    if (isUserFlow) {
-                        batteriesOutInfo = executeResponse.data?.batteries_out_info || [];
-                    } else {
-                        // For booking flow, use booked_batteries_out from validation or execute response
-                        batteriesOutInfo = executeResponse.data?.batteries_out_info ||
-                            validationResponse.data?.booked_batteries_out || [];
-                    }
-
-                    // Map slot_id to slot_number from available slots
-                    const batteriesOutSlots = batteriesOutInfo.map(b => {
-                        // Try to find slot_number from empty slots or use slot_id
-                        const slotInfo = emptySlots.find(s => s.slot_id === b.slot_id);
-                        return slotInfo?.slot_number || b.slot_number || `Slot ${b.slot_id}`;
+                    // Navigate to completion page
+                    setSwapComplete(true);
+                    swapProcessRunning.current = false;
+                    const completeId = isUserFlow ? userId : bookingId;
+                    navigate(`/kiosk/${stationId}/complete/${completeId}`, {
+                        state: {
+                            isUserFlow,
+                            userData: isUserFlow ? userData : null,
+                            bookingData: !isUserFlow ? bookingData : null,
+                            swapResult: swapResult,
+                            vehicleBatteries: vehicleBatteries, // Pass old batteries for SOC calculation
+                            validationData: validationData, // Pass validation data for booked batteries (booking flow)
+                            swapStartTime: swapStartTime, // Pass swap start time for duration calculation
+                            swapEndTime: swapEndTime || new Date() // Pass swap end time for duration calculation
+                        }
                     });
-
-                    setCurrentAction({
-                        title: 'Get New Batteries',
-                        description: `New batteries are ready at slots: ${batteriesOutSlots.join(', ')}. Please take the batteries.`,
-                        progress: 83,
-                        status: 'in_progress',
-                        showButton: true,
-                        buttonText: 'Batteries Retrieved'
-                    });
-
-                } catch (error) {
-                    console.error('Error in swap process:', error);
-
-                    // Check for invalid batteries error in response
-                    const errorMessage = error?.response?.data?.data?.invalid_batteries_in?.error ||
-                        error?.response?.data?.invalid_batteries_in?.error ||
-                        error?.response?.data?.message ||
-                        error?.message ||
-                        'Unable to complete battery swap';
-
-                    setCurrentAction(prev => ({
-                        ...prev,
-                        title: 'Error',
-                        description: errorMessage,
-                        status: 'error'
-                    }));
-
-                    // If it's a validation error (invalid batteries), return to kiosk home
-                    if (errorMessage.includes('battery') || errorMessage.includes('Battery') ||
-                        error?.response?.data?.data?.invalid_batteries_in?.error ||
-                        error?.response?.data?.invalid_batteries_in?.error) {
-                        // Return to kiosk home after 10 seconds
-                        setTimeout(() => {
-                            navigate(`/kiosk/${stationId}`);
-                        }, 10000);
-                    } else {
-                        // For other errors, allow retry
-                        setTimeout(() => {
-                            setCurrentAction({
-                                title: 'Insert Old Batteries',
-                                description: `Please insert the correct batteries into slots: ${selectedSlots.map(s => s.slot_number).join(', ')}`,
-                                progress: 50,
-                                status: 'in_progress',
-                                showButton: true,
-                                buttonText: 'Batteries Inserted'
-                            });
-                        }, 3000);
-                    }
                 }
-            } else if (currentAction.title === 'Get New Batteries') {
-                // Step 6: Complete swap
-                setCurrentAction({
-                    title: 'Complete Battery Swap',
-                    description: 'Checking and completing battery swap process',
-                    progress: 100,
-                    status: 'in_progress',
-                    showButton: false
-                });
-
-                // Simulate completion time
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                // Navigate to completion page
-                setSwapComplete(true);
-                const completeId = isUserFlow ? userId : bookingId;
-                navigate(`/kiosk/${stationId}/complete/${completeId}`, {
-                    state: {
-                        isUserFlow,
-                        userData: isUserFlow ? userData : null,
-                        bookingData: !isUserFlow ? bookingData : null,
-                        swapResult: swapResult,
-                        vehicleBatteries: vehicleBatteries, // Pass old batteries for SOC calculation
-                        validationData: validationData, // Pass validation data for booked batteries (booking flow)
-                        swapStartTime: swapStartTime, // Pass swap start time for duration calculation
-                        swapEndTime: swapEndTime || new Date() // Pass swap end time for duration calculation
-                    }
-                });
+            } catch (error) {
+                console.error('Error in handleActionComplete:', error);
+                swapProcessRunning.current = false;
+            } finally {
+                actionHandlerRunning.current = false;
             }
         }, 1000);
     };
