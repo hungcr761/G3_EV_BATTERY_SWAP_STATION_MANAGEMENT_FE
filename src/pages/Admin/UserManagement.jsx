@@ -34,7 +34,6 @@ import {
 } from '../../components/ui/dialog';
 import { useUser } from '../../hooks/useUser';
 import { createStaffSchema } from '../../lib/validations';
-import { userAPI } from '../../lib/apiServices';
 
 const UserManagement = () => {
     const [searchEmail, setSearchEmail] = useState('');
@@ -45,12 +44,6 @@ const UserManagement = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const [submitSuccess, setSubmitSuccess] = useState(false);
-    const [stats, setStats] = useState({
-        activeUsers: 0,
-        drivers: 0,
-        staff: 0
-    });
-    const [statsLoading, setStatsLoading] = useState(false);
 
     // Use the useUser hook with initial pagination
     const {
@@ -63,6 +56,7 @@ const UserManagement = () => {
         updateStatus,
         updateProfile,
         createStaff,
+        deleteUser,
         refetch
     } = useUser({
         page: 1,
@@ -92,49 +86,6 @@ const UserManagement = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    // Fetch stats (active users, drivers, staff)
-    const fetchStats = async () => {
-        try {
-            setStatsLoading(true);
-
-            // Fetch all stats in parallel for better performance
-            const [activeUsersResponse, driversResponse, staffResponse] = await Promise.allSettled([
-                userAPI.getAll({ page: 1, pageSize: 1, status: 'active' }),
-                userAPI.getAll({ page: 1, pageSize: 1, role: 'driver' }),
-                userAPI.getAll({ page: 1, pageSize: 1, role: 'staff' })
-            ]);
-
-            // Update stats from each response, handling errors gracefully
-            setStats(prev => ({
-                activeUsers: activeUsersResponse.status === 'fulfilled' &&
-                    activeUsersResponse.value.data?.success &&
-                    activeUsersResponse.value.data?.payload?.total
-                    ? activeUsersResponse.value.data.payload.total
-                    : prev.activeUsers,
-                drivers: driversResponse.status === 'fulfilled' &&
-                    driversResponse.value.data?.success &&
-                    driversResponse.value.data?.payload?.total
-                    ? driversResponse.value.data.payload.total
-                    : prev.drivers,
-                staff: staffResponse.status === 'fulfilled' &&
-                    staffResponse.value.data?.success &&
-                    staffResponse.value.data?.payload?.total
-                    ? staffResponse.value.data.payload.total
-                    : prev.staff
-            }));
-        } catch (err) {
-            console.error('Failed to fetch stats:', err);
-            // Don't set error state for stats, just log it
-        } finally {
-            setStatsLoading(false);
-        }
-    };
-
-    // Fetch stats on component mount and after user operations
-    useEffect(() => {
-        fetchStats();
-    }, []);
-
     // Update search params when search term changes
     useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -158,8 +109,6 @@ const UserManagement = () => {
     const handleStatusUpdate = async (accountId, newStatus) => {
         try {
             await updateStatus(accountId, newStatus);
-            // Refetch stats after status update
-            await fetchStats();
             // Optionally show success message
         } catch (err) {
             console.error('Failed to update status:', err);
@@ -167,6 +116,18 @@ const UserManagement = () => {
         }
     };
 
+    // Handle delete user
+    const handleDeleteUser = async (accountId) => {
+        if (window.confirm('Are you sure you want to delete this user?')) {
+            try {
+                await deleteUser(accountId);
+                // Optionally show success message
+            } catch (err) {
+                console.error('Failed to delete user:', err);
+                // Optionally show error message
+            }
+        }
+    };
 
     // Handle create staff form submission
     const onSubmitStaff = async (data) => {
@@ -187,9 +148,6 @@ const UserManagement = () => {
             await createStaff(staffData);
             setSubmitSuccess(true);
             reset();
-
-            // Refetch stats after creating staff
-            await fetchStats();
 
             // Close dialog after a short delay
             setTimeout(() => {
@@ -391,6 +349,9 @@ const UserManagement = () => {
                                                             {user.fullname || 'N/A'}
                                                         </div>
                                                         <div className="text-sm text-gray-500">{user.email || 'N/A'}</div>
+                                                        {user.citizen_id && (
+                                                            <div className="text-xs text-gray-400">ID: {user.citizen_id}</div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
@@ -420,9 +381,6 @@ const UserManagement = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {user.citizen_id && (
-                                                    <div className="text-xs">Citizen ID: {user.citizen_id}</div>
-                                                )}
                                                 {user.driving_license && (
                                                     <div className="text-xs">License: {user.driving_license}</div>
                                                 )}
@@ -446,6 +404,15 @@ const UserManagement = () => {
                                                     </Button>
                                                     <Button variant="ghost" size="sm" title="Edit">
                                                         <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="text-red-600 hover:text-red-700"
+                                                        onClick={() => handleDeleteUser(user.account_id)}
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
                                                     </Button>
                                                 </div>
                                             </td>
@@ -520,7 +487,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Active Users</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {statsLoading ? '...' : stats.activeUsers}
+                                {users.filter(u => u.status === 'active').length}
                             </p>
                         </div>
                     </div>
@@ -534,7 +501,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Drivers</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {statsLoading ? '...' : stats.drivers}
+                                {users.filter(u => u.role === 'driver').length}
                             </p>
                         </div>
                     </div>
@@ -548,7 +515,7 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Staff Members</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {statsLoading ? '...' : stats.staff}
+                                {users.filter(u => u.role === 'staff').length}
                             </p>
                         </div>
                     </div>
