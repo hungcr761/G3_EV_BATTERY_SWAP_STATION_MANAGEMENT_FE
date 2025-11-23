@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Users,
     Plus,
@@ -34,6 +34,7 @@ import {
 } from '../../components/ui/dialog';
 import { useUser } from '../../hooks/useUser';
 import { createStaffSchema } from '../../lib/validations';
+import { userAPI } from '../../lib/apiServices';
 
 /**
  * UserManagement Component
@@ -102,6 +103,65 @@ const UserManagement = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    // State for all users (for stats calculation)
+    const [allUsers, setAllUsers] = useState([]);
+    const [loadingAllUsers, setLoadingAllUsers] = useState(false);
+
+    /**
+     * Fetch all users for stats (helper function)
+     * Fetches all users across all pages if needed
+     */
+    const fetchAllUsersForStats = useCallback(async () => {
+        try {
+            setLoadingAllUsers(true);
+            let allUsersData = [];
+            let currentPage = 1;
+            let hasMorePages = true;
+            const pageSize = 1000; // Use a reasonable pageSize
+
+            // Fetch all pages
+            while (hasMorePages) {
+                const response = await userAPI.getAll({
+                    page: currentPage,
+                    pageSize: pageSize,
+                    // Don't include role param - API will fetch all roles
+                });
+
+                if (response.data?.success && response.data?.payload) {
+                    const usersData = response.data.payload.data || [];
+                    const total = response.data.payload.total || 0;
+                    const totalPages = response.data.payload.totalPages || Math.ceil(total / pageSize);
+
+                    allUsersData = [...allUsersData, ...usersData];
+
+                    // Check if there are more pages
+                    if (currentPage >= totalPages || usersData.length === 0) {
+                        hasMorePages = false;
+                    } else {
+                        currentPage++;
+                    }
+                } else {
+                    hasMorePages = false;
+                }
+            }
+
+            setAllUsers(allUsersData);
+        } catch (err) {
+            console.error('Failed to fetch all users for stats:', err);
+            setAllUsers([]);
+        } finally {
+            setLoadingAllUsers(false);
+        }
+    }, []);
+
+    /**
+     * Fetch all users for stats calculation on mount
+     * Fetches all users without role filter to get accurate counts
+     */
+    useEffect(() => {
+        fetchAllUsersForStats();
+    }, [fetchAllUsersForStats]); // Only fetch once on mount
+
     /**
      * Update search params when search terms or filters change
      * Debounced to avoid excessive API calls
@@ -132,6 +192,8 @@ const UserManagement = () => {
     const handleStatusUpdate = async (accountId, newStatus) => {
         try {
             await updateStatus(accountId, newStatus);
+            // Refetch all users to update stats
+            await fetchAllUsersForStats();
         } catch (err) {
             console.error('Failed to update status:', err);
         }
@@ -144,6 +206,8 @@ const UserManagement = () => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
                 await deleteUser(accountId);
+                // Refetch all users to update stats
+                await fetchAllUsersForStats();
             } catch (err) {
                 console.error('Failed to delete user:', err);
             }
@@ -172,6 +236,9 @@ const UserManagement = () => {
             await createStaff(staffData);
             setSubmitSuccess(true);
             reset();
+            
+            // Refetch all users to update stats
+            await fetchAllUsersForStats();
 
             // Close dialog after a short delay
             setTimeout(() => {
@@ -500,7 +567,11 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Total Users</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {pagination.total}
+                                {loadingAllUsers ? (
+                                    <Loader2 className="h-6 w-6 animate-spin inline" />
+                                ) : (
+                                    allUsers.length
+                                )}
                             </p>
                         </div>
                     </div>
@@ -514,7 +585,11 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Active Users</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {users.filter(u => u.status === 'active').length}
+                                {loadingAllUsers ? (
+                                    <Loader2 className="h-6 w-6 animate-spin inline" />
+                                ) : (
+                                    allUsers.filter(u => u.status === 'active').length
+                                )}
                             </p>
                         </div>
                     </div>
@@ -528,7 +603,11 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Drivers</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {users.filter(u => u.role === 'driver').length}
+                                {loadingAllUsers ? (
+                                    <Loader2 className="h-6 w-6 animate-spin inline" />
+                                ) : (
+                                    allUsers.filter(u => u.role === 'driver').length
+                                )}
                             </p>
                         </div>
                     </div>
@@ -542,7 +621,11 @@ const UserManagement = () => {
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-600">Staff Members</p>
                             <p className="text-2xl font-semibold text-gray-900">
-                                {users.filter(u => u.role === 'staff').length}
+                                {loadingAllUsers ? (
+                                    <Loader2 className="h-6 w-6 animate-spin inline" />
+                                ) : (
+                                    allUsers.filter(u => u.role === 'staff').length
+                                )}
                             </p>
                         </div>
                     </div>
