@@ -7,35 +7,45 @@ import BatterySelection from './BatterySelection';
 import BookingConfirmation from './BookingConfirmation';
 import BookingSuccess from './BookingSuccess';
 
+/**
+ * BookingFlow Component
+ * 
+ * Multi-step booking flow that handles:
+ * - Multi-slot vehicles: Battery Selection -> Confirmation -> Success (3 steps)
+ * - Single-slot vehicles: Confirmation -> Success (2 steps)
+ * 
+ * Manages the entire booking process from selection to completion
+ */
 const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClose }) => {
+    // Step management
     const [currentStep, setCurrentStep] = useState(1);
+    
+    // Booking data
     const [selectedBatteries, setSelectedBatteries] = useState([]);
     const [availabilityData, setAvailabilityData] = useState(null);
+    const [bookingData, setBookingData] = useState(null);
+    
+    // UI state
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
-    const [bookingData, setBookingData] = useState(null);
 
-    // Check availability when vehicle is selected
+    /**
+     * Check battery availability when vehicle and station are selected
+     * Validates that the station has batteries compatible with the vehicle
+     */
     useEffect(() => {
         if (selectedVehicle && selectedStation) {
             checkAvailability();
         }
     }, [selectedVehicle, selectedStation]);
 
+    /**
+     * Check battery availability at selected station for selected vehicle
+     * Validates station and vehicle IDs before making API call
+     */
     const checkAvailability = async () => {
         try {
-            console.log('Checking availability with:', {
-                selectedStation,
-                selectedVehicle,
-                stationId: selectedStation?.id,
-                vehicleId: selectedVehicle?.vehicle_id
-            });
-
             if (!selectedStation?.id || !selectedVehicle?.vehicle_id) {
-                console.error('Missing station or vehicle ID:', {
-                    stationId: selectedStation?.id,
-                    vehicleId: selectedVehicle?.vehicle_id
-                });
                 setError('Missing station or vehicle information');
                 return;
             }
@@ -56,51 +66,69 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
         }
     };
 
-
+    /**
+     * Handle battery quantity selection from BatterySelection component
+     * Clears any previous errors
+     */
     const handleBatterySelection = (batteries) => {
-        console.log('BookingFlow handleBatterySelection called with:', batteries);
         setSelectedBatteries(batteries);
         setError(null);
     };
 
-    // Auto-advance to next step when batteries are selected (only for multi-slot vehicles)
+    /**
+     * Auto-advance to confirmation step when batteries are selected
+     * Only applies to multi-slot vehicles (step 1 -> step 2)
+     */
     useEffect(() => {
         const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
         if (hasMultipleSlots && currentStep === 1 && selectedBatteries.length > 0) {
-            console.log('Auto-advancing from step 1 to step 2, selectedBatteries:', selectedBatteries);
             setCurrentStep(2);
         }
     }, [selectedBatteries, currentStep, selectedVehicle]);
 
-    // Auto-navigate to appropriate step based on vehicle battery slots
+    /**
+     * Initialize step based on vehicle type
+     * Multi-slot vehicles start at battery selection (step 1)
+     * Single-slot vehicles start at confirmation (step 1) with default 1 battery
+     */
     useEffect(() => {
         if (selectedVehicle) {
-            // Check if vehicle has multiple battery slots
             if (selectedVehicle.model?.battery_slot > 1) {
-                // Stay on step 1 (battery selection) for multi-slot vehicles
+                // Multi-slot: start at battery selection
                 setCurrentStep(1);
             } else {
-                // Set default battery selection for single battery vehicles and go to confirmation (step 1 for single-slot vehicles)
+                // Single-slot: set default and start at confirmation
                 setSelectedBatteries([1]);
                 setCurrentStep(1);
             }
         }
     }, [selectedVehicle]);
 
+    /**
+     * Handle next button click
+     * Moves from battery selection to confirmation for multi-slot vehicles
+     */
     const handleNext = () => {
         const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
         if (hasMultipleSlots && currentStep === 1 && selectedBatteries.length > 0) {
-            console.log('BookingFlow: Moving from step 1 to step 2, selectedBatteries:', selectedBatteries);
             setCurrentStep(2); // Go to confirmation
         }
     };
 
+    /**
+     * Handle back button click
+     * Moves to previous step in the flow
+     */
     const handleBack = () => {
         if (currentStep > 1) {
             setCurrentStep(currentStep - 1);
         }
     };
 
+    /**
+     * Create booking with selected vehicle, station, and battery quantity
+     * Processes API response and navigates to success step
+     */
     const handleConfirmBooking = async () => {
         if (!selectedVehicle || !selectedStation) {
             setError('Missing required information to make a booking');
@@ -118,17 +146,12 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                 battery_quantity: batteryQuantity,
             };
 
-            console.log('Creating booking with data:', {
-                bookingData,
-                selectedBatteries,
-                batteryQuantity
-            });
-
             const response = await bookingAPI.create(bookingData);
 
             if (response.data && response.data.booking) {
-                console.log('Booking created successfully:', response.data.booking);
                 const bookingResponse = response.data.booking;
+                
+                // Transform API response to component-friendly format
                 setBookingData({
                     booking_id: bookingResponse.booking_id,
                     status: bookingResponse.status,
@@ -152,11 +175,9 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                     expired_time: bookingResponse.expired_time
                 });
 
-                // Set correct step based on vehicle type
+                // Navigate to success step (step 3 for multi-slot, step 2 for single-slot)
                 const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
                 const successStep = hasMultipleSlots ? 3 : 2;
-                console.log('Booking created successfully, moving to step:', successStep, 'hasMultipleSlots:', hasMultipleSlots);
-                console.log('Booking response data:', bookingResponse);
                 setCurrentStep(successStep);
                 onBookingSuccess?.(response.data);
             } else {
@@ -170,13 +191,20 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
         }
     };
 
+    /**
+     * Close booking flow modal
+     */
     const handleClose = () => {
         onClose?.();
     };
 
+    /**
+     * Render the appropriate step content based on current step and vehicle type
+     * Multi-slot: Battery Selection -> Confirmation -> Success (3 steps)
+     * Single-slot: Confirmation -> Success (2 steps)
+     */
     const renderStepContent = () => {
         const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
-        console.log('renderStepContent - currentStep:', currentStep, 'hasMultipleSlots:', hasMultipleSlots, 'bookingData exists:', !!bookingData);
 
         if (hasMultipleSlots) {
             // Multi-slot vehicle flow: Battery Selection -> Confirmation -> Success
@@ -209,6 +237,8 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                             onClose={handleClose}
                         />
                     );
+                default:
+                    return null;
             }
         } else {
             // Single-slot vehicle flow: Confirmation -> Success
@@ -226,7 +256,6 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
                         />
                     );
                 case 2:
-                    console.log('Rendering BookingSuccess for single-slot, bookingData:', bookingData);
                     return (
                         <BookingSuccess
                             bookingData={bookingData}
@@ -239,6 +268,10 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
         }
     };
 
+    /**
+     * Get title for current step
+     * Different titles for multi-slot vs single-slot vehicles
+     */
     const getStepTitle = () => {
         const hasMultipleSlots = selectedVehicle?.model?.battery_slot > 1;
 
@@ -258,6 +291,10 @@ const BookingFlow = ({ selectedStation, selectedVehicle, onBookingSuccess, onClo
         }
     };
 
+    /**
+     * Get total number of steps based on vehicle type
+     * Multi-slot vehicles have 3 steps, single-slot have 2
+     */
     const getTotalSteps = () => {
         return selectedVehicle?.model?.battery_slot > 1 ? 3 : 2;
     };

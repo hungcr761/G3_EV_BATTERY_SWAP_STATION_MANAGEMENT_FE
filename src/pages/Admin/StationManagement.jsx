@@ -32,13 +32,33 @@ import { useStation } from '../../hooks/useStation';
 import { cabinetAPI } from '../../lib/apiServices';
 import { useUser } from '../../hooks/useUser';
 
+/**
+ * StationManagement Component
+ * 
+ * Admin page for managing battery swap stations
+ * Features:
+ * - Create, edit, and update station status
+ * - Search stations by name or address
+ * - Filter by status (operational, maintenance, closed)
+ * - Address autocomplete using Goong API
+ * - Automatic geocoding (address to coordinates)
+ * - Display battery counts per station
+ * - Station performance metrics
+ */
 const StationManagement = () => {
+    // Search and filter state
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    
+    // Station data from hook
     const { stations, loading, error, fetchStations, createStation, updateStation, updateStationStatus } = useStation();
+    
+    // Dialog state
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+    
+    // Form state
     const [editingStation, setEditingStation] = useState(null);
     const [statusStation, setStatusStation] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState('operational');
@@ -49,6 +69,8 @@ const StationManagement = () => {
         longitude: '',
         status: 'operational'
     });
+    
+    // Loading and error states
     const [geocodingLoading, setGeocodingLoading] = useState(false);
     const [createLoading, setCreateLoading] = useState(false);
     const [createError, setCreateError] = useState(null);
@@ -57,7 +79,7 @@ const StationManagement = () => {
     const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
     const [statusUpdateError, setStatusUpdateError] = useState(null);
 
-    // Autocomplete states
+    // Address autocomplete states (using Goong API)
     const [addressSuggestions, setAddressSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [autocompleteLoading, setAutocompleteLoading] = useState(false);
@@ -77,10 +99,10 @@ const StationManagement = () => {
     const [cabinetDataByStation, setCabinetDataByStation] = useState({});
     const [cabinetLoadingByStation, setCabinetLoadingByStation] = useState({});
 
-    // TEMPORARILY HIDDEN: Get total staff from pagination
-    // const totalStaff = staffPagination?.total || 0;
-
-    // Fetch cabinet data for all stations
+    /**
+     * Fetch cabinet data for all stations
+     * Used to calculate battery counts and availability per station
+     */
     useEffect(() => {
         const fetchCabinetData = async () => {
             if (!stations || stations.length === 0) return;
@@ -94,13 +116,11 @@ const StationManagement = () => {
             });
             setCabinetLoadingByStation(newCabinetLoading);
 
-            // Fetch cabinet data for each station
+            // Fetch cabinet data for each station in parallel
             const promises = stations.map(async (station) => {
                 try {
                     const response = await cabinetAPI.getAll({ station_id: station.id });
                     // Handle different response structures: with/without pagination
-                    // Structure 1: { success: true, payload: { cabinets: [...] } }
-                    // Structure 2: { success: true, payload: { cabinets: { data: [...], total: N } } }
                     let cabinets = [];
                     if (response.data?.payload?.cabinets) {
                         cabinets = Array.isArray(response.data.payload.cabinets)
@@ -128,7 +148,10 @@ const StationManagement = () => {
         fetchCabinetData();
     }, [stations]);
 
-    // Calculate battery counts per station from cabinet data
+    /**
+     * Calculate battery counts per station from cabinet data
+     * Counts total slots and available batteries (slots with batteries)
+     */
     const batteryCountsByStation = useMemo(() => {
         const result = {};
 
@@ -174,7 +197,10 @@ const StationManagement = () => {
 
 
 
-    // Fetch address autocomplete suggestions using Goong API
+    /**
+     * Fetch address autocomplete suggestions using Goong API
+     * Requires at least 3 characters to trigger autocomplete
+     */
     const fetchAddressSuggestions = async (input) => {
         if (!input || input.trim().length < 3) {
             setAddressSuggestions([]);
@@ -217,7 +243,11 @@ const StationManagement = () => {
         }
     };
 
-    // Handle selecting an address suggestion
+    /**
+     * Handle selecting an address suggestion
+     * Fetches place details and geocodes to get coordinates
+     * Falls back to geocoding if place detail API fails
+     */
     const handleAddressSelect = async (placeId, description) => {
         setShowSuggestions(false);
         setAddressSuggestions([]);
@@ -302,7 +332,9 @@ const StationManagement = () => {
     // Debounce timer ref for autocomplete
     const autocompleteTimerRef = useRef(null);
 
-    // Cleanup timer on unmount
+    /**
+     * Cleanup timer on component unmount
+     */
     useEffect(() => {
         return () => {
             if (autocompleteTimerRef.current) {
@@ -311,7 +343,10 @@ const StationManagement = () => {
         };
     }, []);
 
-    // Handle clicks outside suggestions dropdown
+    /**
+     * Handle clicks outside suggestions dropdown
+     * Closes suggestions when clicking outside the input or dropdown
+     */
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -330,7 +365,10 @@ const StationManagement = () => {
         };
     }, []);
 
-    // Handle address input with debounce for autocomplete
+    /**
+     * Handle address input with debounce for autocomplete
+     * Triggers autocomplete suggestions after 300ms delay
+     */
     const handleAddressChange = (value) => {
         setFormData(prev => ({ ...prev, address: value }));
         setCreateError(null);
@@ -354,7 +392,10 @@ const StationManagement = () => {
         }, 300);
     };
 
-    // Handle keyboard navigation in suggestions
+    /**
+     * Handle keyboard navigation in suggestions
+     * Escape closes suggestions, Enter selects first suggestion
+     */
     const handleAddressKeyDown = (e) => {
         if (e.key === 'Escape') {
             setShowSuggestions(false);
@@ -366,7 +407,10 @@ const StationManagement = () => {
         }
     };
 
-    // Handle form submission
+    /**
+     * Handle create station form submission
+     * Validates required fields and creates new station
+     */
     const handleCreateStation = async (e) => {
         e.preventDefault();
 
@@ -408,7 +452,10 @@ const StationManagement = () => {
         }
     };
 
-    // Handle edit button click
+    /**
+     * Handle edit button click
+     * Populates form with station data for editing
+     */
     const handleEditClick = (station) => {
         setEditingStation(station);
         setFormData({
@@ -421,7 +468,10 @@ const StationManagement = () => {
         setIsEditDialogOpen(true);
     };
 
-    // Handle status update button click
+    /**
+     * Handle status update button click
+     * Opens dialog to change station status
+     */
     const handleStatusClick = (station) => {
         setStatusStation(station);
         setSelectedStatus(station.status || 'operational');
@@ -429,7 +479,10 @@ const StationManagement = () => {
         setIsStatusDialogOpen(true);
     };
 
-    // Handle update station
+    /**
+     * Handle update station form submission
+     * Validates required fields and updates station information
+     */
     const handleUpdateStation = async (e) => {
         e.preventDefault();
 
@@ -469,7 +522,10 @@ const StationManagement = () => {
         }
     };
 
-    // Handle status update
+    /**
+     * Handle status update form submission
+     * Updates station status (operational, maintenance, closed)
+     */
     const handleUpdateStatus = async (e) => {
         e.preventDefault();
 
@@ -541,6 +597,9 @@ const StationManagement = () => {
         }
     };
 
+    /**
+     * Get badge color class based on station status
+     */
     const getStatusColor = (status) => {
         switch (status) {
             case 'operational': return 'bg-green-100 text-green-800';
@@ -550,6 +609,9 @@ const StationManagement = () => {
         }
     };
 
+    /**
+     * Get status text label
+     */
     const getStatusText = (status) => {
         switch (status) {
             case 'operational': return 'Operational';
@@ -559,6 +621,9 @@ const StationManagement = () => {
         }
     };
 
+    /**
+     * Get icon component based on station status
+     */
     const getStatusIcon = (status) => {
         switch (status) {
             case 'operational': return <CheckCircle className="h-4 w-4" />;

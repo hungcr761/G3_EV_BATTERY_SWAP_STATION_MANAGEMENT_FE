@@ -6,16 +6,28 @@ import { Badge } from '../../components/ui/badge';
 import { Battery, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { swapAPI } from '../../lib/apiServices';
 
+/**
+ * UserAvailabilityCheck Component
+ * 
+ * Checks battery availability at station for walk-in users
+ * Verifies that station has enough batteries of the required type
+ * Displays available batteries and allows user to proceed to swap if available
+ */
 const UserAvailabilityCheck = () => {
     const { stationId, userId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    
     const [selectedVehicle] = useState(location.state?.selectedVehicle);
     const [selectedBatteries] = useState(location.state?.selectedBatteries);
     const [availabilityData, setAvailabilityData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    /**
+     * Check battery availability at station
+     * Fetches available batteries matching vehicle's battery type
+     */
     useEffect(() => {
         const checkAvailability = async () => {
             try {
@@ -33,14 +45,14 @@ const UserAvailabilityCheck = () => {
                     return;
                 }
 
-                // Check availability using the new API
+                // Check availability using API
                 const response = await swapAPI.checkAvailableBatteries(
                     stationId,
                     batteryTypeId,
                     selectedBatteries.length
                 );
 
-                // Handle the new response structure with success field and nested data
+                // Process response data
                 const responseData = response.data.data;
                 const availabilityData = {
                     available: responseData.has_enough,
@@ -68,10 +80,12 @@ const UserAvailabilityCheck = () => {
         checkAvailability();
     }, [stationId, selectedVehicle, selectedBatteries]);
 
+    /**
+     * Navigate to swap process with user data
+     */
     const handleStartSwap = () => {
         if (!selectedVehicle || !selectedBatteries) return;
 
-        // Navigate to swap process with user data
         navigate(`/kiosk/${stationId}/user/${userId}/swap`, {
             state: {
                 selectedVehicle,
@@ -81,6 +95,9 @@ const UserAvailabilityCheck = () => {
         });
     };
 
+    /**
+     * Navigate back to battery selection
+     */
     const handleBack = () => {
         navigate(`/kiosk/${stationId}/user/${userId}/battery`, {
             state: { selectedVehicle }

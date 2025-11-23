@@ -6,26 +6,47 @@ import { Badge } from '../../components/ui/badge';
 import { Battery, CheckCircle2, AlertCircle, Clock, User, Motorbike } from 'lucide-react';
 import { bookingAPI, swapAPI, batteryAPI, userAPI } from '../../lib/apiServices';
 
+/**
+ * SwapStatus Component
+ * 
+ * Main component for battery swap process at kiosk
+ * Handles both booking flow and walk-in user flow
+ * 
+ * Process flow:
+ * 1. Verification - Check booking/user information
+ * 2. Get Empty Slots - Find available slots at station
+ * 3. Fetch Vehicle Batteries - Get current batteries from vehicle
+ * 4. Insert Old Batteries - User inserts old batteries into assigned slots
+ * 5. Validate and Prepare - System validates batteries and prepares new ones
+ * 6. Execute Swap - Complete the battery swap transaction
+ * 7. Get New Batteries - User retrieves new batteries from assigned slots
+ * 8. Complete - Navigate to completion screen
+ */
 const SwapStatus = () => {
     const { stationId, bookingId, userId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    // eslint-disable-next-line no-unused-vars
+    
+    // Step tracking
     const [currentStep, setCurrentStep] = useState(0);
-    // eslint-disable-next-line no-unused-vars
     const [swapComplete, setSwapComplete] = useState(false);
+    
+    // Data state
     const [bookingData, setBookingData] = useState(null);
     const [userData, setUserData] = useState(null);
     const [emptySlots, setEmptySlots] = useState([]);
     const [selectedSlots, setSelectedSlots] = useState([]);
     const [vehicleBatteries, setVehicleBatteries] = useState([]);
-    // eslint-disable-next-line no-unused-vars
     const [bookedBatteries, setBookedBatteries] = useState([]);
     const [validationData, setValidationData] = useState(null);
     const [swapResult, setSwapResult] = useState(null);
+    
+    // Flow state
     const [isUserFlow, setIsUserFlow] = useState(false);
     const [swapStartTime, setSwapStartTime] = useState(null);
     const [swapEndTime, setSwapEndTime] = useState(null);
+    
+    // UI state
     const [currentAction, setCurrentAction] = useState({
         title: 'Verification',
         description: 'Checking information',
@@ -35,12 +56,17 @@ const SwapStatus = () => {
         buttonText: '',
         slotNumber: null
     });
-    // Ref to track if swap process has been initiated to prevent multiple calls
+    
+    // Refs to prevent multiple simultaneous process calls
     const swapProcessInitiated = useRef(false);
     const swapProcessRunning = useRef(false);
     const actionHandlerRunning = useRef(false);
 
-    // Fetch data based on flow type
+    /**
+     * Fetch initial data based on flow type
+     * Determines if this is booking flow or walk-in user flow
+     * Fetches booking/user data and prepares for swap process
+     */
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -151,7 +177,10 @@ const SwapStatus = () => {
         fetchData();
     }, [bookingId, userId, stationId, location.state]);
 
-    // Fetch empty slots when starting swap
+    /**
+     * Fetch empty slots at station
+     * Returns list of available slots for battery insertion
+     */
     const fetchEmptySlots = async () => {
         try {
             const response = await swapAPI.getEmptySlots(stationId);
@@ -164,25 +193,29 @@ const SwapStatus = () => {
         }
     };
 
-    // Fetch vehicle batteries
+    /**
+     * Fetch current batteries from vehicle
+     * Used to get battery IDs for validation
+     */
     const fetchVehicleBatteries = async (vehicleId) => {
         try {
             const response = await batteryAPI.getByVehicleId(vehicleId);
-            // Handle response structure: response.data.payload.batteries
+            // Handle different response structures
             const batteries = response.data?.payload?.batteries ||
                 response.data?.batteries ||
                 (Array.isArray(response.data) ? response.data : []) ||
                 [];
-            console.log('Fetched batteries:', batteries);
             setVehicleBatteries(batteries);
             return batteries;
         } catch (error) {
-            console.error('Error validating first time pickup:', error);
+            console.error('Error fetching vehicle batteries:', error);
             throw error;
         }
     };
 
-    // Execute swap (for user flow)
+    /**
+     * Execute swap for walk-in user flow (no booking)
+     */
     const executeSwap = async (batteryData) => {
         try {
             const currentData = isUserFlow ? userData : bookingData;
@@ -200,7 +233,10 @@ const SwapStatus = () => {
         }
     };
 
-    // Execute swap with booking (for booking flow)
+    /**
+     * Execute swap with booking (for booking flow)
+     * Includes booked batteries out information
+     */
     const executeSwapWithBooking = async (batteryData, batteriesOut) => {
         try {
             const currentData = bookingData;
@@ -220,7 +256,10 @@ const SwapStatus = () => {
         }
     };
 
-    // Validate and prepare swap (for user flow)
+    /**
+     * Validate and prepare swap for walk-in user flow
+     * Validates inserted batteries and prepares new batteries
+     */
     const validateAndPrepareSwap = async (batteryData) => {
         try {
             const currentData = isUserFlow ? userData : bookingData;
@@ -239,7 +278,10 @@ const SwapStatus = () => {
         }
     };
 
-    // Validate with booking (for booking flow)
+    /**
+     * Validate swap with booking (for booking flow)
+     * Validates inserted batteries against booked batteries
+     */
     const validateSwapWithBooking = async (batteryData) => {
         try {
             const currentData = bookingData;
@@ -258,9 +300,11 @@ const SwapStatus = () => {
         }
     };
 
-    // Start the swap process when data is loaded (only once)
+    /**
+     * Start swap process when data is loaded
+     * Only runs once to prevent multiple simultaneous processes
+     */
     useEffect(() => {
-        // Only start if we have the required data and haven't started yet
         const hasRequiredData = (isUserFlow && userData) || (!isUserFlow && bookingData);
 
         if (hasRequiredData && !swapProcessInitiated.current && !swapProcessRunning.current) {
@@ -271,6 +315,11 @@ const SwapStatus = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isUserFlow, userData, bookingData]);
 
+    /**
+     * Start the swap process
+     * Handles initial steps: verification, getting empty slots, fetching vehicle batteries
+     * Assigns slots for battery insertion
+     */
     const startSwapProcess = async () => {
         try {
             // Record swap start time
@@ -374,16 +423,22 @@ const SwapStatus = () => {
         }
     };
 
-    // Select random slots based on requested quantity
+    /**
+     * Select random slots from available slots
+     * Used to assign slots for battery insertion
+     */
     const selectRandomSlots = (availableSlots, quantity) => {
         const shuffled = [...availableSlots].sort(() => 0.5 - Math.random());
         return shuffled.slice(0, quantity);
     };
 
-    // Generate random UUID format battery ID for testing
+    /**
+     * Generate random UUID format battery ID for testing
+     * Used for testing invalid battery scenarios
+     */
     const generateRandomBatteryId = () => {
         const chars = '0123456789abcdef';
-        const segments = [8, 4, 4, 4, 12]; // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        const segments = [8, 4, 4, 4, 12]; // UUID format
         return segments.map(len =>
             Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
         ).join('-');
@@ -493,6 +548,11 @@ const SwapStatus = () => {
         }, 1000);
     };
 
+    /**
+     * Handle action completion button click
+     * Processes next step in swap flow based on current action
+     * Handles: Insert Old Batteries -> Validate and Prepare -> Execute Swap -> Get New Batteries -> Complete
+     */
     const handleActionComplete = async () => {
         // Prevent multiple simultaneous calls
         if (actionHandlerRunning.current) {

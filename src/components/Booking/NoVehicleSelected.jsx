@@ -3,6 +3,12 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Motorbike, AlertCircle } from 'lucide-react';
 
+/**
+ * NoVehicleSelected Component
+ * 
+ * Empty state component shown when no vehicle is selected
+ * Prompts user to select a vehicle to view station availability
+ */
 const NoVehicleSelected = ({ onSelectVehicle }) => {
     return (
         <div className="text-center py-12">

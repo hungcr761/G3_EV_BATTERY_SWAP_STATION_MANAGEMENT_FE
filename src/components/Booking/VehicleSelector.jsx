@@ -5,12 +5,22 @@ import { Badge } from '../ui/badge';
 import { vehicleAPI } from '../../lib/apiServices';
 import { Motorbike, Battery, CheckCircle, ArrowRight } from 'lucide-react';
 
+/**
+ * VehicleSelector Component
+ * 
+ * Displays list of user's vehicles with active subscriptions
+ * Allows user to select a vehicle for booking or viewing station availability
+ * Filters out vehicles without active subscriptions
+ */
 const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBooking = false, vehicles = null }) => {
     const [internalVehicles, setInternalVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Helper function to filter vehicles to only show those with subscriptions
+    /**
+     * Filter vehicles to only show those with active subscriptions
+     * Fetches list of vehicles without subscriptions and filters them out
+     */
     const filterVehiclesWithSubscription = useCallback(async (vehiclesToFilter) => {
         try {
             setLoading(true);
@@ -40,14 +50,17 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
         }
     }, []);
 
+    /**
+     * Fetch and filter vehicles on component mount
+     * If vehicles are provided via props, filters them
+     * Otherwise fetches all vehicles and filters to show only those with subscriptions
+     */
     useEffect(() => {
-        // If vehicles are provided via props, filter them to only show vehicles with subscriptions
         if (vehicles && vehicles.length > 0) {
             filterVehiclesWithSubscription(vehicles);
             return;
         }
 
-        // Fetch vehicles and filter to only show vehicles with subscriptions
         const fetchData = async () => {
             try {
                 setLoading(true);
@@ -66,7 +79,7 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
                     vehiclesWithoutSubscription.map(v => v.vehicle_id || v.id)
                 );
 
-                // Filter to only show vehicles WITH subscriptions (not in the "without subscription" list)
+                // Filter to only show vehicles WITH subscriptions
                 const vehiclesWithSubscription = allVehicles.filter(vehicle => {
                     const vehicleId = vehicle.vehicle_id || vehicle.id;
                     return !vehicleIdsWithoutSubscription.has(vehicleId);
@@ -84,7 +97,10 @@ const VehicleSelector = ({ onVehicleSelect, selectedVehicle, onContinue, isForBo
         fetchData();
     }, [vehicles, filterVehiclesWithSubscription]);
 
-
+    /**
+     * Handle vehicle selection
+     * Calls parent component's onVehicleSelect callback
+     */
     const handleVehicleSelect = (vehicle) => {
         onVehicleSelect(vehicle);
     };

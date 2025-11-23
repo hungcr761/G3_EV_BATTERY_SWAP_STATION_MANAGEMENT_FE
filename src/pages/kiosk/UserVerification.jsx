@@ -6,18 +6,32 @@ import { Badge } from '../../components/ui/badge';
 import { User, CheckCircle2, ArrowRight, AlertCircle } from 'lucide-react';
 import { userAPI, vehicleAPI } from '../../lib/apiServices';
 
+/**
+ * UserVerification Component
+ * 
+ * Verifies user account for walk-in battery swap (no booking required)
+ * Displays user information and fetches user's vehicles
+ * Auto-navigates to vehicle selection if vehicles are available
+ */
 const UserVerification = () => {
     const { stationId, userId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    
+    // User data state
     const [userData, setUserData] = useState(null);
     const [userVehicles, setUserVehicles] = useState([]);
+    
+    // UI state
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [autoNavigate, setAutoNavigate] = useState(false);
     const [countdown, setCountdown] = useState(3);
 
-    // Get user data from location state or fetch from API
+    /**
+     * Fetch user data from location state or API
+     * Also fetches user's vehicles to check if they can proceed
+     */
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -52,7 +66,10 @@ const UserVerification = () => {
         fetchUserData();
     }, [userId, location.state]);
 
-    // Auto-navigation countdown
+    /**
+     * Auto-navigation countdown
+     * Automatically navigates to vehicle selection after 3 seconds if vehicles are available
+     */
     useEffect(() => {
         if (autoNavigate && userVehicles.length > 0) {
             const timer = setInterval(() => {
@@ -70,6 +87,10 @@ const UserVerification = () => {
         }
     }, [autoNavigate, userVehicles.length, navigate, stationId, userId]);
 
+    /**
+     * Handle continue button click
+     * Validates that user has vehicles before proceeding
+     */
     const handleContinue = () => {
         if (userVehicles.length === 0) {
             setError('You have no vehicles. Please add a vehicle in the app before using the service.');

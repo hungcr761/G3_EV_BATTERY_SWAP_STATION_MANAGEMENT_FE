@@ -32,7 +32,18 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
+/**
+ * Main Booking Page Component
+ * 
+ * This component handles the entire booking flow:
+ * 1. Displays list of battery swap stations
+ * 2. Allows users to search and filter stations
+ * 3. Shows station availability based on selected vehicle
+ * 4. Handles vehicle selection
+ * 5. Initiates booking flow when user selects a station
+ */
 const Stations = () => {
+    // Station selection and filtering state
     const [selectedStation, setSelectedStation] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [batteryType, setBatteryType] = useState('available');
@@ -40,25 +51,37 @@ const Stations = () => {
     const [sortDirection, setSortDirection] = useState('asc');
     const [stations, setStations] = useState([]);
     const availableStations = React.useMemo(() => stations.filter(s => s.status === 'available'), [stations]);
+    
+    // Location state
     const [userLocation, setUserLocation] = useState(null);
     const [nearestStation, setNearestStation] = useState(null);
+    
+    // Booking flow state
     const [showBookingFlow, setShowBookingFlow] = useState(false);
     const [bookingStation, setBookingStation] = useState(null);
+    
+    // Vehicle selection state
     const [selectedVehicle, setSelectedVehicle] = useState(null);
     const [showVehicleSelector, setShowVehicleSelector] = useState(false);
-    const [stationAvailability, setStationAvailability] = useState({});
-    const [loadingAvailability, setLoadingAvailability] = useState(false);
     const [userVehicles, setUserVehicles] = useState([]);
     const [vehiclesLoading, setVehiclesLoading] = useState(true);
     const [showVehiclePrompt, setShowVehiclePrompt] = useState(false);
+    
+    // Station availability state
+    const [stationAvailability, setStationAvailability] = useState({});
+    const [loadingAvailability, setLoadingAvailability] = useState(false);
 
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
 
-    // Use station hook
+    // Fetch stations data using custom hook
     const { stations: stationsData, loading: stationsLoading, error: stationsError } = useStation();
 
-    // Process stations for booking (convert status for booking display)
+    /**
+     * Process stations data from API
+     * Converts status from 'operational' to 'available' for UI display
+     * Parses latitude/longitude to numbers
+     */
     useEffect(() => {
         const processedStations = stationsData.map(station => ({
             ...station,
@@ -67,12 +90,14 @@ const Stations = () => {
             status: station.status === 'operational' ? 'available' : 'closed'
         }));
         setStations(processedStations);
-        // setStationsError(stationsError || null);
     }, [stationsData, stationsError]);
 
-    // Fetch user vehicles and auto-select if only one vehicle
+    /**
+     * Fetch user vehicles and auto-select if only one vehicle exists
+     * Fetches vehicle models, battery types, and user vehicles
+     * Maps vehicles with battery type information
+     */
     useEffect(() => {
-        // Only fetch vehicles if user is authenticated
         if (!isAuthenticated) {
             setVehiclesLoading(false);
             return;
@@ -81,7 +106,7 @@ const Stations = () => {
         const fetchUserVehicles = async () => {
             setVehiclesLoading(true);
             try {
-                // Fetch vehicle models and battery types first
+                // Fetch vehicle models and battery types in parallel
                 const [modelsResponse, batteryResponse] = await Promise.all([
                     modelAPI.getAll(),
                     batteryTypeAPI.getAll()
@@ -90,7 +115,7 @@ const Stations = () => {
                 const models = modelsResponse.data?.payload?.vehicleModels || [];
                 const batteryTypesData = batteryResponse.data?.payload?.batteryTypes || [];
 
-                // Then fetch vehicles
+                // Fetch user vehicles
                 const response = await vehicleAPI.getAll();
                 const vehiclesData = response.data?.vehicles || [];
 
@@ -122,7 +147,6 @@ const Stations = () => {
                 if (mappedVehicles.length === 1) {
                     setSelectedVehicle(mappedVehicles[0]);
                 } else if (mappedVehicles.length > 1) {
-                    // Show prompt to select vehicle
                     setShowVehiclePrompt(true);
                 }
             } catch (error) {
@@ -135,7 +159,10 @@ const Stations = () => {
         fetchUserVehicles();
     }, [isAuthenticated]);
 
-    // Get user location and find nearest station
+    /**
+     * Get user's current location and find nearest station
+     * Uses browser geolocation API
+     */
     useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -151,14 +178,20 @@ const Stations = () => {
         }
     }, [stations]);
 
-    // Check availability for all stations when vehicle is selected
+    /**
+     * Check battery availability for all stations when vehicle is selected
+     * This allows users to see which stations have batteries for their vehicle
+     */
     useEffect(() => {
         if (selectedVehicle && stations.length > 0 && isAuthenticated) {
             checkAllStationsAvailability();
         }
     }, [selectedVehicle, stations, isAuthenticated]);
 
-    // Calculate distance between two points using Haversine formula
+    /**
+     * Calculate distance between two geographic points using Haversine formula
+     * Returns distance in kilometers
+     */
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371; // Earth's radius in kilometers
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -171,7 +204,10 @@ const Stations = () => {
         return R * c;
     };
 
-    // Find nearest station (only among available stations)
+    /**
+     * Find the nearest available station to user's location
+     * Only considers stations with 'available' status
+     */
     const findNearestStation = (userLat, userLng) => {
         if (availableStations.length === 0) return;
 
@@ -195,7 +231,11 @@ const Stations = () => {
         setNearestStation(nearest);
     };
 
-    // Check availability for all stations
+    /**
+     * Check battery availability for all available stations
+     * Called when vehicle is selected to show battery counts at each station
+     * Handles API response variations and error cases
+     */
     const checkAllStationsAvailability = async () => {
         if (!selectedVehicle || stations.length === 0) return;
 
@@ -203,7 +243,7 @@ const Stations = () => {
         const availabilityData = {};
 
         try {
-            // Check availability for each available station
+            // Check availability for each available station in parallel
             const promises = availableStations.map(async (station) => {
                 try {
                     const response = await bookingAPI.checkAvailability(
@@ -226,14 +266,14 @@ const Stations = () => {
 
             const results = await Promise.all(promises);
 
-            // Process results - new API structure returns availableBatteries/totalBatteriesOfType
+            // Process results - handle different API response structures
             results.forEach(({ stationId, data }) => {
-                // Extract availableBatteries and totalBatteriesOfType from response
+                // Extract availability data from various possible response formats
                 const availableBatteries = data.availableBatteries ?? data.available_batteries ?? data.availability_details?.available_batteries ?? 0;
                 const totalBatteriesOfType = data.totalBatteriesOfType ?? data.total_batteries_of_type ?? data.availability_details?.total_batteries_of_type ?? 0;
 
                 availabilityData[stationId] = {
-                    available: availableBatteries > 0, // Can book if availableBatteries > 0
+                    available: availableBatteries > 0,
                     availableBatteries: availableBatteries,
                     totalSlots: data.availability_details?.total_slots || 0,
                     totalBatteriesOfType: totalBatteriesOfType,
@@ -252,7 +292,10 @@ const Stations = () => {
         }
     };
 
-    // Filter stations based on search and status
+    /**
+     * Filter stations based on search term and status filter
+     * Searches in station name and address
+     */
     const filteredStations = stations.filter(station => {
         const matchesSearch = station.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             station.address.toLowerCase().includes(searchTerm.toLowerCase());
@@ -260,12 +303,17 @@ const Stations = () => {
         return matchesSearch && matchesStatus;
     });
 
-    // Sort filtered stations
+    /**
+     * Sort filtered stations based on selected sort criteria
+     * Supports sorting by distance or battery availability
+     * Memoized to avoid recalculating on every render
+     */
     const sortedStations = React.useMemo(() => {
         if (sortBy === 'default') {
             return filteredStations;
         }
 
+        // Add distance and battery data to stations for sorting
         const stationsWithData = filteredStations.map(station => {
             let distance = null;
             if (userLocation) {
@@ -289,8 +337,8 @@ const Stations = () => {
 
         const isAscending = sortDirection === 'asc';
 
+        // Sort by distance
         if (sortBy === 'distance') {
-            console.log('Sorting by distance', { stationsWithData });
             return stationsWithData.sort((a, b) => {
                 if (a.distance === null && b.distance === null) return 0;
                 if (a.distance === null) return 1;
@@ -299,6 +347,7 @@ const Stations = () => {
             });
         }
 
+        // Sort by battery availability
         if (sortBy === 'totalBatteriesReady') {
             return stationsWithData.sort((a, b) => {
                 return isAscending
@@ -310,11 +359,17 @@ const Stations = () => {
         return stationsWithData;
     }, [filteredStations, sortBy, sortDirection, userLocation, stationAvailability]);
 
-    // Toggle sort direction
+    /**
+     * Toggle sort direction between ascending and descending
+     */
     const toggleSortDirection = () => {
         setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     };
 
+    /**
+     * Handle station selection from list or map
+     * Scrolls to selected station in the list
+     */
     const handleStationSelect = (station) => {
         setSelectedStation(station);
 
@@ -330,20 +385,24 @@ const Stations = () => {
         }, 100);
     };
 
-    // Handle navigation/directions
+    /**
+     * Open Google Maps with directions to selected station
+     * Uses user location if available, otherwise just shows station location
+     */
     const handleNavigation = (station) => {
         if (userLocation) {
-            // Open Google Maps with directions
             const url = `https://www.google.com/maps/dir/${userLocation.lat},${userLocation.lng}/${station.latitude},${station.longitude}`;
             window.open(url, '_blank');
         } else {
-            // Fallback to station location only
             const url = `https://www.google.com/maps/search/?api=1&query=${station.latitude},${station.longitude}`;
             window.open(url, '_blank');
         }
     };
 
-    // Handle booking
+    /**
+     * Handle booking initiation
+     * Checks authentication and vehicle selection before proceeding
+     */
     const handleBooking = (station) => {
         if (!isAuthenticated) {
             navigate('/login');
@@ -351,27 +410,36 @@ const Stations = () => {
         }
 
         if (!selectedVehicle) {
-            // Show vehicle selector first
+            // Show vehicle selector first if no vehicle selected
             setBookingStation(station);
             setShowVehicleSelector(true);
         } else {
-            // Proceed with booking
+            // Proceed directly to booking flow
             setBookingStation(station);
             setShowBookingFlow(true);
         }
     };
 
+    /**
+     * Handle successful booking creation
+     * Called from BookingFlow component after booking is created
+     */
     const handleBookingSuccess = (bookingData) => {
         console.log('Booking created successfully:', bookingData);
-        // You can add success notification here
     };
 
+    /**
+     * Close booking flow modal
+     */
     const handleCloseBooking = () => {
         setShowBookingFlow(false);
         setBookingStation(null);
     };
 
-    // Handle vehicle selection
+    /**
+     * Handle vehicle selection from VehicleSelector
+     * If there's a pending booking, proceeds to booking flow
+     */
     const handleVehicleSelect = (vehicle) => {
         if (!isAuthenticated) {
             navigate('/login');
@@ -387,6 +455,9 @@ const Stations = () => {
         }
     };
 
+    /**
+     * Show vehicle selector modal
+     */
     const handleShowVehicleSelector = () => {
         if (!isAuthenticated) {
             navigate('/login');
@@ -395,6 +466,9 @@ const Stations = () => {
         setShowVehicleSelector(true);
     };
 
+    /**
+     * Close vehicle selector modal
+     */
     const handleCloseVehicleSelector = () => {
         setShowVehicleSelector(false);
     };

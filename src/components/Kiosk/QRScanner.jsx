@@ -5,6 +5,13 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 
+/**
+ * QRScanner Component
+ * 
+ * Handles QR code scanning using device camera
+ * Supports both camera scanning and manual entry modes
+ * Uses html5-qrcode library for QR code detection
+ */
 const QRScanner = ({ onScan, onManualEntry }) => {
     const [manualMode, setManualMode] = useState(false);
     const [bookingId, setBookingId] = useState('');
@@ -16,7 +23,10 @@ const QRScanner = ({ onScan, onManualEntry }) => {
     const scannerRef = useRef(null);
     const html5QrCodeRef = useRef(null);
 
-    // Get available cameras on mount
+    /**
+     * Get available cameras on component mount
+     * Prefers back camera for better quality in kiosk environment
+     */
     useEffect(() => {
         Html5Qrcode.getCameras()
             .then(devices => {
@@ -33,7 +43,11 @@ const QRScanner = ({ onScan, onManualEntry }) => {
             });
     }, []);
 
-    // Start camera scanning
+    /**
+     * Start camera scanning
+     * Initializes html5-qrcode scanner with selected camera
+     * Handles QR code detection and calls onScan callback
+     */
     const handleStartScan = async () => {
         if (!selectedCamera) {
             setCameraError('No available camera found.');
@@ -46,7 +60,6 @@ const QRScanner = ({ onScan, onManualEntry }) => {
         // Wait for DOM to update before initializing scanner
         setTimeout(async () => {
             try {
-                // Check if element exists
                 const element = document.getElementById("qr-reader");
                 if (!element) {
                     throw new Error('QR reader element not found');
@@ -63,14 +76,11 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                     },
                     (decodedText) => {
                         // Successfully scanned QR code
-                        console.log('QR Code detected:', decodedText);
                         handleStopScan();
                         onScan(decodedText);
                     },
                     (errorMessage) => {
-                        // Scanning error (this fires frequently, so we don't show it)
-                        // Only log in development
-                        // console.log('Scanning...', errorMessage);
+                        // Scanning error (fires frequently during scanning, so we don't show it)
                     }
                 );
             } catch (err) {
@@ -78,10 +88,13 @@ const QRScanner = ({ onScan, onManualEntry }) => {
                 setCameraError(`Unable to start camera: ${err.message || 'Please allow camera access.'}`);
                 setScanning(false);
             }
-        }, 100); // Small delay to ensure DOM is ready
+        }, 100);
     };
 
-    // Stop camera scanning
+    /**
+     * Stop camera scanning
+     * Cleans up scanner instance and releases camera
+     */
     const handleStopScan = () => {
         if (html5QrCodeRef.current) {
             html5QrCodeRef.current.stop()
@@ -104,7 +117,10 @@ const QRScanner = ({ onScan, onManualEntry }) => {
         }
     };
 
-    // Cleanup on unmount
+    /**
+     * Cleanup scanner on component unmount
+     * Ensures camera is released when component is removed
+     */
     useEffect(() => {
         return () => {
             if (html5QrCodeRef.current) {
@@ -113,6 +129,9 @@ const QRScanner = ({ onScan, onManualEntry }) => {
         };
     }, []);
 
+    /**
+     * Handle manual entry form submission
+     */
     const handleManualSubmit = (e) => {
         e.preventDefault();
         if (bookingId.trim()) {

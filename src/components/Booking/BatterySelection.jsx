@@ -4,6 +4,13 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Battery, CheckCircle, ArrowRight, Plus, Minus } from 'lucide-react';
 
+/**
+ * BatterySelection Component
+ * 
+ * Allows users to select how many batteries they want to swap
+ * Only shown for vehicles with multiple battery slots
+ * Provides increment/decrement controls and quick selection buttons
+ */
 const BatterySelection = ({
     selectedVehicle,
     onBatterySelection,
@@ -13,21 +20,25 @@ const BatterySelection = ({
     const [batteryQuantity, setBatteryQuantity] = useState(1);
     const maxBatteries = selectedVehicle?.batterySlot || selectedVehicle.model?.battery_slot || 1;
 
-
+    /**
+     * Update battery quantity within valid range (1 to maxBatteries)
+     */
     const handleQuantityChange = (newQuantity) => {
         if (newQuantity >= 1 && newQuantity <= maxBatteries) {
             setBatteryQuantity(newQuantity);
         }
     };
 
+    /**
+     * Handle continue button click
+     * Creates array of battery IDs based on selected quantity
+     * Calls onBatterySelection callback (step transition handled by BookingFlow)
+     */
     const handleNext = () => {
-        console.log('BatterySelection handleNext called:', { batteryQuantity });
         if (batteryQuantity > 0) {
             // Create array of battery IDs based on quantity
             const selectedBatteries = Array.from({ length: batteryQuantity }, (_, index) => index + 1);
-            console.log('Calling onBatterySelection with:', selectedBatteries);
             onBatterySelection(selectedBatteries);
-            // Note: onNext() is no longer called here as useEffect in BookingFlow will handle the step transition
         }
     };
 

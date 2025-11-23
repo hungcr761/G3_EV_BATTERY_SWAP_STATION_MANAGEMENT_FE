@@ -13,6 +13,13 @@ import {
 } from 'lucide-react';
 import { configAPI } from '../../lib/apiServices';
 
+/**
+ * BookingConfirmation Component
+ * 
+ * Displays booking summary before final confirmation
+ * Shows vehicle info, station info, battery quantity, and booking time window
+ * Fetches booking interval from API to calculate expiration time
+ */
 const BookingConfirmation = ({
     selectedVehicle,
     selectedTime,
@@ -30,13 +37,16 @@ const BookingConfirmation = ({
         return new Date(now.getTime() + 30 * 60 * 1000); // Default to 30 minutes from now
     });
 
-    // Fetch booking interval from API
+    /**
+     * Fetch booking interval from API
+     * Calculates booking expiration time based on interval
+     * Falls back to 30 minutes if API call fails
+     */
     useEffect(() => {
         const fetchBookingInterval = async () => {
             try {
                 setIsLoadingInterval(true);
                 const response = await configAPI.getBookingInterval();
-                // Assuming the API returns { interval: number } or { booking_interval: number } or just a number
                 const interval = response.data?.data || response.data || 30;
                 setBookingInterval(interval);
 
@@ -45,7 +55,6 @@ const BookingConfirmation = ({
                 setBookingEndTime(new Date(now.getTime() + interval * 60 * 1000));
             } catch (error) {
                 console.error('Error fetching booking interval:', error);
-                // Keep default 30 minutes if API fails
                 setBookingInterval(30);
             } finally {
                 setIsLoadingInterval(false);
@@ -55,6 +64,9 @@ const BookingConfirmation = ({
         fetchBookingInterval();
     }, []);
 
+    /**
+     * Format time to HH:MM format
+     */
     const formatTime = (time) => {
         if (!time) return '';
         return time.toLocaleTimeString('en-US', {
@@ -64,6 +76,9 @@ const BookingConfirmation = ({
         });
     };
 
+    /**
+     * Format date to readable format
+     */
     const formatDate = (date) => {
         if (!date) return '';
         return date.toLocaleDateString('en-US', {
@@ -74,6 +89,10 @@ const BookingConfirmation = ({
         });
     };
 
+    /**
+     * Get active time range for booking
+     * Returns start and end times in formatted string
+     */
     const getActiveTimeRange = () => {
         return {
             start: formatTime(bookingStartTime),

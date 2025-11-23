@@ -6,16 +6,26 @@ import { Badge } from '../../components/ui/badge';
 import { Motorbike, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { vehicleAPI, subscriptionAPI } from '../../lib/apiServices';
 
+/**
+ * UserVehicleSelection Component
+ * 
+ * Allows walk-in users to select a vehicle for battery swap
+ * Only shows vehicles with active subscriptions
+ * Fetches subscription status for each vehicle
+ */
 const UserVehicleSelection = () => {
     const { stationId, userId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    
     const [vehicles, setVehicles] = useState([]);
     const [selectedVehicle, setSelectedVehicle] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Helper function to make battery type names more user-friendly
+    /**
+     * Convert battery type code to user-friendly display name
+     */
     const getBatteryDisplayName = (batteryTypeCode) => {
         const batteryNames = {
             'NMC-50': 'NMC 50kWh',
@@ -26,18 +36,20 @@ const UserVehicleSelection = () => {
         return batteryNames[batteryTypeCode] || batteryTypeCode;
     };
 
+    /**
+     * Fetch user's vehicles and check subscription status for each
+     * Only vehicles with active subscriptions can be used for swapping
+     */
     useEffect(() => {
         const fetchVehicles = async () => {
             try {
-                // Fetch vehicles by user ID with complete model and battery information
                 const response = await vehicleAPI.getByUserId(userId);
                 const vehiclesData = response.data?.vehicles || [];
 
-                // Fetch subscription data for each vehicle
+                // Fetch subscription data for each vehicle in parallel
                 const vehiclesWithSubscriptions = await Promise.all(
                     vehiclesData.map(async (vehicle) => {
                         try {
-                            // Fetch subscription data
                             const subscriptionResponse = await subscriptionAPI.getByVehicleId(vehicle.vehicle_id);
                             const subscriptionData = subscriptionResponse.data;
 
@@ -95,10 +107,17 @@ const UserVehicleSelection = () => {
         fetchVehicles();
     }, []);
 
+    /**
+     * Handle vehicle selection
+     */
     const handleVehicleSelect = (vehicle) => {
         setSelectedVehicle(vehicle);
     };
 
+    /**
+     * Handle continue to battery selection
+     * Only allows vehicles with active subscriptions
+     */
     const handleContinue = () => {
         if (!selectedVehicle || !selectedVehicle.hasActiveSubscription) return;
         navigate(`/kiosk/${stationId}/user/${userId}/battery`, {
@@ -108,6 +127,9 @@ const UserVehicleSelection = () => {
         });
     };
 
+    /**
+     * Navigate back to user verification
+     */
     const handleBack = () => {
         navigate(`/kiosk/${stationId}/user/${userId}`);
     };

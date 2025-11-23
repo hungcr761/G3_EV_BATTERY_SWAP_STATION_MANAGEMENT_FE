@@ -28,7 +28,10 @@ import { analysisAPI, userAPI, batteryAPI } from '../../lib/apiServices';
 import { useStation } from '../../hooks/useStation';
 import { cn } from '../../lib/utils';
 
-// Format large numbers to abbreviated format
+/**
+ * Format large numbers to abbreviated format
+ * Converts numbers to k (thousands), tr (millions), or bn (billions)
+ */
 const formatNumber = (value) => {
     if (value >= 1000000000) {
         // Billions
@@ -43,7 +46,10 @@ const formatNumber = (value) => {
     return value.toString();
 };
 
-// Custom Tooltip Component to show date label
+/**
+ * Custom Tooltip Component for Line Chart
+ * Shows date label and value on hover
+ */
 const CustomLineChartTooltip = ({ active, payload, className }) => {
     if (!active || !payload || !payload.length) {
         return null;
@@ -82,11 +88,14 @@ const CustomLineChartTooltip = ({ active, payload, className }) => {
     );
 };
 
-// Line Chart Component using shadcn/ui and Recharts
+/**
+ * Line Chart Component using shadcn/ui and Recharts
+ * Displays time-series data with customizable color and height
+ */
 const LineChart = ({ data, height = 250, color = '#3B82F6', name = 'Value' }) => {
     if (!data || data.length === 0) return null;
 
-    // Calculate domain for Y-axis
+    // Calculate domain for Y-axis with padding
     const maxValue = Math.max(...data.map(d => d.value));
     const minValue = Math.min(...data.map(d => d.value));
     const range = maxValue - minValue;
@@ -139,7 +148,10 @@ const LineChart = ({ data, height = 250, color = '#3B82F6', name = 'Value' }) =>
     );
 };
 
-// Custom Tooltip Component for Bar Chart
+/**
+ * Custom Tooltip Component for Bar Chart
+ * Shows plan name and subscription metrics on hover
+ */
 const CustomBarChartTooltip = ({ active, payload, className }) => {
     if (!active || !payload || !payload.length) {
         return null;
@@ -179,7 +191,11 @@ const CustomBarChartTooltip = ({ active, payload, className }) => {
     );
 };
 
-// Grouped Bar Chart Component using shadcn/ui and Recharts
+/**
+ * Grouped Bar Chart Component using shadcn/ui and Recharts
+ * Displays subscription metrics grouped by plan
+ * Shows total, active, and inactive subscriptions
+ */
 const GroupedBarChart = ({ data, height = 300 }) => {
     if (!data || data.length === 0) return null;
 
@@ -256,7 +272,10 @@ const GroupedBarChart = ({ data, height = 300 }) => {
     );
 };
 
-// Custom Tooltip Component for Area Chart
+/**
+ * Custom Tooltip Component for Area Chart
+ * Shows revenue distribution by plan on hover
+ */
 const CustomAreaChartTooltip = ({ active, payload, label, className }) => {
     if (!active || !payload || !payload.length) {
         return null;
@@ -294,7 +313,11 @@ const CustomAreaChartTooltip = ({ active, payload, label, className }) => {
     );
 };
 
-// Stacked Area Chart Component for Revenue Distribution using shadcn/ui and Recharts
+/**
+ * Stacked Area Chart Component for Revenue Distribution
+ * Displays revenue distribution by subscription plan over time
+ * Uses 100% stacked format to show percentage distribution
+ */
 const RevenueStackedAreaChart = ({ data, height = 350 }) => {
     if (!data || data.length === 0) {
         return (
@@ -337,7 +360,10 @@ const RevenueStackedAreaChart = ({ data, height = 350 }) => {
         };
     });
 
-    // Normalize data for expanded (100% stacked) area chart
+    /**
+     * Normalize data for expanded (100% stacked) area chart
+     * Converts absolute values to percentages for each period
+     */
     const normalizedData = data.map((item) => {
         const result = { ...item };
         const total = planNames.reduce((sum, planName) => sum + (item[planName] || 0), 0);
@@ -441,11 +467,28 @@ const RevenueStackedAreaChart = ({ data, height = 350 }) => {
     );
 };
 
+/**
+ * AnalyticsReports Component
+ * 
+ * Admin analytics dashboard with comprehensive reports and insights
+ * Features:
+ * - Revenue trends and analysis
+ * - Peak hours analysis (swaps by hour)
+ * - Station performance metrics
+ * - Subscription plan analysis (bar and area charts)
+ * - Active users count
+ * - Average battery SOH
+ * - Custom date range selection
+ * - Export reports to Excel
+ */
 const AnalyticsReports = () => {
+    // Filter state
     const [selectedPeriod, setSelectedPeriod] = useState('30d');
     const [selectedStation, setSelectedStation] = useState('all');
     const [customDateRange, setCustomDateRange] = useState(null); // { from: Date, to: Date }
     const [customGroupDate, setCustomGroupDate] = useState(null); // 'day' | 'week' | 'month'
+    
+    // Data state
     const [revenueData, setRevenueData] = useState([]);
     const [revenueLoading, setRevenueLoading] = useState(true);
     const [peakHoursData, setPeakHoursData] = useState([]);
@@ -464,7 +507,10 @@ const AnalyticsReports = () => {
     // Use station hook
     const { stations, loading: stationsLoading } = useStation();
 
-    // Helper function to format date to YYYY-MM-DD in local timezone
+    /**
+     * Format date to YYYY-MM-DD in local timezone
+     * Used for API date parameters
+     */
     const formatDateLocal = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -472,7 +518,10 @@ const AnalyticsReports = () => {
         return `${year}-${month}-${day}`;
     };
 
-    // Helper function to set preset date ranges
+    /**
+     * Set preset date ranges
+     * Configures date range and grouping based on preset selection
+     */
     const setPresetDateRange = (preset) => {
         const today = new Date();
         let startDate = new Date();
@@ -512,7 +561,10 @@ const AnalyticsReports = () => {
         setCustomGroupDate(groupDate);
     };
 
-    // Calculate date range based on selected period or custom date range
+    /**
+     * Calculate date range based on selected period or custom date range
+     * Returns start date, end date, and grouping (day/week/month)
+     */
     const getDateRange = (period) => {
         // If custom date range is null (all time), return null dates with month grouping
         if (customDateRange === null && customGroupDate === 'month') {
@@ -563,7 +615,10 @@ const AnalyticsReports = () => {
         }
     };
 
-    // Fetch revenue data
+    /**
+     * Fetch revenue data from API
+     * Transforms API response to chart format
+     */
     useEffect(() => {
         const fetchRevenueData = async () => {
             try {
@@ -618,7 +673,10 @@ const AnalyticsReports = () => {
         fetchRevenueData();
     }, [selectedPeriod, customDateRange, customGroupDate]);
 
-    // Fetch swaps data for peak hours analysis
+    /**
+     * Fetch swaps data for peak hours analysis
+     * Aggregates swaps by hour (7 AM - 10 PM) across all stations
+     */
     useEffect(() => {
         const fetchSwapsData = async () => {
             try {
@@ -693,7 +751,10 @@ const AnalyticsReports = () => {
         fetchSwapsData();
     }, [selectedPeriod, selectedStation, customDateRange]);
 
-    // Fetch active users count - fetch all pages to get accurate count
+    /**
+     * Fetch active users count
+     * Fetches all pages to get accurate total count
+     */
     useEffect(() => {
         const fetchActiveUsers = async () => {
             try {
@@ -739,7 +800,10 @@ const AnalyticsReports = () => {
         fetchActiveUsers();
     }, []);
 
-    // Fetch batteries and calculate average SOH
+    /**
+     * Fetch batteries and calculate average SOH
+     * Filters batteries with valid SOH values and calculates average
+     */
     useEffect(() => {
         const fetchBatterySoh = async () => {
             try {
@@ -773,7 +837,11 @@ const AnalyticsReports = () => {
         fetchBatterySoh();
     }, []);
 
-    // Fetch station performance data
+    /**
+     * Fetch station performance data
+     * Aggregates swaps by station and calculates metrics
+     * Shows swaps, unique users, and average swaps per user per station
+     */
     useEffect(() => {
         // Skip if stations are still loading
         if (stationsLoading) {
@@ -867,7 +935,10 @@ const AnalyticsReports = () => {
         fetchStationPerformance();
     }, [selectedPeriod, customDateRange, stations, stationsLoading]);
 
-    // Helper function to format period label
+    /**
+     * Format period label for display
+     * Formats based on grouping (day/week/month)
+     */
     const formatPeriodLabel = (period, groupDate) => {
         if (!period) return '';
         const periodDate = new Date(period);
@@ -881,7 +952,10 @@ const AnalyticsReports = () => {
         }
     };
 
-    // Fetch subscription plan analysis data
+    /**
+     * Fetch subscription plan analysis data
+     * Creates both aggregated data (for bar chart) and time-series data (for area chart)
+     */
     useEffect(() => {
         const fetchSubscriptionPlanData = async () => {
             try {
@@ -979,7 +1053,10 @@ const AnalyticsReports = () => {
         fetchSubscriptionPlanData();
     }, [selectedPeriod, customDateRange, customGroupDate]);
 
-    // Format data for line charts
+    /**
+     * Format data for line charts
+     * Transforms revenue data into chart format
+     */
     const totalRevenueChartData = revenueData.map(item => ({
         label: item.label,
         value: item.totalRevenue
@@ -995,18 +1072,25 @@ const AnalyticsReports = () => {
         value: item.totalSwapFee
     }));
 
-    // Calculate totals
+    /**
+     * Calculate totals and averages
+     */
     const totalRevenue = revenueData.reduce((sum, item) => sum + item.totalRevenue, 0);
     const totalPlanFee = revenueData.reduce((sum, item) => sum + item.totalPlanFee, 0);
     const totalSwapFee = revenueData.reduce((sum, item) => sum + item.totalSwapFee, 0);
     const avgMonthlyRevenue = revenueData.length > 0 ? totalRevenue / revenueData.length : 0;
-    // Calculate total swaps from station performance (includes all swaps across all hours)
-    // This ensures total swaps matches the sum of all stations
+    
+    /**
+     * Calculate total swaps from station performance
+     * Ensures total swaps matches the sum of all stations
+     */
     const totalSwaps = stationPerformanceLoading
         ? 0
         : stationPerformance.reduce((sum, station) => sum + station.swaps, 0);
 
-    // Format peak hours data for line chart
+    /**
+     * Format peak hours data for line chart
+     */
     const peakHoursChartData = peakHoursData.map(item => ({
         label: item.hour,
         value: item.swaps
@@ -1053,6 +1137,9 @@ const AnalyticsReports = () => {
         }
     ];
 
+    /**
+     * Get badge color class based on impact level
+     */
     const getImpactColor = (impact) => {
         switch (impact) {
             case 'high': return 'bg-red-100 text-red-800';
@@ -1062,7 +1149,10 @@ const AnalyticsReports = () => {
         }
     };
 
-    // Handle export report
+    /**
+     * Handle export report to Excel
+     * Downloads report file with current date range
+     */
     const handleExportReport = async () => {
         try {
             setExportLoading(true);

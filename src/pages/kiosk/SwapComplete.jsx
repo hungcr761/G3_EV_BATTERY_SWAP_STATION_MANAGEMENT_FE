@@ -6,17 +6,29 @@ import { Badge } from '../../components/ui/badge';
 import { CheckCircle2, Battery, Clock, Star, Download, Mail, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { bookingAPI } from '../../lib/apiServices';
 
+/**
+ * SwapComplete Component
+ * 
+ * Displays completion screen after successful battery swap
+ * Shows swap summary, battery information, and swap duration
+ * Supports both booking flow and walk-in user flow
+ * Auto-redirects to kiosk home after countdown
+ */
 const SwapComplete = () => {
     const { stationId, bookingId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    
     const [countdown, setCountdown] = useState(30);
     const [swapData, setSwapData] = useState(null);
     const [isUserFlow, setIsUserFlow] = useState(false);
     const [batteriesIn, setBatteriesIn] = useState([]);
     const [batteriesOut, setBatteriesOut] = useState([]);
 
-    // Helper function to calculate average SOC from batteries
+    /**
+     * Calculate average State of Charge (SOC) from battery array
+     * Filters out invalid/null values before calculating average
+     */
     const calculateAverageSOC = (batteries) => {
         if (!batteries || batteries.length === 0) return null;
 
@@ -30,7 +42,11 @@ const SwapComplete = () => {
         return Math.round(sum / validSOCs.length);
     };
 
-    // Helper function to calculate and format swap duration
+    /**
+     * Calculate and format swap duration between start and end times
+     * Handles both Date objects and string timestamps
+     * Returns formatted string (e.g., "5 minutes 30 seconds")
+     */
     const calculateSwapDuration = (startTime, endTime = new Date()) => {
         if (!startTime) {
             return 'N/A';
@@ -55,7 +71,7 @@ const SwapComplete = () => {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
 
-        // Format in Vietnamese
+        // Format duration
         if (minutes > 0) {
             return `${minutes} minutes ${seconds} seconds`;
         } else {
@@ -63,16 +79,16 @@ const SwapComplete = () => {
         }
     };
 
-    // Fetch swap data
+    /**
+     * Fetch and process swap completion data
+     * Handles both booking flow and walk-in user flow
+     * Extracts battery information and calculates swap metrics
+     */
     useEffect(() => {
         const fetchSwapData = async () => {
-            // Check if data is passed from previous page (location.state)
             const stateData = location.state;
 
             // Determine if this is user flow (no booking) or booking flow
-            // User flow: has userData or userId in state, no bookingId in URL params that matches booking format
-            // Booking flow: has bookingId that we can fetch from API
-
             const hasStateData = stateData && (stateData.userData || stateData.bookingData || stateData.swapResult);
             const isUserFlowRoute = stateData?.isUserFlow || (stateData?.userData && !stateData?.bookingData);
 
@@ -231,7 +247,10 @@ const SwapComplete = () => {
         fetchSwapData();
     }, [bookingId, stationId, location.state]);
 
-    // Auto redirect countdown
+    /**
+     * Auto-redirect countdown
+     * Automatically redirects to kiosk home after 30 seconds
+     */
     useEffect(() => {
         const timer = setInterval(() => {
             setCountdown(prev => {
@@ -247,6 +266,10 @@ const SwapComplete = () => {
         return () => clearInterval(timer);
     }, [navigate, stationId]);
 
+    /**
+     * Handle finish button click
+     * Navigates back to kiosk home
+     */
     const handleFinish = () => {
         navigate(`/kiosk/${stationId}`);
     };

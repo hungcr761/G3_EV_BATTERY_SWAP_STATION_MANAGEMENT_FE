@@ -35,11 +35,26 @@ import {
 import { useUser } from '../../hooks/useUser';
 import { createStaffSchema } from '../../lib/validations';
 
+/**
+ * UserManagement Component
+ * 
+ * Admin page for managing all users (drivers, staff, admins)
+ * Features:
+ * - Search users by email and fullname
+ * - Filter by role (driver, staff, admin) and status (active, inactive, pending)
+ * - Pagination support
+ * - Create new staff accounts
+ * - Activate/deactivate user accounts
+ * - View user details
+ */
 const UserManagement = () => {
+    // Search and filter state
     const [searchEmail, setSearchEmail] = useState('');
     const [searchFullname, setSearchFullname] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+    
+    // Dialog state
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
@@ -66,7 +81,7 @@ const UserManagement = () => {
         fullname: ''
     });
 
-    // Form setup for creating staff
+    // Form setup for creating staff using react-hook-form with zod validation
     const {
         register,
         handleSubmit,
@@ -83,10 +98,14 @@ const UserManagement = () => {
         },
     });
 
+    // Password visibility toggles
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    // Update search params when search term changes
+    /**
+     * Update search params when search terms or filters change
+     * Debounced to avoid excessive API calls
+     */
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             updateParams({
@@ -100,36 +119,41 @@ const UserManagement = () => {
         return () => clearTimeout(timeoutId);
     }, [searchEmail, searchFullname, filterType, updateParams]);
 
-    // Handle pagination
+    /**
+     * Handle pagination page change
+     */
     const handlePageChange = (newPage) => {
         updateParams({ page: newPage });
     };
 
-    // Handle status update
+    /**
+     * Handle user status update (activate/deactivate)
+     */
     const handleStatusUpdate = async (accountId, newStatus) => {
         try {
             await updateStatus(accountId, newStatus);
-            // Optionally show success message
         } catch (err) {
             console.error('Failed to update status:', err);
-            // Optionally show error message
         }
     };
 
-    // Handle delete user
+    /**
+     * Handle user deletion
+     */
     const handleDeleteUser = async (accountId) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
                 await deleteUser(accountId);
-                // Optionally show success message
             } catch (err) {
                 console.error('Failed to delete user:', err);
-                // Optionally show error message
             }
         }
     };
 
-    // Handle create staff form submission
+    /**
+     * Handle create staff form submission
+     * Validates form data and creates new staff account
+     */
     const onSubmitStaff = async (data) => {
         setIsSubmitting(true);
         setSubmitError('');
@@ -162,7 +186,10 @@ const UserManagement = () => {
         }
     };
 
-    // Handle dialog close
+    /**
+     * Handle dialog close
+     * Resets form and clears error/success messages
+     */
     const handleDialogClose = () => {
         if (!isSubmitting) {
             setIsDialogOpen(false);
@@ -172,12 +199,18 @@ const UserManagement = () => {
         }
     };
 
-    // Filter users by status (client-side filter since API might not support it)
+    /**
+     * Filter users by status (client-side filter)
+     * API filtering is done by role, status filtering is done client-side
+     */
     const filteredUsers = users.filter(user => {
         const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
         return matchesStatus;
     });
 
+    /**
+     * Get badge color class based on user status
+     */
     const getStatusColor = (status) => {
         switch (status) {
             case 'active': return 'bg-green-100 text-green-800';
@@ -187,6 +220,9 @@ const UserManagement = () => {
         }
     };
 
+    /**
+     * Get badge color class based on user role
+     */
     const getTypeColor = (role) => {
         switch (role) {
             case 'driver': return 'bg-blue-100 text-blue-800';
@@ -196,6 +232,9 @@ const UserManagement = () => {
         }
     };
 
+    /**
+     * Get icon component based on user role
+     */
     const getTypeIcon = (role) => {
         switch (role) {
             case 'driver': return <Battery className="h-4 w-4" />;

@@ -13,7 +13,10 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { configAPI } from '../../lib/apiServices';
 
-// List of numeric fields that should always be numbers
+/**
+ * List of numeric fields that should always be numbers
+ * These fields are normalized to ensure they're numeric values
+ */
 const numericFields = [
     'booking_expired_interval',
     'soc_available_threshole',
@@ -22,7 +25,10 @@ const numericFields = [
     'soh_available_threshole'
 ];
 
-// Normalize settings data to ensure numeric fields are numbers
+/**
+ * Normalize settings data to ensure numeric fields are numbers
+ * Converts string numbers to actual numbers for consistency
+ */
 const normalizeSettings = (data) => {
     if (!data || typeof data !== 'object') return data;
 
@@ -38,6 +44,18 @@ const normalizeSettings = (data) => {
     return normalized;
 };
 
+/**
+ * SystemSettings Component
+ * 
+ * Admin page for configuring system-wide settings
+ * Features:
+ * - Booking expired interval (minutes)
+ * - SOC available threshold (%)
+ * - SOH maintenance threshold (%)
+ * - Allowed empty slots per station
+ * - Save and reset to default functionality
+ * - Tracks unsaved changes
+ */
 const SystemSettings = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -54,7 +72,10 @@ const SystemSettings = () => {
 
     const [hasChanges, setHasChanges] = useState(false);
 
-    // Fetch settings from API on mount
+    /**
+     * Fetch settings from API
+     * Normalizes numeric fields and handles different response structures
+     */
     const fetchSettings = async (showLoading = true) => {
         try {
             if (showLoading) {
@@ -87,6 +108,10 @@ const SystemSettings = () => {
         fetchSettings();
     }, []);
 
+    /**
+     * Handle setting value change
+     * Normalizes numeric fields and tracks changes
+     */
     const handleSettingChange = (key, value) => {
         setSettings(prev => {
             const updated = {
@@ -99,6 +124,10 @@ const SystemSettings = () => {
         setHasChanges(true);
     };
 
+    /**
+     * Handle number input change
+     * Parses numeric input and validates before updating
+     */
     const handleNumberChange = (key, value, parseFn = parseInt) => {
         // Handle empty string - set to 0 for system settings
         if (value === '' || value === null || value === undefined) {
@@ -112,6 +141,10 @@ const SystemSettings = () => {
         // If NaN, don't update (invalid input) - keep current value
     };
 
+    /**
+     * Handle save settings
+     * Normalizes settings before saving to API
+     */
     const handleSave = async () => {
         try {
             setSaving(true);
@@ -132,6 +165,10 @@ const SystemSettings = () => {
         }
     };
 
+    /**
+     * Handle reset to default settings
+     * Confirms with user before resetting all settings
+     */
     const handleReset = async () => {
         if (!window.confirm('Are you sure you want to reset all settings to default values? This action cannot be undone.')) {
             return;

@@ -3,7 +3,18 @@ import { Battery, CheckCircle2, Loader2, Circle } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 
+/**
+ * SwapProgress Component
+ * 
+ * Displays progress indicator for battery swap process
+ * Shows steps with status (completed, in_progress, pending)
+ * Displays progress percentage and estimated time for active steps
+ */
 const SwapProgress = ({ currentStep, steps }) => {
+    /**
+     * Get icon for step based on status
+     * Completed: green checkmark, In progress: spinning loader, Pending: gray circle
+     */
     const getStepIcon = (stepIndex, status) => {
         if (status === 'completed') {
             return <CheckCircle2 className="h-12 w-12 text-green-500" />;

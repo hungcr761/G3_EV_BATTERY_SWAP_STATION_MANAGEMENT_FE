@@ -8,17 +8,35 @@ import QRScanner from '../../components/Kiosk/QRScanner';
 import { bookingAPI, userAPI } from '../../lib/apiServices';
 import { useStation } from '../../hooks/useStation';
 
+/**
+ * KioskHome Component
+ * 
+ * Main entry point for kiosk interface at battery swap stations
+ * Handles:
+ * - Station status verification
+ * - QR code scanning (booking or user account)
+ * - Navigation to appropriate swap flow based on QR code type
+ */
 const KioskHome = () => {
     const navigate = useNavigate();
     const { stationId } = useParams();
+    
+    // Scanner state
     const [showScanner, setShowScanner] = useState(false);
     const [scanMode, setScanMode] = useState(null); // 'booking' or 'user'
+    
+    // UI state
     const [error, setError] = useState(null);
     const [validating, setValidating] = useState(false);
+    
+    // Station data
     const [stationInfo, setStationInfo] = useState(null);
     const { getStationById } = useStation();
 
-    // Fetch station info on mount
+    /**
+     * Fetch station information on component mount
+     * Retrieves station name, address, and status
+     */
     useEffect(() => {
         const fetchStation = async () => {
             try {
@@ -39,16 +57,22 @@ const KioskHome = () => {
         }
     }, [stationId, getStationById]);
 
-    // Check if station is operational
+    /**
+     * Check if station is operational
+     * Returns false if status is unknown or not operational
+     */
     const isStationOperational = () => {
         if (!stationInfo || !stationInfo.status) {
-            return false; // If status is unknown, block access
+            return false;
         }
         return stationInfo.status.toLowerCase() === 'operational';
     };
 
+    /**
+     * Handle QR code scan result
+     * Validates station status and routes to appropriate validation based on scan mode
+     */
     const handleQRScan = async (qrCode) => {
-        // Check station status before proceeding
         if (!isStationOperational()) {
             setError('Station is not operational. Please contact support or visit another station.');
             setValidating(false);
@@ -60,10 +84,8 @@ const KioskHome = () => {
 
         try {
             if (scanMode === 'booking') {
-                // Only try booking validation
                 await validateBooking(qrCode);
             } else if (scanMode === 'user') {
-                // Only try user validation
                 await validateUser(qrCode);
             } else {
                 // Fallback: try both (for backward compatibility)
@@ -85,20 +107,26 @@ const KioskHome = () => {
         }
     };
 
+    /**
+     * Validate booking QR code
+     * Performs three validations:
+     * 1. Checks if booking is for this station
+     * 2. Checks if booking is still valid (not expired)
+     * 3. Checks booking status (not completed/cancelled)
+     * Navigates to swap flow if all validations pass
+     */
     const validateBooking = async (bookingId) => {
         try {
-            // Fetch booking details from backend
             const response = await bookingAPI.getById(bookingId);
             const bookingData = response.data;
 
-            // Check if response is valid
             if (!bookingData || !bookingData.booking) {
                 throw new Error('Booking not found');
             }
 
             const booking = bookingData.booking;
 
-            // VALIDATION 1: Check if booking is for this station
+            // Validation 1: Check if booking is for this station
             if (booking.station_id !== parseInt(stationId)) {
                 const wrongStationName = booking.station?.station_name || `Station #${booking.station_id}`;
                 setError(
@@ -110,7 +138,7 @@ const KioskHome = () => {
                 return;
             }
 
-            // VALIDATION 2: Check if booking is still valid (not expired)
+            // Validation 2: Check if booking is still valid (not expired)
             if (booking.scheduled_end_time) {
                 const bookingEndTime = new Date(booking.scheduled_end_time);
                 const now = new Date();
@@ -125,7 +153,7 @@ const KioskHome = () => {
                 }
             }
 
-            // VALIDATION 3: Check booking status
+            // Validation 3: Check booking status
             if (booking.status === 'completed') {
                 setError(
                     `This booking has been completed.\n` +
@@ -144,32 +172,34 @@ const KioskHome = () => {
                 return;
             }
 
-            // All validations passed - proceed to swap
-            console.log('✅ Booking validated:', booking);
+            // All validations passed - navigate to swap flow
             navigate(`/kiosk/${stationId}/swap/${bookingId}`, {
-                state: { booking } // Pass booking data to next screen
+                state: { booking }
             });
 
         } catch (error) {
             console.error('Error validating booking:', error);
-            throw error; // Re-throw to be caught by the calling function
+            throw error;
         }
     };
 
+    /**
+     * Validate user account QR code
+     * Checks if account is active
+     * Navigates to user flow if validation passes
+     */
     const validateUser = async (accountId) => {
         try {
-            // Fetch user details from backend using /user/id/{account_id}
             const response = await userAPI.getById(accountId);
             const userData = response.data;
 
-            // Check if response is valid
             if (!userData || !userData.success) {
                 throw new Error('User not found');
             }
 
             const user = userData.payload.user;
 
-            // VALIDATION: Check if account is active
+            // Validation: Check if account is active
             if (user.status && user.status.toLowerCase() !== 'active') {
                 setError(
                     `❌ Account Suspended!\n\n` +
@@ -181,24 +211,27 @@ const KioskHome = () => {
             }
 
             // Navigate to user flow
-            console.log('✅ User validated:', user);
             navigate(`/kiosk/${stationId}/user/${accountId}`, {
-                state: { user } // Pass user data to next screen
+                state: { user }
             });
 
         } catch (error) {
             console.error('Error validating user:', error);
-            throw error; // Re-throw to be caught by the calling function
+            throw error;
         }
     };
 
+    /**
+     * Handle QR code scan from scanner component
+     */
     const handleScan = (qrCode) => {
-        console.log('Scanned QR code:', qrCode);
         handleQRScan(qrCode);
     };
 
+    /**
+     * Handle manual QR code entry
+     */
     const handleManualEntry = (qrCode) => {
-        console.log('Manual QR code:', qrCode);
         handleQRScan(qrCode);
     };
 

@@ -22,13 +22,30 @@ import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { useApi } from '../../hooks/useApi';
 import { batteryAPI, batteryTypeAPI, stationAPI, cabinetAPI, configAPI } from '../../lib/apiServices';
-// Removed transfer management from this page; handled in AdminTransferManagement
 
+/**
+ * BatteryManagement Component
+ * 
+ * Admin page for managing battery inventory across all stations
+ * Features:
+ * - Search batteries by serial number
+ * - Filter by station
+ * - Sort by SOC or SOH
+ * - Pagination support
+ * - Display battery health metrics (SOC, SOH)
+ * - Show battery location (station or vehicle)
+ * - Summary statistics (total, available, need maintenance)
+ * 
+ * Note: Transfer management is handled in AdminTransferManagement page
+ */
 const BatteryManagement = () => {
+    // Filter and search state
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStation, setFilterStation] = useState('all');
     const [sortField, setSortField] = useState('none');
     const [sortDirection, setSortDirection] = useState('desc');
+    
+    // Pagination state
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(12);
     const [pagination, setPagination] = useState({
@@ -37,20 +54,28 @@ const BatteryManagement = () => {
         total: 0,
         totalPages: 0
     });
+    
+    // Data state
     const [batteriesData, setBatteriesData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    
+    // Summary statistics
     const [summaryCounts, setSummaryCounts] = useState({
         available: 0,
         needMaintenance: 0
     });
 
+    // Fetch reference data using useApi hook
     const { data: apiBatteryTypes } = useApi(batteryTypeAPI.getAll, []);
     const { data: apiStations, loading: stationsLoading } = useApi(stationAPI.getAll, []);
     const { data: apiCabinets } = useApi(() => cabinetAPI.getAll({ page: 1, pageSize: 100 }), []);
     const { data: apiConfig } = useApi(configAPI.get, []);
 
-    // Fetch batteries with pagination
+    /**
+     * Fetch batteries with pagination and filters
+     * Handles different API response structures
+     */
     const fetchBatteries = useCallback(async () => {
         try {
             setLoading(true);
@@ -135,7 +160,10 @@ const BatteryManagement = () => {
         return () => clearTimeout(timeoutId);
     }, [searchTerm]);
 
-    // Create a map of battery types by battery_type_id for quick lookup
+    /**
+     * Create a map of battery types by battery_type_id for quick lookup
+     * Handles different API response structures
+     */
     const batteryTypeMap = (() => {
         if (!apiBatteryTypes) {
             console.log('BatteryManagement: apiBatteryTypes is null/undefined');
@@ -274,7 +302,10 @@ const BatteryManagement = () => {
         return map;
     })();
 
-    // Get SOH maintenance threshold from config
+    /**
+     * Get SOH maintenance threshold from config
+     * Batteries below this threshold are considered to need maintenance
+     */
     const sohMaintenanceThreshold = (() => {
         if (!apiConfig) return 70; // Default threshold
 
@@ -283,7 +314,10 @@ const BatteryManagement = () => {
         return Number(threshold) || 70;
     })();
 
-    // Fetch all batteries for summary stats (not paginated)
+    /**
+     * Fetch all batteries for summary statistics (not paginated)
+     * Calculates counts of available vs need maintenance batteries
+     */
     const fetchSummaryStats = useCallback(async () => {
         try {
             const params = {
@@ -330,7 +364,10 @@ const BatteryManagement = () => {
         fetchSummaryStats();
     }, [fetchSummaryStats]);
 
-    // Process batteries data
+    /**
+     * Process batteries data
+     * Enriches battery data with type information, location, and calculated status
+     */
     const batteries = batteriesData.map((b) => {
         const batteryTypeId = b?.battery_type_id;
         // Try both number and string keys for lookup
@@ -398,6 +435,9 @@ const BatteryManagement = () => {
         };
     });
 
+    /**
+     * Get badge color class based on battery status
+     */
     const getStatusColor = (status) => {
         switch (status) {
             case 'available': return 'bg-green-100 text-green-800';
@@ -409,6 +449,9 @@ const BatteryManagement = () => {
         }
     };
 
+    /**
+     * Get status text label
+     */
     const getStatusText = (status) => {
         switch (status) {
             case 'available': return 'Available';
@@ -420,6 +463,9 @@ const BatteryManagement = () => {
         }
     };
 
+    /**
+     * Get icon component based on battery status
+     */
     const getStatusIcon = (status) => {
         switch (status) {
             case 'available': return <CheckCircle className="h-4 w-4" />;
@@ -431,6 +477,10 @@ const BatteryManagement = () => {
         }
     };
 
+    /**
+     * Get text color class based on SOC value
+     * Higher SOC = green, lower SOC = red
+     */
     const getSocColor = (soc) => {
         if (soc >= 90) return 'text-green-600';
         if (soc >= 80) return 'text-yellow-600';
@@ -438,6 +488,10 @@ const BatteryManagement = () => {
         return 'text-red-600';
     };
 
+    /**
+     * Get text color class based on SOH value
+     * Higher SOH = green, lower SOH = red
+     */
     const getSohColor = (soh) => {
         if (soh >= 90) return 'text-green-600';
         if (soh >= 80) return 'text-yellow-600';
@@ -445,7 +499,10 @@ const BatteryManagement = () => {
         return 'text-red-600';
     };
 
-    // Apply client-side sorting only (filtering is done server-side via API)
+    /**
+     * Apply client-side sorting (filtering is done server-side via API)
+     * Sorts by SOC or SOH in ascending or descending order
+     */
     const filteredBatteries = (() => {
         if (sortField === 'none') {
             return batteries;
@@ -477,15 +534,26 @@ const BatteryManagement = () => {
         return sorted;
     })();
 
+    /**
+     * Toggle sort direction (ascending/descending)
+     */
     const toggleSortDirection = () => {
         setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
     };
 
+    /**
+     * Handle pagination page change
+     * Scrolls to top after page change
+     */
     const handlePageChange = (newPage) => {
         setPage(newPage);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    /**
+     * Handle page size change
+     * Resets to page 1 when page size changes
+     */
     const handlePageSizeChange = (newPageSize) => {
         setPageSize(parseInt(newPageSize));
         setPage(1);

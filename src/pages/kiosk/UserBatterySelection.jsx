@@ -5,20 +5,34 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Battery, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 
+/**
+ * UserBatterySelection Component
+ * 
+ * Allows walk-in users to select how many batteries they want to swap
+ * Based on vehicle's maximum battery slots
+ */
 const UserBatterySelection = () => {
     const { stationId, userId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    
     const [selectedBatteries, setSelectedBatteries] = useState([]);
     const [selectedVehicle] = useState(location.state?.selectedVehicle);
 
     const maxBatteries = selectedVehicle?.model?.battery_slot || 1;
     const batteryOptions = Array.from({ length: maxBatteries }, (_, i) => i + 1);
 
+    /**
+     * Handle battery quantity selection
+     * Creates array of battery IDs based on selected count
+     */
     const handleBatterySelect = (batteryCount) => {
         setSelectedBatteries(Array.from({ length: batteryCount }, (_, i) => i + 1));
     };
 
+    /**
+     * Navigate to availability check with selected vehicle and batteries
+     */
     const handleContinue = () => {
         if (selectedBatteries.length === 0) return;
         navigate(`/kiosk/${stationId}/user/${userId}/availability`, {
@@ -29,6 +43,9 @@ const UserBatterySelection = () => {
         });
     };
 
+    /**
+     * Navigate back to vehicle selection
+     */
     const handleBack = () => {
         navigate(`/kiosk/${stationId}/user/${userId}/vehicle`);
     };

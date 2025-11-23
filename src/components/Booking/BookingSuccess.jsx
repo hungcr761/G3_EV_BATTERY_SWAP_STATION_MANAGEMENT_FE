@@ -5,8 +5,20 @@ import { Badge } from '../ui/badge';
 import { CheckCircle, Clock, MapPin, Motorbike, Battery, QrCode } from 'lucide-react';
 import QRCodeLib from 'qrcode';
 
+/**
+ * BookingSuccess Component
+ * 
+ * Displays booking confirmation with all booking details
+ * Generates QR code for booking ID to be scanned at kiosk
+ * Shows vehicle, station, battery, and timing information
+ */
 const BookingSuccess = ({ bookingData, onClose }) => {
     const qrCodeRef = useRef(null);
+    
+    /**
+     * Generate QR code for booking ID
+     * QR code can be scanned at the kiosk to confirm booking
+     */
     useEffect(() => {
         if (bookingData?.booking_id && qrCodeRef.current) {
             QRCodeLib.toCanvas(qrCodeRef.current, bookingData.booking_id, {
@@ -20,6 +32,9 @@ const BookingSuccess = ({ bookingData, onClose }) => {
         }
     }, [bookingData?.booking_id]);
 
+    /**
+     * Format time string to HH:MM format (Vietnamese locale)
+     */
     const formatTime = (timeString) => {
         if (!timeString) return '';
         const date = new Date(timeString);
@@ -30,6 +45,9 @@ const BookingSuccess = ({ bookingData, onClose }) => {
         });
     };
 
+    /**
+     * Format date string to readable format (Vietnamese locale)
+     */
     const formatDate = (timeString) => {
         if (!timeString) return '';
         const date = new Date(timeString);
