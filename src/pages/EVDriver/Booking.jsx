@@ -35,10 +35,11 @@ import {
 const Stations = () => {
     const [selectedStation, setSelectedStation] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [batteryType, setBatteryType] = useState('');
+    const [batteryType, setBatteryType] = useState('available');
     const [sortBy, setSortBy] = useState('default');
     const [sortDirection, setSortDirection] = useState('asc');
     const [stations, setStations] = useState([]);
+    const availableStations = React.useMemo(() => stations.filter(s => s.status === 'available'), [stations]);
     const [userLocation, setUserLocation] = useState(null);
     const [nearestStation, setNearestStation] = useState(null);
     const [showBookingFlow, setShowBookingFlow] = useState(false);
@@ -170,14 +171,14 @@ const Stations = () => {
         return R * c;
     };
 
-    // Find nearest station
+    // Find nearest station (only among available stations)
     const findNearestStation = (userLat, userLng) => {
-        if (stations.length === 0) return;
+        if (availableStations.length === 0) return;
 
         let nearest = null;
         let minDistance = Infinity;
 
-        stations.forEach(station => {
+        availableStations.forEach(station => {
             const distance = calculateDistance(
                 userLat,
                 userLng,
@@ -202,8 +203,8 @@ const Stations = () => {
         const availabilityData = {};
 
         try {
-            // Check availability for each station
-            const promises = stations.map(async (station) => {
+            // Check availability for each available station
+            const promises = availableStations.map(async (station) => {
                 try {
                     const response = await bookingAPI.checkAvailability(
                         station.id,
@@ -277,7 +278,7 @@ const Stations = () => {
             }
 
             const availability = stationAvailability[station.id];
-            const totalBatteriesReady = availability?.totalBatteriesReady || 0;
+            const totalBatteriesReady = availability?.availableBatteries || 0;
 
             return {
                 ...station,
@@ -289,6 +290,7 @@ const Stations = () => {
         const isAscending = sortDirection === 'asc';
 
         if (sortBy === 'distance') {
+            console.log('Sorting by distance', { stationsWithData });
             return stationsWithData.sort((a, b) => {
                 if (a.distance === null && b.distance === null) return 0;
                 if (a.distance === null) return 1;
@@ -508,8 +510,8 @@ const Stations = () => {
                                     className="w-full h-10 px-3 rounded-md border border-input bg-background"
                                     value={batteryType}
                                     onChange={(e) => setBatteryType(e.target.value)}
-                                >
-                                    <option value="">Status</option>
+                                >                                    
+                                    <option value="">All</option>
                                     <option value="available">Available</option>
                                     <option value="closed">Closed</option>
                                 </select>

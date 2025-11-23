@@ -60,7 +60,7 @@ const BatteryManagement = () => {
                 page,
                 pageSize,
                 ...(filterStation !== 'all' && { station_id: filterStation }),
-                ...(searchTerm && searchTerm.trim() && { search: searchTerm.trim() })
+                ...(searchTerm && searchTerm.trim() && { battery_serial: searchTerm.trim() })
             };
 
             const response = await batteryAPI.getAll(params);
@@ -290,7 +290,7 @@ const BatteryManagement = () => {
                 page: 1,
                 pageSize: 10000, // Large page size to get all batteries
                 ...(filterStation !== 'all' && { station_id: filterStation }),
-                ...(searchTerm && searchTerm.trim() && { search: searchTerm.trim() })
+                ...(searchTerm && searchTerm.trim() && { battery_serial: searchTerm.trim() })
             };
 
             const response = await batteryAPI.getAll(params);

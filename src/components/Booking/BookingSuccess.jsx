@@ -88,7 +88,7 @@ const BookingSuccess = ({ bookingData, onClose }) => {
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Status:</span>
                                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                        Booked
+                                        Pending
                                     </Badge>
                                 </div>
                                 <div className="flex justify-between">

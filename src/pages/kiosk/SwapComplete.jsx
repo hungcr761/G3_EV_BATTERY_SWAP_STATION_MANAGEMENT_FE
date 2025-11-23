@@ -507,30 +507,6 @@ const SwapComplete = () => {
 
                 </div>
 
-                {/* Rating Section */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-3xl">Service Rating</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-8">
-                        <p className="text-xl text-muted-foreground mb-6">
-                            Please rate your experience
-                        </p>
-                        <div className="flex justify-center space-x-4">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                    key={star}
-                                    className="hover:scale-110 transition-transform"
-                                    onClick={() => {
-                                        alert(`Thank you for rating ${star} stars!`);
-                                    }}
-                                >
-                                    <Star className="h-16 w-16 text-yellow-400 hover:text-yellow-500 fill-yellow-400" />
-                                </button>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
 
                 {/* Thank You Message */}
                 <div className="text-center py-8">

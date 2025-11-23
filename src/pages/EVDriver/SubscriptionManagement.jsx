@@ -126,14 +126,16 @@ export default function SubscriptionManagement() {
 
         {/* Loading State */}
         {loading && (
-          <div className="text-center py-20">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg mb-4">
-              <Loader2 className="h-10 w-10 text-white animate-spin" />
-              <p className="text-slate-600 font-medium text-lg">
-                Loading subcriptions....
-              </p>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex items-center justify-center h-64">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                            <p className="text-slate-600">Loading...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         )}
 
         {/* Subscription List */}

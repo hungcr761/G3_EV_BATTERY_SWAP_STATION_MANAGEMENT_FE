@@ -402,18 +402,6 @@ const UserManagement = () => {
                                                             <UserCheck className="h-4 w-4 text-green-600" />
                                                         )}
                                                     </Button>
-                                                    <Button variant="ghost" size="sm" title="Edit">
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-red-600 hover:text-red-700"
-                                                        onClick={() => handleDeleteUser(user.account_id)}
-                                                        title="Delete"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
                                                 </div>
                                             </td>
                                         </tr>

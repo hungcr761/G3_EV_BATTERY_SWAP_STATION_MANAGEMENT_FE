@@ -221,10 +221,6 @@ export default function Payment() {
                                                 <p className="text-sm text-muted-foreground mb-1">
                                                     First Payment Total
                                                 </p>
-                                                <p className="text-xs text-muted-foreground flex items-center">
-                                                    <Calendar className="h-3 w-3 mr-1" />
-                                                    Includes first month + deposit
-                                                </p>
                                             </div>
                                             <p className="text-3xl font-bold text-primary">
                                                 {formatPrice(totalAmount)}

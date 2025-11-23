@@ -66,18 +66,9 @@ export default function useVehicle() {
             let payload;
 
             if (editingVehicle) {
-                // When editing, model is required
-                const selectedModel = vehicleModels.find(m => m.name === data.model);
-
-                if (!selectedModel) {
-                    setApiError('Invalid vehicle model selected');
-                    setIsSubmitting(false);
-                    return;
-                }
 
                 payload = {
                     vin: data.vin,
-                    model_id: selectedModel.model_id,
                     license_plate: data.license_plate
                 };
             } else {
